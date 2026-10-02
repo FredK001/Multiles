@@ -6,3 +6,5 @@ playwright-report
 *.local
 .DS_Store
 *.tsbuildinfo
+dist-fichier
+multiles.html
