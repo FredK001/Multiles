@@ -1,0 +1,13 @@
+/* Conteneur de l'app : équivalent du .phone du prototype, en plein écran.
+   Sur mobile (≤ 760 px) le prototype affiche exactement ceci : 100 % de large, 100dvh, sans cadre.
+   Sur tablette, la colonne reste centrée et plafonnée pour garder les proportions validées. */
+.app{position:relative;width:100%;height:100vh;height:100dvh;overflow:hidden;background:var(--lagon);margin:0 auto}
+@media (min-width:640px){.app{max-width:600px;box-shadow:0 0 0 3px var(--ink)}}
+
+/* Écart volontaire au prototype : avec « réduire les animations », les étoiles de fin
+   (opacité 0 tant que l'animation starIn ne joue pas) restaient invisibles. */
+@media (prefers-reduced-motion:reduce){.stars3 .s{opacity:1}}
+
+/* Écart volontaire au prototype (validé) : numéro des trophées à gagner en #6B7390 (4,7:1 avec le blanc)
+   au lieu de #9AA2B6 (2,6:1), pour le contraste AA. Même gris que les îles fermées de la carte. */
+.troph.off .pl{background:#6B7390!important}

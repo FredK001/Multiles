@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1E2440">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="description" content="Apprendre les tables de multiplication de 1 à 10, en jouant.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Multîles">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<title>Multîles</title>
+<style>
+  /* Écran de démarrage, visible le temps que l'app se charge. */
+  html,body{margin:0;height:100%;background:#E6F4F2}
+  #splash{position:fixed;inset:0;display:grid;place-items:center;align-content:center;gap:14px;background:#E6F4F2;color:#1E2440;font:700 34px "Fredoka","Baloo 2",system-ui,sans-serif}
+</style>
+</head>
+<body>
+<div id="splash" aria-hidden="true">
+  <svg width="96" height="96" viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="#2F5BEA" stroke="#1E2440" stroke-width="5"/><path d="M14 78 Q37 70 60 78 T106 78 L106 92 Q60 118 14 92Z" fill="#9FD9E8" stroke="#1E2440" stroke-width="4" stroke-linejoin="round"/><path d="M28 80 C34 58 86 58 92 80Z" fill="#FFC93C" stroke="#1E2440" stroke-width="4" stroke-linejoin="round"/><path d="M60 64 C62 50 60 40 58 30" fill="none" stroke="#1E2440" stroke-width="9" stroke-linecap="round"/><path d="M60 64 C62 50 60 40 58 30" fill="none" stroke="#9C5A12" stroke-width="4" stroke-linecap="round"/><path d="M58 30 C48 24 36 26 30 34 C40 34 50 34 58 30Z M58 30 C66 22 80 22 88 30 C78 32 66 33 58 30Z" fill="#7CC44E" stroke="#1E2440" stroke-width="3.5" stroke-linejoin="round"/></svg>
+  <span>Multîles</span>
+</div>
+<div id="app-root"></div>
+<noscript>Multîles a besoin de JavaScript pour fonctionner.</noscript>
+<script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+/* Jetons de design — copie exacte du :root du prototype validé.
+   --ile, --ile-clair, --ile-sombre et --profil sont réécrits à l'exécution
+   selon l'île et le profil en cours (voir src/design/theme.ts). */
+:root{
+  --ink:#1E2440; --ink-2:#4D5675; --lagon:#E6F4F2; --lagon-2:#CFE3DF; --white:#FFFFFF;
+  --ballon:#2F5BEA; --ballon-clair:#E3EAFD;
+  --feuille:#157F45; --miel:#FFE7A0; --laiton:#94660F;
+  --titre:"Fredoka","Baloo 2","Nunito",system-ui,sans-serif;
+  --ui:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ile:#BF3A1A; --ile-clair:#FADCD3; --ile-sombre:#952D14;
+  --profil:#C8371D;
+}

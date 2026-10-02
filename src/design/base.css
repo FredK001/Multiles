@@ -1,0 +1,12 @@
+/* Styles de base — repris du prototype (règles globales hors panneau de revue). */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{background:#D7E9E5;color:var(--ink);font-family:var(--ui);font-weight:700;font-size:17px;line-height:1.4}
+button{font-family:var(--ui);font-weight:800;color:var(--ink);cursor:pointer;border:0;background:none;padding:0}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ballon);outline-offset:3px}
+h1,h2{margin:0}
+p{margin:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
