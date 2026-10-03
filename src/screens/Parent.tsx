@@ -10,7 +10,7 @@ import { checkForUpdate, useUpdate } from '../pwa';
 import { gateQuestion, gateSolved, newGate, type Gate } from '../engine/gate';
 import { rowPct, tablesDone } from '../engine/mastery';
 import { hardList, totalSessions, weekMinutes } from '../engine/stats';
-import { MAX_PROFILES, type BossTime, type Profile } from '../store';
+import { BackupError, FutureVersionError, makeBackup, MAX_PROFILES, readBackup, type AppData, type BossTime, type Profile } from '../store';
 
 const DEFAULT_MSG = 'Cette étape évite que les enfants entrent ici par hasard.';
 const WRONG_MSG = "Ce n'est pas le bon résultat. Voici une nouvelle opération.";
@@ -90,6 +90,86 @@ function ProfileRow({ k, onAction, edit }: { k: Profile; edit: 'rename' | 'del' 
             <button class="btn-sm" onClick={() => onAction('cancel')}>Annuler</button>
             <button class="btn-sm dangerfill" onClick={() => onAction('delok')}>Supprimer</button>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Enregistre le fichier : feuille de partage sur mobile (« Enregistrer dans Fichiers »), téléchargement sinon. */
+async function saveFile(name: string, text: string): Promise<boolean> {
+  const file = new File([text], name, { type: 'application/json' });
+  if (matchMedia('(pointer: coarse)').matches && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] });
+      return true;
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') return false;
+    }
+  }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  return true;
+}
+
+function BackupCard() {
+  const { store, selectPlayer, toast } = useApp();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [pending, setPending] = useState<AppData | null>(null);
+  const [msg, setMsg] = useState('');
+
+  const save = async () => {
+    const { name, text } = makeBackup(store.get());
+    if (await saveFile(name, text)) toast('Sauvegarde enregistrée.');
+  };
+  const pick = async (input: HTMLInputElement) => {
+    const f = input.files?.[0];
+    input.value = '';
+    if (!f) return;
+    setMsg('');
+    try {
+      setPending(readBackup(await f.text()));
+    } catch (e) {
+      setMsg(
+        e instanceof BackupError ? e.message
+          : e instanceof FutureVersionError ? "Cette sauvegarde vient d'une version plus récente de Multîles. Mettez l'application à jour, puis réessayez."
+          : 'Ce fichier ne peut pas être lu.',
+      );
+    }
+  };
+  const restore = async () => {
+    if (!pending) return;
+    const next = { ...pending, persistAsked: store.get().persistAsked };
+    selectPlayer(null);
+    await store.update(() => next);
+    setPending(null);
+    toast((await store.flush()) ? 'Progression restaurée.' : "La progression est restaurée, mais n'a pas pu être enregistrée sur l'appareil.");
+  };
+  const names = pending?.profiles.map((k) => k.name).join(', ') || 'aucun profil';
+
+  return (
+    <div class="pcard2">
+      <h2>Sauvegarde</h2>
+      <p style={{ fontSize: '15px', color: 'var(--ink-2)' }}>La progression est enregistrée uniquement sur cet appareil. Gardez-en une copie dans un fichier pour la retrouver dans un autre navigateur ou sur un autre téléphone.</p>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <button class="btn-sm" onClick={() => void save()}>Sauvegarder la progression</button>
+        <button class="btn-sm" onClick={() => fileRef.current?.click()}>Restaurer une sauvegarde</button>
+      </div>
+      <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={(e) => void pick(e.currentTarget)} />
+      {msg && <p role="alert" style={{ fontSize: '15px', color: '#A3261E' }}>{msg}</p>}
+      {pending && (
+        <div class="confirm" role="alertdialog" aria-label="Confirmer la restauration">
+          <span>Remplacer toute la progression de cet appareil par celle de la sauvegarde ({names}) ? Les profils actuels seront remplacés.</span>
+          <span class="acts">
+            <button class="btn-sm" onClick={() => setPending(null)}>Annuler</button>
+            <button class="btn-sm dangerfill" onClick={() => void restore()}>Remplacer</button>
+          </span>
         </div>
       )}
     </div>
@@ -246,6 +326,7 @@ export function Parent() {
           </div>
           <p style={{ fontSize: '13px', color: 'var(--ink-2)' }}>Pas de publicité, pas d'achat intégré, pas de classement entre enfants. Les pièces se gagnent uniquement en jouant.</p>
         </div>
+        <BackupCard />
       </div>
     );
   }
