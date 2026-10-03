@@ -5,17 +5,21 @@ import { chromium } from '@playwright/test';
 import { createServer } from 'vite';
 
 const OUT = 'public/icons';
-const LAGON = '#E6F4F2';
+// Bleu du logo : le fond prolonge le disque jusqu'aux bords, sans « badge » sur fond pâle.
+const BLEU = '#2F5BEA';
 
 /** [fichier, taille, fond, part du logo dans l'icône] */
 const ICONS = [
   ['icon-192.png', 192, null, 1],
   ['icon-512.png', 512, null, 1],
   // Masquable : fond plein et logo dans la zone sûre (cercle central de 80 %).
-  ['icon-maskable-512.png', 512, LAGON, 0.72],
-  // iOS n'accepte pas la transparence : fond plein, logo avec marge.
-  ['apple-touch-icon-180.png', 180, LAGON, 0.84],
+  ['icon-maskable-512.png', 512, BLEU, 0.8],
+  // iOS n'accepte pas la transparence : fond plein, logo jusqu'aux bords.
+  ['apple-touch-icon-180.png', 180, BLEU, 0.98],
   ['favicon-32.png', 32, null, 1],
+  // Firefox sur iPhone ignore apple-touch-icon et le manifeste : il prend la favicon,
+  // et dessine une lettre si elle fait moins de 48 px.
+  ['favicon-192.png', 192, BLEU, 0.98],
 ];
 
 mkdirSync(OUT, { recursive: true });
