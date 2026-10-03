@@ -409,6 +409,14 @@
 .btn-sm.dangerfill{background:#A3261E;color:#fff;border-color:var(--ink)}
 .confirm{grid-column:1/-1;background:#FDECEA;border:2px solid #A3261E;border-radius:14px;padding:10px;font-size:15px;display:grid;gap:8px}
 .confirm .acts{display:flex;gap:8px;justify-content:flex-end}
+.bk-last{font-size:14px;font-weight:800;color:var(--ink-2)}
+.bk-live{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.bk-acts{display:flex;gap:8px;flex-wrap:wrap}
+.xfer{background:var(--lagon);border:2px solid var(--ink);border-radius:14px;padding:10px;display:grid;gap:4px;font-size:15px;text-align:center}
+.xfer-code{font-family:var(--titre);font-weight:700;font-size:34px;letter-spacing:.08em;line-height:1.1;user-select:all}
+.xfer-in{display:grid;gap:6px;font-size:15px}
+.xfer-in .row{display:flex;gap:8px}
+.xfer-in .rename{flex:1;min-width:0;text-transform:uppercase;letter-spacing:.08em}
 .rename{grid-column:2/4;height:44px;border:2px solid var(--ink);border-radius:12px;padding:0 10px;font-family:var(--ui);font-weight:800;font-size:16px;width:100%}
 .setrow{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:16px;min-height:52px}
 .setrow small{display:block;color:var(--ink-2);font-size:13px;font-weight:700}

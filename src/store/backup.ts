@@ -1,10 +1,9 @@
 /* Fichier de sauvegarde : toute la progression de l'appareil, pour la retrouver ailleurs
    (autre navigateur, autre raccourci d'écran d'accueil, autre téléphone). */
-import { dayKey } from '../engine/dates';
+import { dayKey, daysBetween } from '../engine/dates';
 import { migrate } from './migrations';
 import type { AppData } from './schema';
-
-const MARK = 'multiles-sauvegarde';
+import { BACKUP_MARK as MARK } from './transfer-shared';
 
 export class BackupError extends Error {}
 
@@ -30,4 +29,12 @@ export function readBackup(text: string): AppData {
   }
   // Une sauvegarde venant d'une version plus récente lève FutureVersionError : rien n'est écrasé.
   return migrate(o.data);
+}
+
+/** Rappel affiché dans l'espace parent : depuis quand aucun fichier n'a été enregistré. */
+export function lastBackupText(last: string | null, today: string): string {
+  if (!last) return 'Aucune sauvegarde enregistrée depuis cet appareil.';
+  const n = Math.max(0, daysBetween(last, today));
+  const ago = n === 0 ? "aujourd'hui" : n === 1 ? 'hier' : n < 31 ? `il y a ${n} jours` : `il y a ${Math.floor(n / 30)} mois`;
+  return `Dernière sauvegarde : ${ago}.`;
 }

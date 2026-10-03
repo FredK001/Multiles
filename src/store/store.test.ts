@@ -11,7 +11,7 @@ const noPersist = async () => true;
 
 describe('Migrations', () => {
   it('données absentes : base vide à la version courante', () => {
-    expect(migrate(undefined)).toEqual({ version: SCHEMA_VERSION, profiles: [], settings: { sound: true, bossTime: 2 }, persistAsked: false });
+    expect(migrate(undefined)).toEqual({ version: SCHEMA_VERSION, profiles: [], settings: { sound: true, bossTime: 2 }, persistAsked: false, lastBackup: null });
   });
   it('version 0 (sans numéro) migrée vers la version courante', () => {
     const d = migrate({ profiles: [{ name: 'Léa', coins: 12 }] });

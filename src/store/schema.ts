@@ -7,7 +7,7 @@ import type { PepWear } from '../art/mascot';
 import type { DayKey } from '../engine/dates';
 import type { MulKey } from '../engine/keys';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** Progression sur une île. Le prototype stockait [étapes, trophée, total] ; on garde les étoiles par étape. */
 export interface IsleProgress {
@@ -102,6 +102,8 @@ export interface AppData {
   settings: Settings;
   /** navigator.storage.persist() déjà demandé. */
   persistAsked: boolean;
+  /** Dernier fichier de sauvegarde enregistré depuis cet appareil (rappel dans l'espace parent). */
+  lastBackup: DayKey | null;
 }
 
 export const MAX_PROFILES = 4;
@@ -111,4 +113,4 @@ export const START_BUOYS = 1;
 
 export const defaultSettings = (): Settings => ({ sound: true, bossTime: 2 });
 
-export const emptyData = (): AppData => ({ version: SCHEMA_VERSION, profiles: [], settings: defaultSettings(), persistAsked: false });
+export const emptyData = (): AppData => ({ version: SCHEMA_VERSION, profiles: [], settings: defaultSettings(), persistAsked: false, lastBackup: null });

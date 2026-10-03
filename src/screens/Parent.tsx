@@ -10,7 +10,10 @@ import { checkForUpdate, useUpdate } from '../pwa';
 import { gateQuestion, gateSolved, newGate, type Gate } from '../engine/gate';
 import { rowPct, tablesDone } from '../engine/mastery';
 import { hardList, totalSessions, weekMinutes } from '../engine/stats';
-import { BackupError, FutureVersionError, makeBackup, MAX_PROFILES, readBackup, type AppData, type BossTime, type Profile } from '../store';
+import {
+  BackupError, forgetTransfer, formatCode, FutureVersionError, lastBackupText, makeBackup, MAX_PROFILES, readBackup, receiveTransfer, sendTransfer, TransferError,
+  type AppData, type BossTime, type Profile,
+} from '../store';
 
 const DEFAULT_MSG = 'Cette étape évite que les enfants entrent ici par hasard.';
 const WRONG_MSG = "Ce n'est pas le bon résultat. Voici une nouvelle opération.";
@@ -118,15 +121,34 @@ async function saveFile(name: string, text: string): Promise<boolean> {
   return true;
 }
 
+// Le transfert passe par la fonction Netlify : absent de la version fichier (multiles.html ouvert en local).
+const CAN_TRANSFER = location.protocol.startsWith('http');
+
+const readError = (e: unknown, fallback: string) =>
+  e instanceof BackupError || e instanceof TransferError ? e.message
+    : e instanceof FutureVersionError ? "Cette sauvegarde vient d'une version plus récente de Multîles. Mettez l'application à jour, puis réessayez."
+    : fallback;
+
 function BackupCard() {
-  const { store, selectPlayer, toast } = useApp();
+  const { data, store, selectPlayer, toast, today } = useApp();
   const fileRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<AppData | null>(null);
   const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState<string | null>(null);
+  const [entering, setEntering] = useState(false);
+  const [code, setCode] = useState('');
+  /** Code dont la progression attend confirmation : effacé du serveur une fois restaurée. */
+  const [received, setReceived] = useState<string | null>(null);
+  const codeRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (entering) codeRef.current?.focus(); }, [entering]);
 
   const save = async () => {
     const { name, text } = makeBackup(store.get());
-    if (await saveFile(name, text)) toast('Sauvegarde enregistrée.');
+    if (await saveFile(name, text)) {
+      await store.update((d) => ({ ...d, lastBackup: today }));
+      toast('Sauvegarde enregistrée.');
+    }
   };
   const pick = async (input: HTMLInputElement) => {
     const f = input.files?.[0];
@@ -135,20 +157,50 @@ function BackupCard() {
     setMsg('');
     try {
       setPending(readBackup(await f.text()));
+      setReceived(null);
     } catch (e) {
-      setMsg(
-        e instanceof BackupError ? e.message
-          : e instanceof FutureVersionError ? "Cette sauvegarde vient d'une version plus récente de Multîles. Mettez l'application à jour, puis réessayez."
-          : 'Ce fichier ne peut pas être lu.',
-      );
+      setMsg(readError(e, 'Ce fichier ne peut pas être lu.'));
+    }
+  };
+  const send = async () => {
+    setMsg('');
+    setEntering(false);
+    setBusy(true);
+    // Un seul code à la fois : l'ancien ne doit pas laisser une copie en ligne.
+    if (sent) void forgetTransfer(sent);
+    setSent(null);
+    try {
+      setSent(await sendTransfer(makeBackup(store.get()).text));
+    } catch (e) {
+      setMsg(readError(e, 'Le transfert a échoué.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const receive = async () => {
+    setMsg('');
+    setBusy(true);
+    try {
+      setPending(await receiveTransfer(code));
+      setReceived(code);
+      setEntering(false);
+      setCode('');
+    } catch (e) {
+      setMsg(readError(e, 'Le transfert a échoué.'));
+    } finally {
+      setBusy(false);
     }
   };
   const restore = async () => {
     if (!pending) return;
-    const next = { ...pending, persistAsked: store.get().persistAsked };
+    // Réglages propres à l'appareil : conservés.
+    const { persistAsked, lastBackup } = store.get();
+    const next = { ...pending, persistAsked, lastBackup };
     selectPlayer(null);
     await store.update(() => next);
     setPending(null);
+    if (received) void forgetTransfer(received);
+    setReceived(null);
     toast((await store.flush()) ? 'Progression restaurée.' : "La progression est restaurée, mais n'a pas pu être enregistrée sur l'appareil.");
   };
   const names = pending?.profiles.map((k) => k.name).join(', ') || 'aucun profil';
@@ -156,12 +208,47 @@ function BackupCard() {
   return (
     <div class="pcard2">
       <h2>Sauvegarde</h2>
-      <p style={{ fontSize: '15px', color: 'var(--ink-2)' }}>La progression est enregistrée uniquement sur cet appareil. Gardez-en une copie dans un fichier pour la retrouver dans un autre navigateur ou sur un autre téléphone.</p>
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      <p style={{ fontSize: '15px', color: 'var(--ink-2)' }}>
+        La progression est enregistrée uniquement sur cet appareil.{' '}
+        {CAN_TRANSFER ? 'Pour changer de téléphone, transférez-la avec un code. Gardez aussi une copie dans un fichier, par précaution.' : 'Gardez-en une copie dans un fichier pour la retrouver dans un autre navigateur ou sur un autre téléphone.'}
+      </p>
+      <p class="bk-last">{lastBackupText(data.lastBackup, today)}</p>
+      <div class="bk-acts">
         <button class="btn-sm" onClick={() => void save()}>Sauvegarder la progression</button>
         <button class="btn-sm" onClick={() => fileRef.current?.click()}>Restaurer une sauvegarde</button>
       </div>
-      <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={(e) => void pick(e.currentTarget)} />
+      {/* Pas de filtre « accept » : iOS grise parfois les .json enregistrés depuis un autre navigateur. */}
+      <input ref={fileRef} type="file" hidden onChange={(e) => void pick(e.currentTarget)} />
+      {CAN_TRANSFER && (
+        <div class="bk-acts">
+          <button class="btn-sm" disabled={busy} onClick={() => void send()}>Transférer vers un autre téléphone</button>
+          <button class="btn-sm" disabled={busy} aria-expanded={entering} aria-controls="xfer-form" onClick={() => { setEntering(!entering); setMsg(''); }}>J'ai un code de transfert</button>
+        </div>
+      )}
+      {CAN_TRANSFER && <p class="bk-last">Le transfert fait passer la progression (prénoms compris) par notre serveur. Elle y est effacée dès qu'elle est restaurée, et au plus tard après 24 heures.</p>}
+      {sent && (
+        <div class="xfer">
+          <span>Code de transfert</span>
+          <b class="xfer-code">{formatCode(sent)}</b>
+          <span>Sur le nouveau téléphone, ouvrez Multîles, puis l'espace parent, et touchez « J'ai un code de transfert ». Le code est valable 24 heures.</span>
+        </div>
+      )}
+      {entering && (
+        <form id="xfer-form" class="xfer-in" onSubmit={(e) => { e.preventDefault(); void receive(); }}>
+          <label for="xfer-code">Code affiché sur l'ancien téléphone</label>
+          <span class="row">
+            <input
+              ref={codeRef} id="xfer-code" class="rename" value={code} maxLength={16} placeholder="K7F-29Q"
+              autocomplete="off" autocapitalize="characters" spellcheck={false} enterKeyHint="go"
+              onInput={(e) => setCode(e.currentTarget.value)}
+            />
+            <button class="btn-sm" type="submit" disabled={busy || !code.trim()}>Récupérer</button>
+          </span>
+        </form>
+      )}
+      {busy && <p class="bk-last" aria-hidden="true">Connexion au service de transfert…</p>}
+      {/* Zone d'annonce invisible et toujours présente : les lecteurs d'écran lisent ce qui y apparaît. */}
+      <p class="bk-live" role="status">{busy ? 'Connexion au service de transfert…' : sent ? `Code de transfert : ${formatCode(sent)}` : ''}</p>
       {msg && <p role="alert" style={{ fontSize: '15px', color: '#A3261E' }}>{msg}</p>}
       {pending && (
         <div class="confirm" role="alertdialog" aria-label="Confirmer la restauration">

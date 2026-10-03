@@ -15,6 +15,8 @@ type Raw = Record<string, unknown>;
 export const MIGRATIONS: Record<number, (d: Raw) => Raw> = {
   // Version 0 : données sans numéro de version (aucune n'a été publiée), simple marquage.
   0: (d) => ({ ...d, version: 1 }),
+  // Version 2 : ajout de lastBackup (null par défaut, posé par la normalisation).
+  1: (d) => d,
 };
 
 export class FutureVersionError extends Error {
@@ -145,5 +147,6 @@ export function migrate(raw: unknown): AppData {
     profiles: (Array.isArray(d.profiles) ? d.profiles : []).filter(isObj).map(normalizeProfile).slice(0, 4),
     settings: { sound: s.sound !== false, bossTime },
     persistAsked: d.persistAsked === true,
+    lastBackup: day(d.lastBackup),
   };
 }

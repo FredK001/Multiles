@@ -14,6 +14,7 @@
     "build:fichier": "vite build -c vite.fichier.config.ts && mv dist-fichier/index.html multiles.html && rm -rf dist-fichier"
   },
   "dependencies": {
+    "@netlify/blobs": "^11.1.3",
     "idb-keyval": "^6.3.0",
     "preact": "^11.0.0"
   },
