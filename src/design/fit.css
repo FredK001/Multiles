@@ -1,0 +1,104 @@
+/* Adaptation aux petits écrans — écart volontaire au prototype (conçu pour 390 × 844).
+   Sur un téléphone moins haut (iPhone SE, petits Android, barre du navigateur visible),
+   les boutons du bas (Jouer, Valider…) sortaient de l'écran. Les règles ci-dessous
+   compactent les écrans, et les zones centrales défilent en dernier recours. */
+
+/* ===== Filet de sécurité : rien n'est jamais coupé, on peut faire défiler ===== */
+.home-body,.q-sheet,.end-body,.pane,.isd-body{overflow-y:auto;overscroll-behavior:contain}
+.screen[data-screen="who"]{overflow-y:auto}
+/* Le bouton Jouer reste toujours visible au bas de la zone qui défile. */
+/* Le halo de la couleur du fond masque les cartes qui défilent derrière. */
+.home-body .btn-play,.isd-body .btn-isle{position:sticky;bottom:0;z-index:1}
+.home-body .btn-play{box-shadow:0 7px 0 var(--ink),0 16px 0 16px var(--lagon)}
+.home-body .btn-play:active{box-shadow:0 1px 0 var(--ink),0 16px 0 16px var(--lagon)}
+.isd-body .btn-isle{box-shadow:0 6px 0 var(--ink),0 16px 0 16px var(--ile-clair)}
+.isd-body .btn-isle:active{box-shadow:0 1px 0 var(--ink),0 16px 0 16px var(--ile-clair)}
+
+/* ===== Hauteur réduite (≤ 760 px) ===== */
+@media (max-height:760px){
+  /* Accueil */
+  .home-band{padding-bottom:12px}
+  .home-hello{margin-top:10px;min-height:56px;padding:8px 12px}
+  .home-scene{height:112px;margin-top:4px}
+  .home-ground{height:26px}
+  .home-disc{width:100px;height:100px;margin-bottom:8px}
+  .home-disc svg{width:96px;height:auto}
+  .home-pep svg{width:92px;height:auto}
+  .home-stats{margin-top:8px}
+  .home-body{gap:10px;padding:10px 16px}
+  .hcard{min-height:0;padding:10px 12px}
+  .btn-play{height:68px}
+  .btn-play b{font-size:28px}
+
+  /* Question */
+  .q-band{height:calc(150px + env(safe-area-inset-top,0px))}
+  .q-progress{margin-top:10px}
+  .q-sheet{gap:10px;padding-top:10px}
+  .q-sheet .buddy{min-height:76px;grid-template-columns:70px 1fr}
+  .q-sheet .buddy .m{width:70px;height:74px}
+  .q-sheet .buddy .m svg{width:70px;height:auto}
+  .q-sheet .bubble{min-height:60px;padding:8px 8px 8px 12px}
+  .q-card{min-height:96px}
+  .key{height:56px}
+  .choice{height:92px}
+  .vf .choice{height:104px}
+
+  /* Détail d'une île */
+  .isd-hero svg.art{width:160px;height:116px}
+  .isd-hero h1{font-size:28px}
+  .isd-body{gap:10px;padding-top:12px}
+  .stp{min-height:108px}
+  .boss{min-height:100px}
+  .btn-isle{height:64px}
+
+  /* Fin de session */
+  .end-band{padding-top:calc(16px + env(safe-area-inset-top,0px))}
+  .end-body{gap:10px}
+}
+
+/* ===== Très petite hauteur (≤ 620 px) ===== */
+@media (max-height:620px){
+  .home-scene{height:96px}
+  .home-disc{width:88px;height:88px}
+  .home-disc svg{width:84px}
+  .home-pep svg{width:80px}
+
+  .isd-hero svg.art{width:120px;height:87px}
+  .stp{min-height:96px}
+  .boss{grid-template-columns:72px 1fr auto;min-height:84px}
+  .boss svg{max-width:72px;height:auto}
+
+  .shop-stage{height:140px}
+  .shop-stage .disc{width:100px;height:100px;margin-bottom:20px}
+  .shop-stage .disc svg,.shop-stage .pp svg{width:auto;max-height:96px}
+
+  .q-band{height:calc(128px + env(safe-area-inset-top,0px))}
+  .q-progress{margin-top:8px}
+  .q-sheet .buddy{min-height:64px;grid-template-columns:58px 1fr}
+  .q-sheet .buddy .m{width:58px;height:62px}
+  .q-sheet .buddy .m svg{width:58px}
+  .q-sheet .bubble{min-height:52px}
+  .q-sheet .bubble .t{font-size:16px}
+  .q-card{min-height:80px}
+  .expr{font-size:min(var(--fs,62px),52px)}
+  .key{height:50px;font-size:30px}
+  .pad{gap:8px}
+  .choice{height:80px}
+  .vf .choice{height:88px}
+}
+
+/* ===== Écran étroit (< 360 px de large) ===== */
+@media (max-width:389px){
+  .topbar{gap:8px}
+  .topbar .ttl{font-size:20px}
+  .topbar.tri{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
+  .topbar.tri > :last-child{justify-self:end}
+}
+
+/* ===== Téléphone en paysage dans le navigateur (l'app installée reste en portrait) ===== */
+@media (max-height:480px) and (orientation:landscape){
+  .screen{overflow-y:auto}
+  .screen > *{flex:0 0 auto}
+  .home-body,.q-sheet,.end-body,.pane,.isd-body,.grid-scroll,.shop-grid,.par-body,.ed-grid{overflow:visible}
+  .tabbar,.map-foot{position:sticky;bottom:0;z-index:10}
+}

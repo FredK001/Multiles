@@ -3,6 +3,7 @@ export type ChimeKind = 'ok' | 'combo' | 'help';
 
 let ctx: AudioContext | null = null;
 let enabled = true;
+let lastTap: OscillatorNode | null = null;
 
 export function setSoundEnabled(on: boolean): void {
   enabled = on;
@@ -26,9 +27,34 @@ export function unlockAudio(): void {
   }
 }
 
+/** « Pop » discret joué à chaque appui sur un bouton. */
+export function tap(): void {
+  if (!enabled) return;
+  try {
+    const AC = audioContext();
+    if (!AC || AC.state !== 'running') return;
+    const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime;
+    o.type = 'sine';
+    o.frequency.setValueAtTime(880, t);
+    o.frequency.exponentialRampToValueAtTime(440, t + 0.05);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.09, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    o.connect(g).connect(AC.destination);
+    o.start(t);
+    o.stop(t + 0.09);
+    lastTap = o;
+  } catch {
+    /* ignoré */
+  }
+}
+
 export function chime(kind: ChimeKind): void {
   if (!enabled) return;
   try {
+    // Le carillon d'une bonne réponse part du même appui : on coupe le clic pour qu'il reste net.
+    lastTap?.stop();
+    lastTap = null;
     const AC = audioContext();
     if (!AC) return;
     const notes = kind === 'ok' ? [784, 1047] : kind === 'combo' ? [784, 988, 1319] : [392, 440];
