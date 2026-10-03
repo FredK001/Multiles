@@ -1,4 +1,4 @@
-import type { IsleId } from '../content/isles';
+import type { Op, SeriesId } from '../content/series';
 import type { EndSummary } from '../engine/rewards';
 import type { SessionConfig } from '../engine/session';
 
@@ -8,9 +8,11 @@ export type Route =
   | { name: 'create' }
   | { name: 'editor'; ret: Route }
   | { name: 'home' }
-  | { name: 'map' }
-  | { name: 'isle'; n: IsleId }
-  | { name: 'discover'; n: IsleId; m: number }
+  /** Choix de l'opération (CP), avant de jouer ou d'ouvrir la carte. */
+  | { name: 'ops'; then: 'play' | 'map' }
+  | { name: 'map'; op: Op }
+  | { name: 'isle'; s: SeriesId }
+  | { name: 'discover'; s: SeriesId; m: number }
   | { name: 'question'; cfg: SessionConfig; back: Route; nonce?: number }
   | { name: 'end'; end: EndSummary; cfg: SessionConfig; back: Route }
   | { name: 'grid' }

@@ -4,14 +4,21 @@ import { useIsleTheme } from '../app/theme';
 import { useApp, useBack, usePlayer } from '../app/context';
 import { stepCfg } from '../app/sessions';
 import { BackChip, BtnSay } from '../app/ui';
-import { ISLES, type IsleId } from '../content/isles';
-import { isleOf } from '../engine/unlock';
+import { ISLES } from '../content/isles';
+import { SERIES, type SeriesId } from '../content/series';
+import { DiscoverCP } from './DiscoverCP';
+import { opProg } from '../engine/progress';
+import { isleOf, tableNum } from '../engine/unlock';
 
-export function Discover({ n, m }: { n: IsleId; m: number }) {
+export function Discover({ s, m }: { s: SeriesId; m: number }) {
+  return SERIES[s].op === 'mul' ? <DiscoverTable s={s} m={m} /> : <DiscoverCP s={s} m={m} />;
+}
+
+function DiscoverTable({ s, m }: { s: SeriesId; m: number }) {
   const p = usePlayer();
   const { go } = useApp();
-  const I = ISLES[n];
-  const back = () => go({ name: 'isle', n });
+  const n = tableNum(s), I = ISLES[n];
+  const back = () => go({ name: 'isle', s });
   useBack(back);
   useIsleTheme(I.fort, I.clair);
 
@@ -51,7 +58,7 @@ export function Discover({ n, m }: { n: IsleId; m: number }) {
               aria-pressed={k === m}
               aria-label={`${n} fois ${k}`}
               onClick={() => {
-                go({ name: 'discover', n, m: k });
+                go({ name: 'discover', s, m: k });
                 chime('ok');
               }}
             >
@@ -63,8 +70,8 @@ export function Discover({ n, m }: { n: IsleId; m: number }) {
           class="btn-isle"
           style={{ marginTop: 0 }}
           onClick={() => {
-            const i = Math.min(isleOf(p.isl, n).steps, 2);
-            go({ name: 'question', cfg: stepCfg(n, i), back: { name: 'isle', n } });
+            const i = Math.min(isleOf(opProg(p, 'mul').series, s).steps, 2);
+            go({ name: 'question', cfg: stepCfg(s, i), back: { name: 'isle', s } });
           }}
         >
           Je m'entraîne

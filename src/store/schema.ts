@@ -1,15 +1,15 @@
 /* Modèle de données persistant de Multîles. Toute modification de forme impose
    d'incrémenter SCHEMA_VERSION et d'ajouter une migration (src/store/migrations.ts). */
 import type { AvatarLook } from '../content/avatar';
-import type { IsleId } from '../content/isles';
 import type { PepinVariant } from '../content/pepins';
+import type { Grade, Op, SeriesId } from '../content/series';
 import type { PepWear } from '../art/mascot';
 import type { DayKey } from '../engine/dates';
-import type { MulKey } from '../engine/keys';
+import type { FactKey } from '../engine/keys';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
-/** Progression sur une île. Le prototype stockait [étapes, trophée, total] ; on garde les étoiles par étape. */
+/** Progression sur une île (une série). Le prototype stockait [étapes, trophée, total] ; on garde les étoiles par étape. */
 export interface IsleProgress {
   /** Nombre d'étapes réussies (0 à 3). */
   steps: number;
@@ -18,11 +18,16 @@ export interface IsleProgress {
   stepStars: [number, number, number];
 }
 
-export interface DayStats {
+export interface PlayTime {
   /** Temps de jeu actif (ms), onglet visible uniquement. */
   ms: number;
   /** Sessions terminées ce jour-là. */
   sessions: number;
+}
+
+export interface DayStats extends PlayTime {
+  /** Détail par opération (statistiques de l'espace parent). */
+  ops: Partial<Record<Op, PlayTime>>;
 }
 
 export interface Streak {
@@ -45,6 +50,26 @@ export type StreakEvent =
   | { kind: 'buoy'; streak: number; buoysLeft: number; missed: number }
   | { kind: 'reset'; best: number };
 
+/** Progression, statistiques et récompenses d'une opération : rien n'est partagé entre ×, + et −. */
+export interface OpProgress {
+  /** Série en cours : dernière jouée en étape ou gardien (bouton Jouer, épingle de la carte). */
+  current: SeriesId;
+  series: Partial<Record<SeriesId, IsleProgress>>;
+  /** Calculs maîtrisés, dans l'ordre où ils ont été réussis (colore la grille). */
+  mastered: FactKey[];
+  traps: FactKey[];
+  /** Dates des erreurs par calcul (clé canonique « 7x8 », « 3+4 », « 9-2 »). */
+  trapLog: Record<string, DayKey[]>;
+  /** Record du défi chrono par série. */
+  records: Partial<Record<SeriesId, number>>;
+  /** Stickers gagnés : « mul-7-lieu », « add-10-gardien »… */
+  stickers: string[];
+  /** Dernier jour où le défi du jour a été réussi. */
+  defiDay: DayKey | null;
+  /** Série du défi tirée pour la journée (ne change pas si une île s'ouvre entre-temps). */
+  defiPick: { day: DayKey; series: SeriesId } | null;
+}
+
 export interface Profile {
   id: string;
   name: string;
@@ -58,30 +83,22 @@ export interface Profile {
   house: string[];
   /** Objets achetés en boutique. */
   owned: string[];
-  stars: number;
+  /* Communs à toutes les opérations : pièces, niveau du Pépin, série de jours. */
   coins: number;
   level: number;
   xp: number;
   streak: Streak;
-  /** Île en cours : dernière île jouée en étape ou gardien. */
-  isle: IsleId;
-  isl: Partial<Record<IsleId, IsleProgress>>;
-  /** Multiplications maîtrisées, dans l'ordre où elles ont été réussies (colore la grille). */
-  mastered: MulKey[];
-  traps: MulKey[];
-  /** Dates des erreurs par multiplication (clé canonique « 7x8 »). */
-  trapLog: Record<string, DayKey[]>;
-  /** Record du défi chrono par table. */
-  records: Partial<Record<IsleId, number>>;
-  stickers: string[];
+  /** Classe : détermine les opérations proposées (CURRICULUM). */
+  grade: Grade;
+  /** Opération en cours (dernier choix au CP), toujours une opération de la classe. */
+  op: Op;
+  prog: Partial<Record<Op, OpProgress>>;
   /** Stickers déjà vus dans l'album (les autres portent « Nouveau »). */
   seen: string[];
+  /** Lecture automatique des consignes et des calculs. */
+  autoSpeech: boolean;
   /** Historique de jeu par jour. */
   days: Record<string, DayStats>;
-  /** Dernier jour où le défi du jour a été réussi. */
-  defiDay: DayKey | null;
-  /** Table du défi tirée pour la journée (ne change pas si une île s'ouvre entre-temps). */
-  defiPick: { day: DayKey; table: IsleId } | null;
   /** Annonce de série en attente (bouée utilisée ou série remise à zéro). */
   pendingStreak: StreakEvent | null;
   createdAt: number;

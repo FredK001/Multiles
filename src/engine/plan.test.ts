@@ -74,7 +74,9 @@ describe('Répétition intelligente', () => {
   });
   it('erreurs récentes : fenêtre de 14 jours', () => {
     const log = { '7x8': ['2026-09-18', '2026-09-19', '2026-10-02'] as DayKey[] };
-    expect(recentErrors(log, 8, 7, TODAY)).toBe(2);
+    expect(recentErrors(log, '8x7', TODAY)).toBe(2);
+    expect(recentErrors({ '9-2': [TODAY] }, '2-9', TODAY)).toBe(0);
+    expect(recentErrors({ '3+4': [TODAY] }, '4+3', TODAY)).toBe(1);
   });
   it('jamais de piège en question 1, ni deux pièges à la suite quand c\'est possible', () => {
     for (let seed = 0; seed < 100; seed++) {

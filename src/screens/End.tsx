@@ -6,8 +6,9 @@ import { useIsleTheme } from '../app/theme';
 import { useApp, useBack, usePlayer } from '../app/context';
 import { confetti } from '../app/effects';
 import type { Route } from '../app/routes';
-import { Overlay, reducedMotion, Svg } from '../app/ui';
-import { BOSS, ISLES, ofIsle } from '../content/isles';
+import { Overlay, reducedMotion, Svg, useAutoSay } from '../app/ui';
+import { lookOf } from '../content/isles';
+import { OP_SINGULAR, SERIES } from '../content/series';
 import { VARIANTS } from '../content/pepins';
 import { stickerName } from '../content/stickers';
 import { nb } from '../content/text';
@@ -16,6 +17,9 @@ import { stageFor } from '../engine/level';
 import { pick } from '../engine/random';
 import type { EndSummary } from '../engine/rewards';
 import type { SessionConfig } from '../engine/session';
+import { opProg } from '../engine/progress';
+import { timedRules } from '../engine/session';
+import { tableNum } from '../engine/unlock';
 import { MiniGrid } from './MiniGrid';
 
 type Pop = 'chest' | 'record' | 'trophy' | 'evolve' | 'level' | { sticker: string };
@@ -39,7 +43,10 @@ function CountUp({ to }: { to: number }) {
 export function End({ end: E, cfg, back }: { end: EndSummary; cfg: SessionConfig; back: Route }) {
   const p = usePlayer();
   const { go } = useApp();
-  const I = ISLES[E.isle];
+  const def = SERIES[E.series], mul = def.op === 'mul', I = lookOf(E.series);
+  const minutes = timedRules(def.op).seconds / 60;
+  /** « table de 7 », « additions jusqu'à 10 ». */
+  const what = mul ? `table de ${tableNum(E.series)}` : `${OP_SINGULAR[def.op].toLowerCase()}s ${def.title.toLowerCase()}`;
   const starsRef = useRef<HTMLDivElement>(null);
   const [xpW, setXpW] = useState(E.levelUp ? 0 : Math.round(E.xp0 * 100));
   const [title] = useState(() => {
@@ -51,7 +58,7 @@ export function End({ end: E, cfg, back }: { end: EndSummary; cfg: SessionConfig
   const stage = stageFor(p.level);
 
   useIsleTheme(I.fort, I.clair);
-  const next = () => (E.mode === 'defi' ? go({ name: 'home' }) : go({ name: 'isle', n: E.isle }));
+  const next = () => (E.mode === 'defi' ? go({ name: 'home' }) : go({ name: 'isle', s: E.series }));
   useBack(next);
 
   useEffect(() => {
@@ -73,17 +80,18 @@ export function End({ end: E, cfg, back }: { end: EndSummary; cfg: SessionConfig
   useEffect(() => { if (pops?.length) chime('combo'); }, [pops]);
 
   const sub = E.mode === 'chrono'
-    ? `Défi chrono, table de ${E.isle}`
+    ? `Défi chrono, ${what}`
     : E.mode === 'defi'
       ? (E.success ? 'Le coffre est à toi !' : `${E.score} sur ${E.target}. Tu peux réessayer aujourd'hui.`)
       : E.timedOut && !E.trophy
-        ? `Le temps est écoulé. ${BOSS[E.isle]} t'attend pour une revanche !`
+        ? `Le temps est écoulé. ${I.boss} t'attend pour une revanche !`
         : E.trophy
-          ? `Tu as battu ${BOSS[E.isle]} !`
+          ? `Tu as battu ${I.boss} !`
           : E.label === 'Gardien'
-            ? `Défi du gardien terminé, île ${ofIsle(E.isle)}`
-            : `${E.mode === 'traps' ? 'Session pièges' : E.label} terminée, île ${ofIsle(E.isle)}`;
+            ? `Défi du gardien terminé, île ${I.of}`
+            : `${E.mode === 'traps' ? 'Session pièges' : E.label} terminée, île ${I.of}`;
 
+  useAutoSay(`${title} ${sub}`, E);
   const timed = E.mode === 'chrono' || E.mode === 'defi';
   const nf = E.fresh.length;
 
@@ -91,11 +99,11 @@ export function End({ end: E, cfg, back }: { end: EndSummary; cfg: SessionConfig
   const cur = pops?.[0];
   if (cur) {
     let art, t = '', d = '';
-    if (cur === 'trophy') { art = <div style={{ transform: 'scale(1.1)' }}><Svg html={trophyIcon(130)} /></div>; t = 'Trophée gagné !'; d = `L'île ${ofIsle(E.isle)} est conquise.`; }
+    if (cur === 'trophy') { art = <div style={{ transform: 'scale(1.1)' }}><Svg html={trophyIcon(130)} /></div>; t = 'Trophée gagné !'; d = `L'île ${I.of} est conquise.`; }
     else if (cur === 'level') { art = <Svg html={mascot({ variant: p.pepin, stage, wear: p.pw, mood: 'joie', size: 150 })} />; t = `Niveau ${p.level} !`; d = `${VARIANTS[p.pepin].name} prend des forces.`; }
     else if (cur === 'evolve') { art = <Svg html={mascot({ variant: p.pepin, stage, wear: p.pw, mood: 'joie', size: 160 })} />; t = 'Ton Pépin grandit !'; d = 'Regarde sa nouvelle pousse.'; }
     else if (cur === 'chest') { art = <div style={{ transform: 'scale(3.2)', margin: '40px 0 34px' }}><Svg html={icoChest(true)} /></div>; t = 'Coffre ouvert !'; d = `+${E.bonus} pièces bonus pour le défi du jour.`; }
-    else if (cur === 'record') { art = <Svg html={trophyIcon(120)} />; t = 'Nouveau record !'; d = `${E.score} bonnes réponses en 1 minute. Ton ancien record : ${E.rec}.`; }
+    else if (cur === 'record') { art = <Svg html={trophyIcon(120)} />; t = 'Nouveau record !'; d = `${E.score} bonnes réponses en ${minutes} minute${minutes > 1 ? 's' : ''}. Ton ancien record : ${E.rec}.`; }
     else { art = <div class="sticker"><Svg html={stickerArt(cur.sticker, p, 164)} /></div>; t = 'Nouveau sticker !'; d = `« ${stickerName(cur.sticker)} » rejoint ton album.`; }
     popup = (
       <Overlay onClose={() => setPops(pops!.slice(1))}>
@@ -130,7 +138,7 @@ export function End({ end: E, cfg, back }: { end: EndSummary; cfg: SessionConfig
         <div class="end-stats">
           {timed ? (
             <>
-              <div class="es"><b><CountUp to={E.score ?? 0} /></b><small>{E.mode === 'defi' ? `sur ${E.target} demandées` : 'bonnes réponses en 1 min'}</small></div>
+              <div class="es"><b><CountUp to={E.score ?? 0} /></b><small>{E.mode === 'defi' ? `sur ${E.target} demandées` : `bonnes réponses en ${minutes} min`}</small></div>
               <div class="es coin"><b>+<span><CountUp to={E.coinsGain} /></span><Svg html={coinIcon(24)} /></b><small>pièces{E.bonus ? ` dont ${E.bonus} de bonus` : ''}</small></div>
               {E.mode === 'chrono'
                 ? <div class="es"><b>{E.newRec ? <Svg html={trophyIcon(30)} /> : E.rec}</b><small>{E.newRec ? 'nouveau record' : 'ton record'}</small></div>
@@ -145,10 +153,10 @@ export function End({ end: E, cfg, back }: { end: EndSummary; cfg: SessionConfig
           )}
         </div>
         <button class="end-grid" onClick={() => go({ name: 'grid' })}>
-          <MiniGrid mastered={p.mastered} fresh={E.fresh} />
+          {mul && <MiniGrid mastered={opProg(p, 'mul').mastered} fresh={E.fresh} />}
           <span>
-            <b>{nf ? `+${nf} case${nf > 1 ? 's' : ''}` : 'Ta grille'}</b>
-            <small>{nf ? 'dans ta grille de Pythagore' : 'Rejoue pour la colorier'}</small>
+            <b>{nf ? `+${nf} ${mul ? 'case' : 'calcul'}${nf > 1 ? 's' : ''}` : 'Ta grille'}</b>
+            <small>{nf ? (mul ? 'dans ta grille de Pythagore' : 'réussis du premier coup') : 'Rejoue pour la colorier'}</small>
             <span class="xp"><span>Niv. {p.level}</span><span class="bar"><i style={{ width: `${xpW}%` }}></i></span></span>
           </span>
         </button>

@@ -6,26 +6,37 @@ import { useProfileTheme } from '../app/theme';
 import { useApp, usePlayer } from '../app/context';
 import { defiCfg, playCurrentCfg } from '../app/sessions';
 import { BtnSay, Overlay, Svg, TabBar } from '../app/ui';
-import { ISLES, ISLE_IDS, ofIsle } from '../content/isles';
+import { lookOf } from '../content/isles';
+import { OP_SIGN, OP_WORD, SERIES, seriesOf } from '../content/series';
 import { DAYS, HELLO, PEP_LINES } from '../content/messages';
 import { nb } from '../content/text';
-import { dailyTable, defiDone } from '../engine/daily';
+import { dailySeries, defiDone } from '../engine/daily';
 import { stageFor } from '../engine/level';
 import { pick } from '../engine/random';
 import { weekView } from '../engine/streak';
-import { currentStep, isleOf, openIsles, trophies } from '../engine/unlock';
+import { opProg, opsOf } from '../engine/progress';
+import { timedRules } from '../engine/session';
+import { currentStep, isleOf, openSeries, tableNum, totalStars, trophies } from '../engine/unlock';
 
 export function Home() {
   const p = usePlayer();
   const { go, toast, today, updatePlayer } = useApp();
-  const step = currentStep(isleOf(p.isl, p.isle));
+  // Opération en cours (la seule au CM1, la dernière choisie au CP) ; plusieurs opérations → passage par le choix.
+  const ops = opsOf(p), several = ops.length > 1;
+  const o = opProg(p), look = lookOf(o.current);
+  const step = currentStep(isleOf(o.series, o.current));
   const streak = p.streak.current;
-  const hello = useMemo(() => nb(pick(HELLO({ name: p.name, streak, isle: p.isle, step }))), [p.id]);
+  const hello = useMemo(() => nb(pick(HELLO({ name: p.name, streak, of: look.of, step }))), [p.id]);
+  const isles = ops.flatMap((op) => seriesOf(op).map((s) => ({ s: s.id, won: !!opProg(p, op).series[s.id]?.trophy })));
+  const stars = ops.reduce((t, op) => t + totalStars(opProg(p, op).series), 0);
+  const won = ops.reduce((t, op) => t + trophies(opProg(p, op).series, op), 0);
   const [pepLine, setPepLine] = useState<string | null>(null);
   const [popup, setPopup] = useState<typeof p.pendingStreak>(null);
   const stage = stageFor(p.level);
-  const defiTable = p.defiPick?.day === today ? p.defiPick.table : dailyTable(today, openIsles(p.isl));
-  const done = defiDone(p.defiDay, today);
+  const defiSeries = o.defiPick?.day === today ? o.defiPick.series : dailySeries(today, openSeries(o.series, p.op));
+  const rules = timedRules(p.op), minutes = rules.seconds / 60;
+  const defiWhat = p.op === 'mul' ? `Table de ${tableNum(defiSeries)}` : `${OP_WORD[p.op]}, ${SERIES[defiSeries].title.toLowerCase()}`;
+  const done = defiDone(o.defiDay, today);
 
   useProfileTheme(p.color);
 
@@ -99,7 +110,7 @@ export function Home() {
           </div>
         </div>
         <div class="home-stats">
-          <span class="stat"><Svg html={starIcon(28)} />{p.stars}<span class="sr"> étoiles</span></span>
+          <span class="stat"><Svg html={starIcon(28)} />{stars}<span class="sr"> étoiles</span></span>
           <button class="stat coin" aria-label="Pièces, ouvrir la boutique" onClick={() => go({ name: 'shop' })}>
             <Svg html={coinIcon(28)} />{p.coins}
           </button>
@@ -107,11 +118,11 @@ export function Home() {
         </div>
       </div>
       <div class="home-body">
-        <button class="isles-strip" onClick={() => go({ name: 'map' })}>
-          <span><b>Mes îles</b><small>{trophies(p.isl)} sur 10 conquises</small></span>
+        <button class="isles-strip" onClick={() => go(several ? { name: 'ops', then: 'map' } : { name: 'map', op: p.op })}>
+          <span><b>Mes îles</b><small>{won} sur {isles.length} conquises</small></span>
           <span class="dots10">
-            {ISLE_IDS.map((n) => (
-              <i key={n} style={p.isl[n]?.trophy ? { background: ISLES[n].fort } : n === p.isle ? { background: 'var(--miel)' } : undefined}></i>
+            {isles.map(({ s, won: w }) => (
+              <i key={s} style={w ? { background: lookOf(s).fort } : s === o.current ? { background: 'var(--miel)' } : undefined}></i>
             ))}
           </span>
         </button>
@@ -140,15 +151,15 @@ export function Home() {
                 toast("Bravo, défi déjà réussi aujourd'hui !");
                 return;
               }
-              go({ name: 'question', cfg: defiCfg(defiTable), back: { name: 'home' } });
+              go({ name: 'question', cfg: defiCfg(defiSeries), back: { name: 'home' } });
             }}
           >
             <span class="h"><Svg html={icoChest(done)} /><b>Défi du jour</b></span>
-            <small>{done ? nb("Réussi ! Un nouveau défi t'attend demain.") : nb(`Table de ${defiTable} : 8 réponses en 1 minute.`)}</small>
+            <small>{done ? nb("Réussi ! Un nouveau défi t'attend demain.") : nb(`${defiWhat} : ${rules.target} réponses en ${minutes} minute${minutes > 1 ? 's' : ''}.`)}</small>
           </button>
         </div>
-        <button class="btn-play" onClick={() => go({ name: 'question', cfg: playCurrentCfg(p), back: { name: 'home' } })}>
-          <b>Jouer</b><small>{`Île ${ofIsle(p.isle)}, étape ${step}`}</small>
+        <button class="btn-play" onClick={() => go(several ? { name: 'ops', then: 'play' } : { name: 'question', cfg: playCurrentCfg(p), back: { name: 'home' } })}>
+          <b>Jouer</b><small>{several ? nb(`${ops.map((x) => OP_SIGN[x]).join(' ou ')} ?`) : `Île ${look.of}, étape ${step}`}</small>
         </button>
       </div>
       {pop}

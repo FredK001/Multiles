@@ -3,19 +3,24 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { avatar, icoClose, icoErase } from '../art';
 import { useApp, useBack } from '../app/context';
 import { Svg } from '../app/ui';
-import { ISLES, ISLE_IDS } from '../content/isles';
-import { cleanName } from '../engine/profile';
+import { ISLES, type IsleId } from '../content/isles';
+import { CP_ZONE, GRADES, OP_NAME, OP_SIGN, seriesOf, type Op, type SeriesDef } from '../content/series';
+import { cleanName, setGrade } from '../engine/profile';
 import { checkStreak } from '../engine/streak';
 import { checkForUpdate, useUpdate } from '../pwa';
 import { gateQuestion, gateSolved, newGate, type Gate } from '../engine/gate';
-import { rowPct, tablesDone } from '../engine/mastery';
+import { seriesDone, seriesPct } from '../engine/mastery';
 import { hardList, totalSessions, weekMinutes } from '../engine/stats';
+import { opProg, opsOf } from '../engine/progress';
+import { tableNum } from '../engine/unlock';
 import {
   BackupError, forgetTransfer, formatCode, FutureVersionError, lastBackupText, makeBackup, MAX_PROFILES, readBackup, receiveTransfer, sendTransfer, TransferError,
   type AppData, type BossTime, type Profile,
 } from '../store';
 
 const DEFAULT_MSG = 'Cette étape évite que les enfants entrent ici par hasard.';
+/** « 1 session », « 3 sessions ». */
+const plural = (n: number, w: string) => `${n} ${w}${n > 1 ? 's' : ''}`;
 const WRONG_MSG = "Ce n'est pas le bon résultat. Voici une nouvelle opération.";
 
 function GateView({ onOpen }: { onOpen: () => void }) {
@@ -51,6 +56,52 @@ function GateView({ onOpen }: { onOpen: () => void }) {
         <button class="key erase" aria-label="Effacer" onClick={() => press('del')}><Svg html={icoErase} /><span>Effacer</span></button>
         <button class="key" onClick={() => press('0')}>0</button>
         <button class="key go" onClick={() => press('ok')}>Valider</button>
+      </div>
+    </div>
+  );
+}
+
+const ALL_OPS: readonly Op[] = ['mul', 'add', 'sub'];
+
+/** Opérations à montrer dans le suivi : celles de la classe, plus celles déjà travaillées (changement de classe). */
+function shownOps(k: Profile): Op[] {
+  return ALL_OPS.filter((op) => {
+    const o = k.prog[op];
+    return opsOf(k).includes(op) || (!!o && (o.mastered.length > 0 || o.traps.length > 0 || Object.keys(o.series).length > 0));
+  });
+}
+
+/** Pastille d'une série dans le suivi : numéro de la table (couleur de l'île), ou signe en Mandarine pour le CP. */
+function seriesBadge(s: SeriesDef): { text: string; color: string } {
+  return s.op === 'mul' ? { text: String(tableNum(s.id)), color: ISLES[tableNum(s.id) as IsleId].fort } : { text: OP_SIGN[s.op], color: CP_ZONE.fort };
+}
+
+function KidSettings({ k }: { k: Profile }) {
+  const { store, toast } = useApp();
+  const set = (fn: (x: Profile) => Profile) => void store.updateProfile(k.id, fn);
+  return (
+    <div class="prow-set">
+      <div class="setrow">
+        <span>Classe<small>{k.grade === 'CP' ? 'Additions et soustractions' : 'Tables de multiplication'}</small></span>
+        <span class="opts" role="group" aria-label={`Classe de ${k.name}`}>
+          {GRADES.map((g) => (
+            <button
+              key={g}
+              aria-pressed={k.grade === g}
+              onClick={() => {
+                if (k.grade === g) return;
+                set((x) => setGrade(x, g));
+                toast(`${k.name} passe en ${g}. Sa progression est gardée.`);
+              }}
+            >
+              {g}
+            </button>
+          ))}
+        </span>
+      </div>
+      <div class="setrow">
+        <span>Lecture à voix haute<small>Consignes et calculs lus automatiquement</small></span>
+        <button class="switch" role="switch" aria-checked={k.autoSpeech} aria-label={`Lecture à voix haute pour ${k.name}`} onClick={() => set((x) => ({ ...x, autoSpeech: !x.autoSpeech }))}></button>
       </div>
     </div>
   );
@@ -95,6 +146,7 @@ function ProfileRow({ k, onAction, edit }: { k: Profile; edit: 'rename' | 'del' 
           </div>
         </div>
       )}
+      {edit === null && <KidSettings k={k} />}
     </div>
   );
 }
@@ -268,6 +320,8 @@ export function Parent() {
   const [open, setOpen] = useState(false);
   const [psel, setPsel] = useState(0);
   const [pedit, setPedit] = useState<{ id: string; mode: 'rename' | 'del' } | null>(null);
+  /** Opération suivie (null = celle en cours de l'enfant). */
+  const [pop, setPop] = useState<Op | null>(null);
   const close = () => go({ name: 'who' });
   useBack(close);
   const update = useUpdate();
@@ -311,9 +365,14 @@ export function Parent() {
 
   let body = null;
   if (open) {
-    const mins = p ? weekMinutes(p.days, today) : [];
+    const ops = p ? shownOps(p) : [], split = ops.length > 1;
+    const op: Op = pop && ops.includes(pop) ? pop : (p?.op ?? 'mul');
+    const o = p ? opProg(p, op) : null, mul = op === 'mul';
+    // Une seule opération : le temps de jeu est le total (comme avant le CP) ; sinon celui de l'opération suivie.
+    const mins = p ? weekMinutes(p.days, today, split ? op : undefined) : [];
     const tot = mins.reduce((a, b) => a + b, 0), mx = Math.max(20, ...mins);
-    const hard = p ? hardList(p, today) : [];
+    const hard = o ? hardList(o, today) : [];
+    const what = OP_NAME[op].toLowerCase();
     // Série à jour des jours manqués (sans l'enregistrer : c'est l'enfant qui la verra à l'accueil).
     const streak = p ? checkStreak(p.streak, today).streak.current : 0;
     body = (
@@ -327,18 +386,25 @@ export function Parent() {
         )}
         <div class="kids" role="group" aria-label="Enfant">
           {profiles.map((k, i) => (
-            <button key={k.id} class="kid" aria-pressed={i === sel} onClick={() => { setPsel(i); setPedit(null); }}>
+            <button key={k.id} class="kid" aria-pressed={i === sel} onClick={() => { setPsel(i); setPedit(null); setPop(null); }}>
               <span class="mini"><Svg html={avatar({ ...k.av, color: k.color, size: 38 })} /></span>{k.name}
             </button>
           ))}
         </div>
-        {p && (
+        {p && o && (
           <>
+            {split && (
+              <div class="opts op-tabs" role="group" aria-label="Opération suivie">
+                {ops.map((x) => (
+                  <button key={x} aria-pressed={x === op} onClick={() => setPop(x)}><b aria-hidden="true">{OP_SIGN[x]}</b>{OP_NAME[x]}</button>
+                ))}
+              </div>
+            )}
             <div class="pcard2">
-              <h2>Cette semaine <small>du lundi à aujourd'hui</small></h2>
+              <h2>Cette semaine <small>{split ? `${what}, du lundi à aujourd'hui` : "du lundi à aujourd'hui"}</small></h2>
               <div class="kpis">
                 <div class="kpi"><b>{tot} min</b><small>de jeu</small></div>
-                <div class="kpi"><b>{tablesDone(p.mastered)}/10</b><small>tables maîtrisées</small></div>
+                <div class="kpi"><b>{seriesDone(o.mastered, op)}/{seriesOf(op).length}</b><small>{mul ? 'tables maîtrisées' : 'séries maîtrisées'}</small></div>
                 <div class="kpi"><b>{streak}</b><small>jour{streak > 1 ? 's' : ''} de suite</small></div>
               </div>
               <div class="week-bars" role="img" aria-label={`Minutes par jour : ${['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map((d, i) => `${d} ${mins[i]}`).join(', ')}`}>
@@ -350,19 +416,20 @@ export function Parent() {
                   </span>
                 ))}
               </div>
-              <p style={{ fontSize: '14px', color: 'var(--ink-2)' }}>{totalSessions(p.days)} sessions depuis le début. Une session dure 3 à 5 minutes.</p>
+              <p style={{ fontSize: '14px', color: 'var(--ink-2)' }}>{plural(totalSessions(p.days, split ? op : undefined), 'session')} depuis le début. Une session dure 3 à 5 minutes.</p>
             </div>
             <div class="pcard2">
-              <h2>Tables <small>part des multiplications réussies</small></h2>
+              <h2>{mul ? 'Tables' : 'Séries'} <small>part des {what} réussies</small></h2>
               <div class="tbl">
-                {ISLE_IDS.map((r) => {
-                  const v = rowPct(p.mastered, r);
+                {seriesOf(op).map((s) => {
+                  const v = seriesPct(o.mastered, s.id), b = seriesBadge(s);
+                  const state = v === 100 ? 'Maîtrisée' : v ? 'En cours' : 'Pas commencée';
                   return (
-                    <div key={r} class="tr">
-                      <span class="n" style={{ background: ISLES[r].fort }}>{r}</span>
+                    <div key={s.id} class="tr">
+                      <span class="n" style={{ background: b.color }} aria-hidden={!mul}>{b.text}</span>
                       <span>
-                        <span class="lb"><span>{v === 100 ? 'Maîtrisée' : v ? 'En cours' : 'Pas commencée'}</span><span>{v}%</span></span>
-                        <span class="bar"><i style={{ width: `${v}%`, background: ISLES[r].fort }}></i></span>
+                        <span class="lb"><span>{mul ? state : s.title}</span><span>{v}%</span></span>
+                        <span class="bar"><i style={{ width: `${v}%`, background: b.color }}></i></span>
                       </span>
                     </div>
                   );
@@ -370,15 +437,15 @@ export function Parent() {
               </div>
             </div>
             <div class="pcard2">
-              <h2>Multiplications difficiles <small>{hard.length}</small></h2>
+              <h2>{OP_NAME[op]} difficiles <small>{hard.length}</small></h2>
               {hard.length ? (
                 <>
                   <div class="hard">
                     {hard.map((h) => (
                       <div key={h.key} class="row">
-                        <span class="eq">{h.a} × {h.b}</span>
+                        <span class="eq">{h.a} {OP_SIGN[h.op]} {h.b}</span>
                         <small>{h.errors} erreur{h.errors > 1 ? 's' : ''} récente{h.errors > 1 ? 's' : ''}</small>
-                        <small>{h.a * h.b}</small>
+                        <small>{h.r}</small>
                       </div>
                     ))}
                   </div>

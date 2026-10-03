@@ -12,7 +12,7 @@ async function openParent(page: Page) {
 }
 
 test('sauvegarder, tout perdre, restaurer : la progression revient', async ({ page }) => {
-  await seedProd(page, [kid({ stars: 17, coins: 33 })]);
+  await seedProd(page, [kid({ coins: 33, isl: { 1: { steps: 3, trophy: true, stepStars: [3, 3, 3] }, 2: { steps: 3, trophy: false, stepStars: [3, 3, 2] } } }) /* 17 étoiles */]);
   await openParent(page);
   await expect(page.getByText('Aucune sauvegarde enregistrée depuis cet appareil.')).toBeVisible();
   const dl = page.waitForEvent('download');
@@ -47,7 +47,7 @@ test('transférer par code vers un autre téléphone', async ({ page }) => {
     await route.fulfill({ status: res.status, headers: Object.fromEntries(res.headers), body: await res.text() });
   });
 
-  await seedProd(page, [kid({ stars: 21, coins: 44 })]);
+  await seedProd(page, [kid({ coins: 44, isl: { 1: { steps: 3, trophy: true, stepStars: [3, 3, 3] }, 2: { steps: 3, trophy: true, stepStars: [3, 3, 3] }, 5: { steps: 1, trophy: false, stepStars: [3, 0, 0] } } }) /* 21 étoiles */]);
   await openParent(page);
   await page.getByRole('button', { name: 'Transférer vers un autre téléphone' }).click();
   const code = (await page.locator('.xfer-code').textContent())!;

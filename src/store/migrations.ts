@@ -1,13 +1,15 @@
 /* Migrations versionnées et normalisation des données lues.
    Pour changer le schéma : incrémenter SCHEMA_VERSION et ajouter MIGRATIONS[ancienne version]. */
-import { ISLE_IDS, type IsleId } from '../content/isles';
 import { VARIANT_IDS } from '../content/pepins';
 import { AV, PROFILE_COLORS, type AvatarLook } from '../content/avatar';
+import { CURRICULUM, GRADES, seriesOf, type Op, type SeriesId } from '../content/series';
+import { KINDS, stickerParts } from '../content/stickers';
 import type { PepWear } from '../art/mascot';
 import type { DayKey } from '../engine/dates';
-import type { MulKey } from '../engine/keys';
+import { factKey, parseFact, type FactKey } from '../engine/keys';
 import { defaultAvatar } from '../engine/profile';
-import { defaultSettings, emptyData, SCHEMA_VERSION, START_BUOYS, type AppData, type IsleProgress, type Profile, type StreakEvent } from './schema';
+import { seriesForFact } from '../engine/series';
+import { defaultSettings, emptyData, SCHEMA_VERSION, START_BUOYS, type AppData, type DayStats, type IsleProgress, type OpProgress, type PlayTime, type Profile, type StreakEvent } from './schema';
 
 type Raw = Record<string, unknown>;
 
@@ -17,7 +19,45 @@ export const MIGRATIONS: Record<number, (d: Raw) => Raw> = {
   0: (d) => ({ ...d, version: 1 }),
   // Version 2 : ajout de lastBackup (null par défaut, posé par la normalisation).
   1: (d) => d,
+  // Version 3 : classe et progression par opération. Les profils existants passent en CM1,
+  // toute leur progression va dans prog.mul, sans perte.
+  // Un profil déjà au format v3 (sauvegarde mal étiquetée) n'est pas migré une seconde fois.
+  2: (d) => ({ ...d, profiles: Array.isArray(d.profiles) ? d.profiles.map((p) => (isObj(p) && !isObj(p.prog) ? profileToV3(p) : p)) : d.profiles }),
 };
+
+/** Profil v2 (tout à plat, tables 1 à 10) → profil v3 (classe CM1, progression dans prog.mul). */
+export function profileToV3(v: Raw): Raw {
+  const byTable = (o: unknown) => (isObj(o) ? Object.fromEntries(Object.entries(o).map(([n, x]) => [`mul-${n}`, x])) : {});
+  // Stickers « 7-lieu » → « mul-7-lieu ».
+  const prefixed = (a: unknown) => (Array.isArray(a) ? a.map((k) => (typeof k === 'string' && /^\d+-/.test(k) ? `mul-${k}` : k)) : a);
+  const days = isObj(v.days)
+    ? Object.fromEntries(Object.entries(v.days).map(([k, d]) => [k, isObj(d) ? { ...d, ops: { mul: { ms: d.ms, sessions: d.sessions } } } : d]))
+    : v.days;
+  const pick = isObj(v.defiPick) ? { day: v.defiPick.day, series: `mul-${v.defiPick.table}` } : null;
+  const rest: Raw = { ...v };
+  for (const k of ['isle', 'isl', 'mastered', 'traps', 'trapLog', 'records', 'stickers', 'defiDay', 'defiPick', 'stars']) delete rest[k];
+  return {
+    ...rest,
+    grade: 'CM1',
+    op: 'mul',
+    autoSpeech: false,
+    days,
+    seen: prefixed(v.seen),
+    prog: {
+      mul: {
+        current: `mul-${typeof v.isle === 'number' ? v.isle : 1}`,
+        series: byTable(v.isl),
+        mastered: v.mastered,
+        traps: v.traps,
+        trapLog: v.trapLog,
+        records: byTable(v.records),
+        stickers: prefixed(v.stickers),
+        defiDay: v.defiDay,
+        defiPick: pick,
+      },
+    },
+  };
+}
 
 export class FutureVersionError extends Error {
   constructor(readonly found: number) {
@@ -41,13 +81,20 @@ function normIsle(v: unknown): IsleProgress | null {
   };
 }
 
-const KEY_RE = /^([1-9]|10)x([1-9]|10)$/;
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 const int = (v: unknown, d: number, min = 0, max = Number.MAX_SAFE_INTEGER) => Math.min(max, Math.max(min, Math.round(num(v, d))));
 const oneOf = <T extends string>(v: unknown, allowed: readonly T[], d: T): T => (allowed.includes(v as T) ? (v as T) : d);
 const day = (v: unknown) => (typeof v === 'string' && DAY_RE.test(v) ? (v as DayKey) : null);
 const days = (v: unknown) => strArr(v).filter((x) => DAY_RE.test(x)) as DayKey[];
-const keys = (v: unknown) => strArr(v).filter((x) => KEY_RE.test(x)) as MulKey[];
+const ALL_OPS: readonly Op[] = ['mul', 'add', 'sub'];
+/** Clé bien écrite d'un calcul de l'opération qui existe dans l'une de ses séries (« 7x8 », pas « 0x3 » ni « 07x8 »). */
+const factOk = (op: Op, k: string): boolean => {
+  const f = parseFact(k);
+  return !!f && f.op === op && factKey(op, f.a, f.b) === k && !!seriesForFact(op, f);
+};
+/** Sans doublon, ordre conservé (il colore la grille). */
+const uniq = <T>(a: T[]): T[] => [...new Set(a)];
+const keys = (op: Op, v: unknown) => uniq(strArr(v).filter((x) => factOk(op, x))) as FactKey[];
 const vals = (opts: readonly (readonly [string, ...unknown[]])[]) => opts.map((o) => o[0]);
 
 function normAvatar(v: unknown): AvatarLook {
@@ -79,17 +126,50 @@ function normPending(v: unknown): StreakEvent | null {
   return null;
 }
 
-/** Répare un profil incomplet ou abîmé : chaque champ est validé, sinon remplacé par sa valeur par défaut. */
+function normTime(v: unknown): PlayTime {
+  const d = isObj(v) ? v : {};
+  return { ms: int(d.ms, 0), sessions: int(d.sessions, 0) };
+}
+
+function normDay(d: Raw): DayStats {
+  const ops: DayStats['ops'] = {};
+  if (isObj(d.ops)) for (const op of ALL_OPS) if (isObj(d.ops[op])) ops[op] = normTime(d.ops[op]);
+  return { ...normTime(d), ops };
+}
+
+/** Progression d'une opération : seules les séries, clés et stickers de cette opération sont gardés. */
+function normOp(op: Op, v: Raw): OpProgress {
+  const ids = seriesOf(op).map((s) => s.id);
+  const isId = (x: unknown): x is SeriesId => ids.includes(x as SeriesId);
+  const series: OpProgress['series'] = {};
+  if (isObj(v.series)) for (const id of ids) { const ip = normIsle(v.series[id]); if (ip) series[id] = ip; }
+  const records: OpProgress['records'] = {};
+  if (isObj(v.records)) for (const id of ids) if (typeof v.records[id] === 'number') records[id] = int(v.records[id], 0);
+  const trapLog: OpProgress['trapLog'] = {};
+  if (isObj(v.trapLog)) for (const [k, d] of Object.entries(v.trapLog)) if (factOk(op, k)) trapLog[k] = days(d);
+  const pick = isObj(v.defiPick) ? v.defiPick : null;
+  return {
+    current: isId(v.current) ? v.current : ids[0]!,
+    series,
+    mastered: keys(op, v.mastered),
+    traps: keys(op, v.traps),
+    trapLog,
+    records,
+    stickers: uniq(strArr(v.stickers).filter((k) => { const s = stickerParts(k); return isId(s.series) && KINDS.includes(s.kind); })),
+    defiDay: day(v.defiDay),
+    defiPick: pick && day(pick.day) && isId(pick.series) ? { day: day(pick.day)!, series: pick.series } : null,
+  };
+}
+
+/** Répare un profil (v3) incomplet ou abîmé : chaque champ est validé, sinon remplacé par sa valeur par défaut. */
 export function normalizeProfile(v: Raw): Profile {
   const streak = isObj(v.streak) ? v.streak : {};
-  const isl: Profile['isl'] = {};
-  if (isObj(v.isl)) for (const n of ISLE_IDS) { const ip = normIsle(v.isl[n]); if (ip) isl[n] = ip; }
-  const records: Profile['records'] = {};
-  if (isObj(v.records)) for (const n of ISLE_IDS) if (typeof v.records[n] === 'number') records[n] = int(v.records[n], 0);
+  const grade = oneOf(v.grade, GRADES, 'CM1'), ops = CURRICULUM[grade];
+  const prog: Profile['prog'] = {};
+  // Toutes les opérations sont gardées, même hors de la classe : un changement de classe ne perd rien.
+  if (isObj(v.prog)) for (const op of ALL_OPS) if (isObj(v.prog[op])) prog[op] = normOp(op, v.prog[op]);
   const dayStats: Profile['days'] = {};
-  if (isObj(v.days)) for (const [k, d] of Object.entries(v.days)) if (DAY_RE.test(k) && isObj(d)) dayStats[k] = { ms: int(d.ms, 0), sessions: int(d.sessions, 0) };
-  const trapLog: Profile['trapLog'] = {};
-  if (isObj(v.trapLog)) for (const [k, d] of Object.entries(v.trapLog)) if (KEY_RE.test(k)) trapLog[k] = days(d);
+  if (isObj(v.days)) for (const [k, d] of Object.entries(v.days)) if (DAY_RE.test(k) && isObj(d)) dayStats[k] = normDay(d);
   return {
     id: str(v.id, `p-${Math.random().toString(36).slice(2, 10)}`),
     name: str(v.name, 'Joueur').slice(0, 12) || 'Joueur',
@@ -99,7 +179,6 @@ export function normalizeProfile(v: Raw): Profile {
     pw: normWear(v.pw),
     house: strArr(v.house),
     owned: strArr(v.owned),
-    stars: int(v.stars, 0, 0, 90),
     coins: int(v.coins, 0),
     level: int(v.level, 1, 1),
     xp: Math.min(0.999, Math.max(0, num(v.xp, 0))),
@@ -111,17 +190,12 @@ export function normalizeProfile(v: Raw): Profile {
       buoyDays: days(streak.buoyDays),
       checkedDay: day(streak.checkedDay),
     },
-    isle: ISLE_IDS.includes(v.isle as IsleId) ? (v.isle as IsleId) : 1,
-    isl,
-    mastered: keys(v.mastered),
-    traps: keys(v.traps),
-    trapLog,
-    records,
-    stickers: strArr(v.stickers),
+    grade,
+    op: oneOf(v.op, ops, ops[0]!),
+    prog,
     seen: strArr(v.seen),
+    autoSpeech: typeof v.autoSpeech === 'boolean' ? v.autoSpeech : grade === 'CP',
     days: dayStats,
-    defiDay: day(v.defiDay),
-    defiPick: isObj(v.defiPick) && day(v.defiPick.day) && ISLE_IDS.includes(v.defiPick.table as IsleId) ? { day: day(v.defiPick.day)!, table: v.defiPick.table as IsleId } : null,
     pendingStreak: normPending(v.pendingStreak),
     createdAt: num(v.createdAt, Date.now()),
   };

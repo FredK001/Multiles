@@ -4,7 +4,8 @@ import { addXp, stageFor, xpGain } from './level';
 import { isMastered } from './mastery';
 import { seeded } from './random';
 import { creditCoin, finishSession, recordQuit, starsFor } from './rewards';
-import { bossSession, newKid, play, playTimed, stepSession, timedSession, TODAY } from './test-helpers';
+import { totalStars } from './unlock';
+import { bossSession, mulOf, newKid, play, playTimed, stepSession, timedSession, TODAY } from './test-helpers';
 
 const ctx = (seed = 1) => ({ today: TODAY, rng: seeded(seed), activeMs: 180_000 });
 /** rng qui accorde toujours (ou jamais) le sticker Lieu. */
@@ -29,26 +30,26 @@ describe('Étoiles d\'une étape', () => {
   it("rejouer une étape n'ajoute que l'amélioration", () => {
     let p = newKid();
     ({ profile: p } = runStep(p, 2, 0, 3)); // 7 → 2 étoiles
-    expect(p.isl[2]!.stepStars[0]).toBe(2);
-    expect(p.stars).toBe(2);
+    expect(mulOf(p).series['mul-2']!.stepStars[0]).toBe(2);
+    expect(totalStars(mulOf(p).series)).toBe(2);
     const again = runStep(p, 2, 0, 0); // 10 → 3 étoiles : +1
     expect(again.end.starGain).toBe(1);
-    expect(again.profile.stars).toBe(3);
+    expect(totalStars(mulOf(again.profile).series)).toBe(3);
     const worse = runStep(again.profile, 2, 0, 5); // 5 → 1 étoile : +0
     expect(worse.end.starGain).toBe(0);
-    expect(worse.profile.isl[2]!.stepStars[0]).toBe(3);
-    expect(worse.profile.stars).toBe(3);
+    expect(mulOf(worse.profile).series['mul-2']!.stepStars[0]).toBe(3);
+    expect(totalStars(mulOf(worse.profile).series)).toBe(3);
   });
   it('réussir une étape ouvre la suivante et fait de l\'île l\'île en cours', () => {
     const { profile, end } = runStep(newKid(), 5, 0, 0);
     expect(end.stepDone).toBe(true);
-    expect(profile.isl[5]!.steps).toBe(1);
-    expect(profile.isle).toBe(5);
+    expect(mulOf(profile).series['mul-5']!.steps).toBe(1);
+    expect(mulOf(profile).current).toBe('mul-5');
   });
 });
 
 describe('Trophée du gardien', () => {
-  const ready = (): Profile => newKid({ isl: { 1: { steps: 3, trophy: false, stepStars: [3, 3, 3] } } });
+  const ready = (): Profile => newKid({}, { series: { 'mul-1': { steps: 3, trophy: false, stepStars: [3, 3, 3] } } });
   const runBoss = (wrong: number, timeUp = false) => {
     const s = bossSession(1, timeUp ? 120 : null);
     if (timeUp) {
@@ -63,8 +64,8 @@ describe('Trophée du gardien', () => {
   it('gagné avec 8 réponses justes du premier coup', () => {
     const { profile, end } = runBoss(2);
     expect(end.trophy).toBe(true);
-    expect(profile.isl[1]!.trophy).toBe(true);
-    expect(profile.stickers).toContain('1-gardien');
+    expect(mulOf(profile).series['mul-1']!.trophy).toBe(true);
+    expect(mulOf(profile).stickers).toContain('mul-1-gardien');
   });
   it('pas de trophée à 7', () => {
     expect(runBoss(3).end.trophy).toBe(false);
@@ -97,7 +98,7 @@ describe('Pièces', () => {
     expect(first.end.success).toBe(true);
     expect(first.end.bonus).toBe(20);
     expect(first.profile.coins).toBe(p0.coins + 8 + 20);
-    expect(first.profile.defiDay).toBe(TODAY);
+    expect(mulOf(first.profile).defiDay).toBe(TODAY);
     const s2 = timedSession('defi', 6, 2);
     const again = finishSession(playTimed(s2, first.profile, 8), s2, ctx());
     expect(again.end.bonus).toBe(0);
@@ -114,9 +115,9 @@ describe('Pièces', () => {
     let p = newKid();
     const s = stepSession(p, 1, 0);
     for (let i = 0; i < 4; i++) { s.next(); s.answer(true); p = creditCoin(p); }
-    const quit = recordQuit(p, { today: TODAY, activeMs: 60_000 });
+    const quit = recordQuit(p, 'mul', { today: TODAY, activeMs: 60_000 });
     expect(quit.coins).toBe(newKid().coins + 4);
-    expect(quit.days[TODAY]).toEqual({ ms: 60_000, sessions: 0 });
+    expect(quit.days[TODAY]).toEqual({ ms: 60_000, sessions: 0, ops: { mul: { ms: 60_000, sessions: 0 } } });
   });
 });
 
@@ -150,29 +151,29 @@ describe('Maîtrise et pièges', () => {
   it('une multiplication réussie du premier coup est maîtrisée, sa symétrique aussi', () => {
     const { profile, end } = runStep(newKid(), 7, 0, 0);
     expect(end.fresh).toHaveLength(5);
-    expect(isMastered(profile.mastered, 7, 3)).toBe(true);
-    expect(isMastered(profile.mastered, 3, 7)).toBe(true);
-    expect(isMastered(profile.mastered, 7, 8)).toBe(false);
+    expect(isMastered(mulOf(profile).mastered, 7, 3)).toBe(true);
+    expect(isMastered(mulOf(profile).mastered, 3, 7)).toBe(true);
+    expect(isMastered(mulOf(profile).mastered, 7, 8)).toBe(false);
   });
   it('toute erreur ajoute la multiplication aux pièges, sans doublon de symétrique', () => {
-    const p = newKid({ traps: ['8x7'] });
+    const p = newKid({}, { traps: ['8x7'] });
     const s = stepSession(p, 7, 1);
     let q = s.next()!;
     while (q.b !== 8) { s.answer(true); q = s.next()!; }
     s.answer(false); // 7x8, symétrique de 8x7 déjà en piège
     const r = play(s, p);
     const { profile } = finishSession(r.profile, s, unlucky);
-    expect(profile.traps).toEqual(['8x7']);
-    expect(profile.trapLog['7x8']).toEqual([TODAY]);
+    expect(mulOf(profile).traps).toEqual(['8x7']);
+    expect(mulOf(profile).trapLog['7x8']).toEqual([TODAY]);
   });
   it('un piège réussi du premier coup en sort', () => {
-    const p = newKid({ traps: ['7x3', '9x9'], trapLog: { '3x7': [TODAY] } });
+    const p = newKid({}, { traps: ['7x3', '9x9'], trapLog: { '3x7': [TODAY] } });
     const { profile } = runStep(p, 7, 0, 0);
-    expect(profile.traps).toEqual(['9x9']);
-    expect(profile.trapLog['3x7']).toBeUndefined();
+    expect(mulOf(profile).traps).toEqual(['9x9']);
+    expect(mulOf(profile).trapLog['3x7']).toBeUndefined();
   });
   it('même règle en mode chrono', () => {
-    const p = newKid({ traps: ['3x6'] });
+    const p = newKid({}, { traps: ['3x6'] });
     const s = timedSession('chrono', 6, 3);
     let prof = p;
     // on joue jusqu'à tomber sur 6 × 3, réussi du premier coup
@@ -182,41 +183,41 @@ describe('Maîtrise et pièges', () => {
       if (q.b === 3) { s.expire(); break; }
     }
     const { profile } = finishSession(prof, s, ctx());
-    expect(profile.traps).toEqual([]);
+    expect(mulOf(profile).traps).toEqual([]);
   });
 });
 
 describe('Stickers', () => {
   it('Lieu : 50 % de chance à 3 étoiles', () => {
-    expect(runStep(newKid(), 1, 0, 0, lucky).end.stickers).toEqual(['1-lieu']);
+    expect(runStep(newKid(), 1, 0, 0, lucky).end.stickers).toEqual(['mul-1-lieu']);
     expect(runStep(newKid(), 1, 0, 0, unlucky).end.stickers).toEqual([]);
     expect(runStep(newKid(), 1, 0, 2, lucky).end.stickers).toEqual([]); // 2 étoiles
   });
   it('Pépin sur l\'île : à 9 étoiles sur l\'île, sans tirage', () => {
-    const p = newKid({ isl: { 1: { steps: 2, trophy: false, stepStars: [3, 3, 0] } } });
+    const p = newKid({}, { series: { 'mul-1': { steps: 2, trophy: false, stepStars: [3, 3, 0] } } });
     const { profile, end } = runStep(p, 1, 2, 0, unlucky);
-    expect(end.stickers).toEqual(['1-pepin']);
-    expect(profile.stickers).toContain('1-pepin');
+    expect(end.stickers).toEqual(['mul-1-pepin']);
+    expect(mulOf(profile).stickers).toContain('mul-1-pepin');
   });
   it('pas de sticker Pépin sous 9 étoiles', () => {
-    const p = newKid({ isl: { 1: { steps: 2, trophy: false, stepStars: [3, 2, 0] } } });
+    const p = newKid({}, { series: { 'mul-1': { steps: 2, trophy: false, stepStars: [3, 2, 0] } } });
     expect(runStep(p, 1, 2, 0, unlucky).end.stickers).toEqual([]);
   });
 });
 
 describe('Défi chrono', () => {
   it('record personnel par table', () => {
-    const p0 = newKid({ records: { 7: 12 } });
+    const p0 = newKid({}, { records: { 'mul-7': 12 } });
     const s = timedSession('chrono', 7);
     const { profile, end } = finishSession(playTimed(s, p0, 15), s, ctx());
     expect(end).toMatchObject({ newRec: true, rec: 12, score: 15, stars: 3, coinsGain: 15 });
-    expect(profile.records[7]).toBe(15);
-    expect(profile.records).toEqual({ 7: 15 });
+    expect(mulOf(profile).records['mul-7']).toBe(15);
+    expect(mulOf(profile).records).toEqual({ 'mul-7': 15 });
   });
   it('étoiles : 2 à 80 % du record, sinon 1', () => {
     const at = (score: number) => {
       const s = timedSession('chrono', 7);
-      return finishSession(playTimed(s, newKid({ records: { 7: 20 } }), score), s, ctx()).end.stars;
+      return finishSession(playTimed(s, newKid({}, { records: { 'mul-7': 20 } }), score), s, ctx()).end.stars;
     };
     expect(at(16)).toBe(2);
     expect(at(15)).toBe(1);
@@ -249,8 +250,8 @@ describe('Arbitrages après relecture', () => {
       if (!second) prof = creditCoin(prof);
     }
     const { profile } = finishSession(prof, s, unlucky);
-    expect(isMastered(profile.mastered, 7, target)).toBe(false);
-    expect(profile.traps).toEqual([`7x${target}`]);
+    expect(isMastered(mulOf(profile).mastered, 7, target)).toBe(false);
+    expect(mulOf(profile).traps).toEqual([`7x${target}`]);
   });
   it('défi chrono à 0 sans record : 1 étoile', () => {
     const s = timedSession('chrono', 7);
@@ -269,7 +270,7 @@ describe('Robustesse', () => {
     expect(profile.pendingStreak).toMatchObject({ kind: 'buoy', missed: 1 });
   });
   it('le chrono qui expire après la dernière réponse ne retire pas le trophée', () => {
-    const p = newKid({ isl: { 1: { steps: 3, trophy: false, stepStars: [3, 3, 3] } } });
+    const p = newKid({}, { series: { 'mul-1': { steps: 3, trophy: false, stepStars: [3, 3, 3] } } });
     const s = bossSession(1, 120);
     const r = play(s, p, 1);
     s.expire();
@@ -282,7 +283,7 @@ describe('Robustesse', () => {
 describe('Temps de jeu et sessions', () => {
   it('fin de session : temps actif et session ajoutés au jour', () => {
     const { profile } = runStep(newKid(), 1, 0, 0, ctx());
-    expect(profile.days[TODAY]).toEqual({ ms: 180_000, sessions: 1 });
+    expect(profile.days[TODAY]).toEqual({ ms: 180_000, sessions: 1, ops: { mul: { ms: 180_000, sessions: 1 } } });
     expect(profile.streak.current).toBe(1);
   });
 });

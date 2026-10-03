@@ -1,32 +1,44 @@
 /* Écrans 7 et 8 : question (4 formats), feedback, et mode chronométré (défi chrono, défi du jour, gardien). */
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
-import { coinIcon, decorSvg, icoBulb, icoClock, icoErase, icoFalse, icoQuit, icoTrue, mascot, type Mood } from '../art';
-import { chime } from '../audio';
+import { coinIcon, decorSvg, icoBulb, icoClock, icoErase, icoFalse, icoFmtMissing, icoFmtPad, icoFmtPick, icoQuit, icoTrue, mascot, type Mood } from '../art';
+import { chime, speak } from '../audio';
 import { useApp, useBack, usePlayer } from '../app/context';
 import { confetti, flyCoin, pop } from '../app/effects';
 import type { Route } from '../app/routes';
 import { planFor } from '../app/sessions';
-import { BtnSay, Svg } from '../app/ui';
-import { ISLES } from '../content/isles';
-import { fill, goodAnswers, HELP_TITLES, MSG, OK_TITLES, spoken, tipFor } from '../content/messages';
+import { AUTO_SAY_DELAY, BtnSay, Svg } from '../app/ui';
+import { lookOf } from '../content/isles';
+import { SERIES } from '../content/series';
+import { equation, fill, goodAnswers, HELP_TITLES, MSG, MSG_CP, OK_TITLES, spoken, tipOf } from '../content/messages';
+import { OP_SIGN, OP_SPOKEN } from '../content/series';
+import type { Format } from '../engine/questions';
 import { nb } from '../content/text';
 import { useIsleTheme } from '../app/theme';
 import { stageFor } from '../engine/level';
 import { expected, isCorrect, typeDigit, type Question as Q } from '../engine/questions';
 import { pick } from '../engine/random';
 import { creditCoin, finishSession, recordQuit } from '../engine/rewards';
-import { OK_FEEDBACK_MS, Session, type SessionConfig } from '../engine/session';
+import { OK_FEEDBACK_MS, opOf, Session, type SessionConfig } from '../engine/session';
 import { ActiveClock, Countdown, fmtTime } from '../engine/timer';
-import { AidGrid } from './Aid';
+import { AidGrid, AidTokens } from './Aid';
 
 type Feedback =
   | { ok: true; title: string; sub: string; eq: string; combo: number | null; delay: number }
   | { ok: false; title: string; eq: string; q: Q };
 
+/** Pictogramme de la consigne (CP) : pavé, choix, nombre caché, juste ou pas. */
+function FormatPicto({ fmt }: { fmt: Format }) {
+  if (fmt === 'vf') return <span class="fmt-picto" aria-hidden="true"><span class="pair"><Svg html={icoTrue} /><Svg html={icoFalse} /></span></span>;
+  return <span class="fmt-picto" aria-hidden="true"><Svg html={fmt === 'pave' ? icoFmtPad : fmt === 'qcm' ? icoFmtPick : icoFmtMissing} /></span>;
+}
+
+/** Ce qui est lu pour une question : la consigne, puis le calcul (sans répéter le calcul déjà dans la consigne). */
+const sayQuestion = (q: Q, bubble: string): string => (q.fmt === 'pave' ? spoken(q) : `${bubble} ${spoken(q)}`);
+
 export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route }) {
   const p = usePlayer();
   const { go, store, today } = useApp();
-  const I = ISLES[cfg.isle];
+  const I = lookOf(cfg.series);
   const [session] = useState(() => new Session(cfg, planFor(cfg, p, today)));
   const [, setTick] = useState(0);
   const render = () => setTick((t) => t + 1);
@@ -55,6 +67,12 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
   const sheetRef = useRef<HTMLDivElement>(null);
 
   useIsleTheme(I.fort, I.clair);
+  // Au CP : consignes courtes, chiffres et touches plus grands, aide avec jetons.
+  const cp = opOf(cfg) !== 'mul', msgs = cp ? MSG_CP : MSG;
+  /** Lecture automatique (réglage du profil) ; jamais quand le chrono tourne, la lecture mangerait le temps. */
+  const autoSay = (text: string) => {
+    if (p.autoSpeech && !cfg.timed) later(() => speak(text), AUTO_SAY_DELAY);
+  };
   const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(() => alive.current && fn(), ms));
   const stage = stageFor(p.level);
   const q = session.cur;
@@ -68,7 +86,9 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
     setMark('');
     setPicked(null);
     setBuddy({ mood: 'neutre', anim: 'idle' });
-    setBubble(fill(pick(MSG[n.fmt]), n, p.name));
+    const text = fill(pick(msgs[n.fmt]), n, p.name);
+    setBubble(text);
+    autoSay(sayQuestion(n, text));
     render();
   };
 
@@ -89,7 +109,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
     alive.current = false;
     const now = performance.now();
     clock.current.pause(now);
-    void store.updateProfile(p.id, (x) => recordQuit(x, { today, activeMs: clock.current.elapsed(now) }));
+    void store.updateProfile(p.id, (x) => recordQuit(x, SERIES[cfg.series].op, { today, activeMs: clock.current.elapsed(now) }));
     go(back);
   };
   useBack(quit);
@@ -138,14 +158,16 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
 
   // Développement uniquement : impose la question affichée (captures comparées au prototype).
   if (import.meta.env.DEV) {
-    (window as unknown as { __multilesQuestion?: (q: Q) => void }).__multilesQuestion = (fq: Q) => {
+    (window as unknown as { __multilesQuestion?: (q: Q) => void }).__multilesQuestion = (raw: Q) => {
+      // Les captures injectent une multiplication sans opération ni série.
+      const fq: Q = { ...raw, op: raw.op ?? 'mul', series: raw.series ?? `mul-${raw.a}` };
       session.cur = fq;
       setInput('');
       setLocked(false);
       setMark('');
       setPicked(null);
       setBuddy({ mood: 'neutre', anim: 'idle' });
-      setBubble(fill(pick(MSG[fq.fmt]), fq, p.name));
+      setBubble(fill(pick(msgs[fq.fmt]), fq, p.name));
       render();
     };
   }
@@ -155,10 +177,11 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
     const e = exprRef.current;
     if (!e) return;
     const box = e.parentElement!;
-    let fs = 62;
-    e.style.setProperty('--fs', '62px');
-    e.style.setProperty('--sw', '96px');
-    e.style.setProperty('--sh', '84px');
+    // Taille de départ : 62 px avec une case de 96 × 84 (prototype), 80 px au CP.
+    let fs = cp ? 80 : 62;
+    e.style.setProperty('--fs', fs + 'px');
+    e.style.setProperty('--sw', cp ? '116px' : '96px');
+    e.style.setProperty('--sh', cp ? '104px' : '84px');
     while (e.scrollWidth > box.clientWidth - 24 && fs > 34) {
       fs -= 2;
       e.style.setProperty('--fs', fs + 'px');
@@ -204,13 +227,16 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
       const sub = cfg.endless
         ? cfg.target ? `${session.good} sur ${cfg.target}` : goodAnswers(session.good)
         : session.done < session.total ? `Encore ${session.remaining} question${session.remaining > 1 ? 's' : ''}` : 'Dernière réponse !';
-      setFb({ ok: true, title: fill(pick(OK_TITLES), q, p.name), sub: nb(sub), eq: `${q.a} × ${q.b} = ${q.p}`, combo, delay });
+      const title = fill(pick(OK_TITLES), q, p.name);
+      setFb({ ok: true, title, sub: nb(sub), eq: equation(q), combo, delay });
       chime(combo ? 'combo' : 'ok');
       requestAnimationFrame(() => confetti(sheetRef.current));
       later(continueQ, delay);
     } else {
       setBuddy({ mood: 'encourage', anim: 'idle' });
-      setFb({ ok: false, title: fill(pick(HELP_TITLES), q, p.name), eq: `${q.a} × ${q.b} = ${q.p}`, q });
+      const title = fill(pick(HELP_TITLES), q, p.name);
+      setFb({ ok: false, title, eq: equation(q), q });
+      autoSay(`${title} ${q.a} ${OP_SPOKEN[q.op]} ${q.b} égale ${q.p}.`);
       chime('help');
       if (countdown.current) {
         helpPause.current = true;
@@ -277,10 +303,11 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
     </span>
   );
   let expr = null;
+  const sign = q ? OP_SIGN[q.op] : '×';
   if (q) {
-    if (q.fmt === 'pave' || q.fmt === 'qcm') expr = <><span>{q.a}</span><span class="op">×</span><span>{q.b}</span><span class="op">=</span>{slot}</>;
-    if (q.fmt === 'manquant') expr = <><span>{q.a}</span><span class="op">×</span>{slot}<span class="op">=</span><span>{q.p}</span></>;
-    if (q.fmt === 'vf') expr = <><span>{q.a}</span><span class="op">×</span><span>{q.b}</span><span class="op">=</span><span class={`shown ${mark ? 'ok' : ''}`} id="shown" ref={slotRef}>{mark && !q.truth ? q.p : q.shown}</span></>;
+    if (q.fmt === 'pave' || q.fmt === 'qcm') expr = <><span>{q.a}</span><span class="op">{sign}</span><span>{q.b}</span><span class="op">=</span>{slot}</>;
+    if (q.fmt === 'manquant') expr = <><span>{q.a}</span><span class="op">{sign}</span>{slot}<span class="op">=</span><span>{q.p}</span></>;
+    if (q.fmt === 'vf') expr = <><span>{q.a}</span><span class="op">{sign}</span><span>{q.b}</span><span class="op">=</span><span class={`shown ${mark ? 'ok' : ''}`} id="shown" ref={slotRef}>{mark && !q.truth ? q.p : q.shown}</span></>;
   }
 
   let answer = null;
@@ -329,7 +356,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
       </div>
     );
   } else if (fb && !fb.ok) {
-    const fq = fb.q, tip = nb(tipFor(fq.a, fq.b));
+    const fq = fb.q, tip = nb(tipOf(fq));
     sheet = (
       <div class="fb-sheet help" role="status" aria-live="assertive">
         <div class="fb-help-row">
@@ -337,12 +364,24 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
             <Svg html={mascot({ variant: p.pepin, stage, wear: p.pw, mood: 'encourage', size: 72 })} />
           </div>
           <div style={{ flex: 1 }}><p class="fb-title" style={{ fontSize: '28px' }}>{fb.title}</p><p class="fb-sub">{nb('La bonne réponse :')}</p></div>
-          <BtnSay wrap id="fbSay" label="Écouter l'astuce" style={{ background: '#fff' }} text={`${fb.title} ${fq.a} fois ${fq.b} égale ${fq.p}. ${tip}`} />
+          <BtnSay wrap id="fbSay" label="Écouter l'astuce" style={{ background: '#fff' }} text={`${fb.title} ${fq.a} ${OP_SPOKEN[fq.op]} ${fq.b} égale ${fq.p}. ${tip}`} />
         </div>
         <p class="fb-eq">{fb.eq}</p>
         <div class="aid">
-          <div class="aid-top"><span>{fq.a} rangées de {fq.b}</span><span>{fq.p} en tout</span></div>
-          <AidGrid rows={fq.a} cols={fq.b} />
+          {fq.op === 'mul' ? (
+            <>
+              <div class="aid-top"><span>{fq.a} rangées de {fq.b}</span><span>{fq.p} en tout</span></div>
+              <AidGrid rows={fq.a} cols={fq.b} />
+            </>
+          ) : (
+            <>
+              <div class="aid-top">
+                <span>{fq.op === 'add' ? `${fq.a} et encore ${fq.b}` : `${fq.a}, on en enlève ${fq.b}`}</span>
+                <span>{fq.op === 'add' ? `${fq.p} en tout` : `il en reste ${fq.p}`}</span>
+              </div>
+              <AidTokens op={fq.op} a={fq.a} b={fq.b} />
+            </>
+          )}
           <p class="tip"><span class="bulb"><Svg html={icoBulb} /></span><span id="fbTip">{tip}</span></p>
         </div>
         <p class="fb-sub" style={{ textAlign: 'center' }}>{cfg.timed ? 'Le chrono est en pause pendant que tu regardes.' : 'Elle reviendra plus tard dans la session.'}</p>
@@ -352,7 +391,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
   }
 
   return (
-    <section class="screen scr-q" data-screen="question" aria-label="Question">
+    <section class={`screen scr-q${cp ? ' cp' : ''}`} data-screen="question" aria-label="Question">
       <header class="q-band">
         <div class="q-top">
           <button class="btn-chip" id="btnQuit" aria-label="Quitter la session" onClick={quit}>
@@ -376,11 +415,12 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
             <Svg html={mascot({ variant: p.pepin, mood: buddy.mood, stage, wear: p.pw })} />
           </div>
           <div class="bubble">
+            {cp && q && !locked && <FormatPicto fmt={q.fmt} />}
             <p class="t" aria-live="polite">{bubble}</p>
             <BtnSay
               id="btnSayQ"
               label="Écouter la question"
-              text={() => (q ? (locked ? bubble : `${bubble} ${spoken(q)}`) : bubble)}
+              text={() => (q ? (locked ? bubble : cp ? sayQuestion(q, bubble) : `${bubble} ${spoken(q)}`) : bubble)}
             />
           </div>
         </div>

@@ -12,28 +12,36 @@ import { applyIsleTheme } from '../design/theme';
 import { parseKey } from '../engine/keys';
 import { stageFor } from '../engine/level';
 import { gridCount, isMastered, isTrap } from '../engine/mastery';
-import { isOpen } from '../engine/unlock';
+import { opProg } from '../engine/progress';
+import { isOpen, tableId } from '../engine/unlock';
 import { AidGrid } from './Aid';
+import { GridCP } from './GridCP';
 
 export function Grid() {
+  const p = usePlayer();
+  return p.op === 'mul' ? <GridTable /> : <GridCP />;
+}
+
+function GridTable() {
   const p = usePlayer();
   const { go } = useApp();
   const [sel, setSel] = useState<[number, number] | null>(null);
   useBack(() => (sel ? setSel(null) : go({ name: 'home' })));
   useProfileTheme(p.color);
   const stage = stageFor(p.level);
+  const o = opProg(p, 'mul');
 
-  const count = gridCount(p.mastered, p.traps);
+  const count = gridCount(o.mastered, o.traps);
   const tally: Record<number, number> = {};
   const head = [<span key="x" class="h x" aria-hidden="true">×</span>];
   for (let c = 1; c <= 10; c++) head.push(<span key={`h${c}`} class="h" aria-hidden="true">{c}</span>);
   const rows = [];
   for (let r = 1; r <= 10; r++) {
     let full = true;
-    for (let c = 1; c <= 10; c++) if (!isMastered(p.mastered, r, c)) full = false;
+    for (let c = 1; c <= 10; c++) if (!isMastered(o.mastered, r, c)) full = false;
     rows.push(<span key={`r${r}`} class={`h r ${full ? 'full' : ''}`} style={{ background: ISLES[r as IsleId].fort }} aria-hidden="true">{r}</span>);
     for (let c = 1; c <= 10; c++) {
-      const m = isMastered(p.mastered, r, c), t = isTrap(p.traps, r, c), own = p.mastered.includes(`${r}x${c}` as never) ? r : c;
+      const m = isMastered(o.mastered, r, c), t = isTrap(o.traps, r, c), own = o.mastered.includes(`${r}x${c}` as never) ? r : c;
       if (m && !t) tally[own] = (tally[own] ?? 0) + 1;
       const isSel = !!sel && sel[0] === r && sel[1] === c;
       const hl = !!sel && !isSel && (sel[0] === r || sel[1] === c) && !m && !t;
@@ -50,12 +58,12 @@ export function Grid() {
       );
     }
   }
-  const traps = p.traps.map(parseKey);
+  const traps = o.traps.map(parseKey);
 
   let sheet = null;
   if (sel) {
-    const [r, c] = sel, m = isMastered(p.mastered, r, c), t = isTrap(p.traps, r, c);
-    const open = isOpen(p.isl, r as IsleId) || isOpen(p.isl, c as IsleId);
+    const [r, c] = sel, m = isMastered(o.mastered, r, c), t = isTrap(o.traps, r, c);
+    const open = isOpen(o.series, tableId(r)) || isOpen(o.series, tableId(c));
     applyIsleTheme(ISLES[r as IsleId].fort, ISLES[r as IsleId].clair);
     const badge = t
       ? <span class="cs-badge" style={{ background: 'var(--miel)' }}>{nb("Piège : on s'entraîne")}</span>
@@ -116,7 +124,7 @@ export function Grid() {
               <div class="trap-chips">
                 {traps.map(([a, b]) => <button key={`${a}x${b}`} class="tchip" onClick={() => setSel([a, b])}>{a} × {b}</button>)}
               </div>
-              <button class="btn-primary" onClick={() => go({ name: 'question', cfg: trapsCfg(p.traps), back: { name: 'grid' } })}>{nb('Entraîner mes pièges')}</button>
+              <button class="btn-primary" onClick={() => go({ name: 'question', cfg: trapsCfg(o.traps), back: { name: 'grid' } })}>{nb('Entraîner mes pièges')}</button>
             </>
           ) : (
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>

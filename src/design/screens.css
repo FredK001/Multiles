@@ -50,7 +50,7 @@
 .toast{position:absolute;left:16px;right:16px;bottom:172px;background:var(--ink);color:#fff;border-radius:18px;padding:14px 16px;font-size:16px;text-align:center;z-index:40}
 
 /* ===== Écran 2 : Création ===== */
-.stepper{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.stepper{flex:1;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px}
 .st{display:grid;gap:4px;font-size:15px;text-align:center;color:var(--ink-2)}
 .st i{display:block;height:12px;border-radius:6px;border:2px solid var(--ink);background:#fff}
 .st.done i{background:var(--ballon)}
@@ -68,6 +68,8 @@
 .pep-card .chk{width:40px;height:40px;border-radius:50%;border:3px solid var(--ink);background:#fff;display:grid;place-items:center}
 .pep-card[aria-pressed="true"]{background:var(--ballon-clair);box-shadow:0 0 0 4px var(--ballon),0 6px 0 4px var(--ink)}
 .pep-card[aria-pressed="true"] .chk{background:var(--ballon)}
+/* Choix de la classe : grande pastille avec les signes de l'opération, texte blanc sur fond plein. */
+.gsign{width:104px;height:104px;border-radius:24px;border:3px solid var(--ink);display:grid;place-items:center;color:#fff;font-family:var(--titre);font-weight:600;font-size:54px;line-height:1;letter-spacing:4px}
 .pane-title{font-family:var(--titre);font-weight:600;font-size:30px;line-height:1.1}
 
 /* ===== Écran 3 : Éditeur d'avatar ===== */
@@ -143,6 +145,7 @@
 /* ===== Écran 5 : Carte des îles ===== */
 .map-head{background:#fff;border-bottom:3px solid var(--ink);padding:calc(12px + env(safe-area-inset-top,0px)) 16px 10px;display:grid;grid-template-columns:112px 1fr 112px;align-items:center;gap:8px;flex:none;position:relative;z-index:5}
 .map-head .ttl{text-align:center;font-family:var(--titre);font-weight:600;font-size:24px}
+.map-head .ttl-op{font-weight:700;font-size:30px;margin-right:6px;line-height:1}
 .map-head .cnt{justify-self:end;display:flex;align-items:center;gap:4px;height:48px;padding:0 10px 0 6px;border:3px solid var(--ink);border-radius:16px;font-size:17px;font-weight:900}
 .sea{flex:1;overflow-y:auto;position:relative;background:#A6DCE5;scroll-behavior:smooth}
 .sea-in{position:relative;width:100%;height:2220px}
@@ -174,6 +177,9 @@
 .isd-hero svg.art{width:210px;height:152px}
 .isd-hero h1{font-family:var(--titre);font-weight:700;font-size:32px;line-height:1;margin-top:-6px}
 .isd-hero p{font-size:17px;margin-top:4px}
+/* Île du CP : le signe de l'opération en grand avant la série. */
+.isd-hero p.isd-op{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:800}
+.isd-op b{font-family:var(--titre);font-weight:700;font-size:34px;line-height:1}
 .isd-prog{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:15px}
 .isd-prog .bar{flex:1;height:16px;border-radius:8px;border:3px solid var(--ink);background:var(--ile-sombre);overflow:hidden}
 .isd-prog .bar i{display:block;height:100%;background:#fff}
@@ -283,6 +289,8 @@
 .g-bar i{height:100%;display:block;flex:none}
 .pyth-card{background:#fff;border:3px solid var(--ink);border-radius:24px;box-shadow:0 5px 0 var(--ink);padding:8px}
 .pyth{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:2px}
+/* Table d'addition du CP : 0 à 10, donc 12 colonnes. */
+.pyth.cp{grid-template-columns:repeat(12,minmax(0,1fr))}
 .pyth .h{min-width:0;display:grid;place-items:center;font-family:var(--titre);font-weight:700;font-size:15px;aspect-ratio:1}
 .pyth .h.r{border-radius:50%;color:#fff;border:2px solid var(--ink)}
 .pyth .h.r.full{box-shadow:0 0 0 2px #FFC93C}
@@ -403,6 +411,11 @@
 .hard .row small{color:var(--ink-2);font-size:14px}
 .prow{display:grid;grid-template-columns:44px minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:6px 0;border-bottom:2px dashed var(--lagon-2)}
 .prow:last-child{border-bottom:0}
+.prow-set{grid-column:1/-1;display:grid;gap:2px;padding-left:52px}
+.prow-set .setrow{min-height:48px;font-size:15px}
+.op-tabs{flex-wrap:wrap}
+.op-tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px}
+.op-tabs b{font-family:var(--titre);font-weight:700;font-size:20px;line-height:1}
 .prow .mini{width:44px;height:44px;border-radius:50%;overflow:hidden;border:3px solid var(--c);display:flex;align-items:flex-end;justify-content:center;background:#fff}
 .btn-sm{height:44px;padding:0 9px;border-radius:14px;border:2px solid var(--ink);background:#fff;font-size:13px}
 .btn-sm.danger{color:#A3261E;border-color:#A3261E}
@@ -456,6 +469,13 @@
 .vrow:nth-child(even) .vdots i{background:var(--ile-clair)}
 .vtot{min-width:44px;text-align:center;font-family:var(--titre);font-weight:700;font-size:16px;background:var(--lagon);border:2px solid var(--ink);border-radius:10px;padding:0 6px}
 .vrow:last-child .vtot{background:var(--miel)}
+/* Découvrir au CP : couleurs fixes (pas d'alternance), 2e terme en bleu, jetons enlevés barrés. */
+.vrow:nth-child(even) .vdots.cp i{background:var(--ile)}
+.vdots.cp{flex-wrap:wrap}
+.vdots.cp i.b,.vrow:nth-child(even) .vdots.cp i.b{background:var(--ballon)}
+.vdots.cp i.out,.vrow:nth-child(even) .vdots.cp i.out{position:relative;background:var(--ile-clair)}
+.vdots.cp i.out::after{content:"";position:absolute;left:-3px;right:-3px;top:calc(50% - 1.5px);height:3px;border-radius:2px;background:var(--ink);transform:rotate(-45deg)}
+.vrow .vtot{white-space:nowrap}
 .mchips{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;flex:none}
 .mchip{height:58px;border-radius:16px;border:3px solid var(--ink);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;font-family:var(--titre);font-weight:700;font-size:19px}
 .mchip small{font-family:var(--ui);font-weight:800;font-size:13px;color:var(--ink-2)}
@@ -511,3 +531,32 @@
 .btn-main{height:64px;border-radius:22px;background:var(--ile);color:#fff;border:3px solid var(--ink);box-shadow:0 6px 0 var(--ink);font-size:22px;width:100%}
 .fly{position:absolute;z-index:50;pointer-events:none;width:34px;height:34px}
 .pop{animation:pop .3s ease-out}
+
+/* ===== Choix de l'opération (CP) ===== */
+.ops-cards{flex:1;display:grid;grid-template-rows:1fr 1fr;gap:20px;min-height:0;padding-top:8px}
+.op-card{position:relative;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:18px;background:#fff;border:3px solid var(--ink);border-radius:32px;box-shadow:0 6px 0 var(--ink);padding:16px 20px;text-align:left;min-height:150px;transition:transform .06s,box-shadow .06s}
+.op-card:active{transform:translateY(4px);box-shadow:0 2px 0 var(--ink)}
+.op-card.last{background:var(--miel)}
+.op-sign{width:124px;height:124px;border-radius:30px;border:3px solid var(--ink);display:grid;place-items:center;color:#fff;font-family:var(--titre);font-weight:700;font-size:104px;line-height:1;padding-bottom:8px}
+.op-card b{display:block;font-family:var(--titre);font-weight:700;font-size:44px;line-height:1}
+.op-card small{display:block;font-size:17px;font-weight:800;color:var(--ink-2);margin-top:4px}
+.op-stars{display:flex;align-items:center;gap:4px;margin-top:10px;font-size:20px;font-weight:900}
+.op-card .now{position:absolute;top:-14px;right:20px;background:var(--ink);color:#fff;border-radius:12px;padding:3px 12px;font-size:14px;font-weight:900}
+
+/* ===== Question du CP : gros chiffres, grandes zones tactiles, jetons ===== */
+.scr-q.cp .bubble .t{font-size:22px;font-weight:800;line-height:1.2}
+.fmt-picto{flex:none;display:grid;place-items:center}
+.fmt-picto .pair{display:flex;gap:2px}
+.fmt-picto .pair svg{width:26px;height:26px}
+.scr-q.cp .key{height:74px;font-size:42px}
+.scr-q.cp .key.erase,.scr-q.cp .key.go{font-size:19px}
+.scr-q.cp .choice{height:124px;font-size:58px}
+.scr-q.cp .vf .choice{height:136px;font-size:26px;font-weight:800}
+.scr-q.cp .vf .choice svg{width:52px;height:52px}
+.tens{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+.ten{display:grid;grid-template-columns:repeat(5,22px);gap:5px;padding:7px;border:3px solid var(--ink);border-radius:14px;background:#fff}
+.ten i{width:22px;height:22px;border-radius:50%;border:2px dashed #C9D6DC}
+.ten i.a{background:var(--ile);border:2px solid var(--ink)}
+.ten i.b{background:var(--ballon);border:2px solid var(--ink)}
+.ten i.out{position:relative;background:var(--ile-clair);border:2px solid var(--ink)}
+.ten i.out::after{content:"";position:absolute;left:-3px;right:-3px;top:8px;height:3px;border-radius:2px;background:var(--ink);transform:rotate(-45deg)}

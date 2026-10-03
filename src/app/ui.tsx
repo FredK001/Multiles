@@ -12,6 +12,23 @@ export function useCanSpeak(): boolean {
   return ok;
 }
 
+/** Délai avant une lecture automatique. */
+export const AUTO_SAY_DELAY = 250;
+
+/** Lecture automatique (réglage du profil) : lit `text` à l'affichage, puis à chaque changement de `key`. */
+export function useAutoSay(text: string | null, key: unknown = text): void {
+  const { player } = useApp();
+  const on = !!player?.autoSpeech;
+  const latest = useRef(text);
+  latest.current = text;
+  useEffect(() => {
+    if (!on || !latest.current) return;
+    // Petit délai : laisse l'écran s'afficher et le son de clic se terminer.
+    const t = setTimeout(() => latest.current && speak(latest.current), AUTO_SAY_DELAY);
+    return () => clearTimeout(t);
+  }, [on, key]);
+}
+
 interface SayProps {
   /** Texte lu, ou fonction appelée au moment du tap. */
   text: string | (() => string);

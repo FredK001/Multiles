@@ -1,13 +1,15 @@
 /* Création et modification de profil, boutique, éditeur d'avatar. */
 import { AV, PROFILE_COLORS, type AvatarLook } from '../content/avatar';
 import type { PepinVariant } from '../content/pepins';
+import { CURRICULUM, type Grade } from '../content/series';
 import type { ShopCat, ShopItem } from '../content/shop';
 import { START_BUOYS, START_COINS, type Profile } from '../store/schema';
 import type { DayKey } from './dates';
 import { defaultRng, pick, type Rng } from './random';
 import { checkStreak } from './streak';
-import { dailyTable } from './daily';
-import { openIsles } from './unlock';
+import { dailySeries } from './daily';
+import { opProg, withOp } from './progress';
+import { openSeries } from './unlock';
 
 /** Avatar par défaut d'un nouveau joueur. */
 export const defaultAvatar = (): AvatarLook => ({ face: 'rond', hair: 'court', skin: '#F1C29A', hairColor: '#6B3E1F', acc: 'aucun' });
@@ -25,14 +27,23 @@ export const freeColors = (profiles: readonly Profile[], self?: Profile | null):
 const uid = (): string =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-export function createProfile(input: { name: string; color: string; av: AvatarLook; pepin: PepinVariant }, now = Date.now()): Profile {
+export function createProfile(input: { name: string; color: string; av: AvatarLook; pepin: PepinVariant; grade?: Grade }, now = Date.now()): Profile {
+  const grade = input.grade ?? 'CM1';
   return {
     id: uid(), name: cleanName(input.name), color: input.color, av: { ...input.av }, pepin: input.pepin,
-    pw: {}, house: [], owned: [], stars: 0, coins: START_COINS, level: 1, xp: 0,
+    pw: {}, house: [], owned: [], coins: START_COINS, level: 1, xp: 0,
     streak: { current: 0, best: 0, buoys: START_BUOYS, lastDay: null, buoyDays: [], checkedDay: null },
-    isle: 1, isl: {}, mastered: [], traps: [], trapLog: {}, records: {}, stickers: [], seen: [],
-    days: {}, defiDay: null, defiPick: null, pendingStreak: null, createdAt: now,
+    grade, op: CURRICULUM[grade][0]!, prog: {}, seen: [],
+    // Au CP, l'enfant lit peu : consignes et calculs lus à voix haute par défaut.
+    autoSpeech: grade === 'CP',
+    days: {}, pendingStreak: null, createdAt: now,
   };
+}
+
+/** Change la classe : la progression de chaque opération est conservée (un retour en arrière la retrouve). */
+export function setGrade(p: Profile, grade: Grade): Profile {
+  if (p.grade === grade) return p;
+  return { ...p, grade, op: CURRICULUM[grade][0]! };
 }
 
 /** « Au hasard » : visage, coiffure, couleur de cheveux et accessoire gratuit. Jamais la peau. */
@@ -76,10 +87,14 @@ export function buy(cat: ShopCat, it: ShopItem, p: Profile): BuyResult {
   return { ok: true, profile: wear(cat, it, bought, true) };
 }
 
-/** Table du défi du jour, tirée une fois par jour et mémorisée. */
+/** Série du défi du jour de chaque opération de la classe, tirée une fois par jour et mémorisée. */
 export function withDefiPick(p: Profile, today: DayKey): Profile {
-  if (p.defiPick?.day === today) return p;
-  return { ...p, defiPick: { day: today, table: dailyTable(today, openIsles(p.isl)) } };
+  let out = p;
+  for (const op of CURRICULUM[p.grade]) {
+    if (opProg(out, op).defiPick?.day === today) continue;
+    out = withOp(out, op, (o) => ({ ...o, defiPick: { day: today, series: dailySeries(today, openSeries(o.series, op)) } }));
+  }
+  return out;
 }
 
 /** À l'arrivée sur l'accueil : vérifie la série et prépare l'annonce éventuelle (bouée ou nouveau départ). */
@@ -90,4 +105,4 @@ export function enterProfile(p: Profile, today: DayKey): Profile {
   return { ...picked, streak, pendingStreak: event ?? picked.pendingStreak };
 }
 
-export const todayStats = (p: Profile, today: DayKey) => p.days[today] ?? { ms: 0, sessions: 0 };
+export const todayStats = (p: Profile, today: DayKey) => p.days[today] ?? { ms: 0, sessions: 0, ops: {} };

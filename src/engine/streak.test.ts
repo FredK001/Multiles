@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Streak } from '../store/schema';
 import { addDays, dayKey, dayNumber, weekday, weekOf, type DayKey } from './dates';
-import { dailyTable, defiDone } from './daily';
+import { dailySeries, defiBonus, defiDone } from './daily';
+import { opProg } from './progress';
 import { BUOY_EVERY, checkStreak, MAX_BUOYS, recordPlayedDay, weekView } from './streak';
 import { newKid, TODAY } from './test-helpers';
 import { withDefiPick } from './profile';
@@ -89,19 +90,38 @@ describe('Série de jours', () => {
 
 describe('Défi du jour', () => {
   it('table tirée de la date, parmi les îles ouvertes, stable dans la journée', () => {
-    const open = [1, 2, 5, 10] as const;
-    const t = dailyTable(TODAY, [...open]);
+    const open = ['mul-1', 'mul-2', 'mul-5', 'mul-10'] as const;
+    const t = dailySeries(TODAY, [...open]);
     expect(open).toContain(t);
-    expect(dailyTable(TODAY, [10, 5, 2, 1])).toBe(t);
-    const seen = new Set(Array.from({ length: 60 }, (_, i) => dailyTable(D(i), [...open])));
+    expect(dailySeries(TODAY, ['mul-10', 'mul-5', 'mul-2', 'mul-1'])).toBe(t);
+    const seen = new Set(Array.from({ length: 60 }, (_, i) => dailySeries(D(i), [...open])));
     expect(seen.size).toBe(4); // toutes les tables ouvertes finissent par sortir
+  });
+  it('même tirage qu\'avant la généralisation (tables rangées 1, 2, 5, 10)', () => {
+    // fnv1a("multiles:2026-10-02") % 4, indice dans [1, 2, 5, 10]
+    const legacy = (day: DayKey) => {
+      let h = 0x811c9dc5;
+      for (const c of `multiles:${day}`) h = Math.imul(h ^ c.charCodeAt(0), 0x01000193) >>> 0;
+      return [1, 2, 5, 10][h % 4];
+    };
+    for (let i = 0; i < 30; i++) expect(dailySeries(D(i), ['mul-10', 'mul-1', 'mul-5', 'mul-2'])).toBe(`mul-${legacy(D(i))}`);
+  });
+  it('bonus : 5 pièces pour les tables 1 et 10, 20 sinon (séries CP comprises)', () => {
+    expect([defiBonus('mul-1'), defiBonus('mul-10'), defiBonus('mul-7'), defiBonus('add-10'), defiBonus('sub-20')]).toEqual([5, 5, 20, 20, 20]);
   });
   it('mémorisée pour la journée même si une île s\'ouvre', () => {
     const p = withDefiPick(newKid(), TODAY);
-    const t = p.defiPick!.table;
-    const later = withDefiPick({ ...p, isl: { 1: { steps: 3, trophy: true, stepStars: [3, 3, 3] }, 2: { steps: 3, trophy: true, stepStars: [3, 3, 3] } } }, TODAY);
-    expect(later.defiPick!.table).toBe(t);
-    expect(withDefiPick(p, D(1)).defiPick!.day).toBe(D(1));
+    const t = opProg(p, 'mul').defiPick!.series;
+    const won = { steps: 3, trophy: true, stepStars: [3, 3, 3] as [number, number, number] };
+    const later = withDefiPick({ ...p, prog: { mul: { ...opProg(p, 'mul'), series: { 'mul-1': won, 'mul-2': won } } } }, TODAY);
+    expect(opProg(later, 'mul').defiPick!.series).toBe(t);
+    expect(withDefiPick(later, TODAY)).toBe(later); // rien à changer : même objet
+    expect(opProg(withDefiPick(p, D(1)), 'mul').defiPick!.day).toBe(D(1));
+  });
+  it('au CP, un défi par opération', () => {
+    const p = withDefiPick({ ...newKid(), grade: 'CP', op: 'add' }, TODAY);
+    expect(opProg(p, 'add').defiPick).toEqual({ day: TODAY, series: 'add-10' });
+    expect(opProg(p, 'sub').defiPick).toEqual({ day: TODAY, series: 'sub-10' });
   });
   it('réinitialisé à minuit local', () => {
     expect(defiDone(TODAY, TODAY)).toBe(true);

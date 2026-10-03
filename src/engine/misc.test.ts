@@ -3,13 +3,17 @@ import { SHOP } from '../content/shop';
 import { ofIsle } from '../content/isles';
 import { stickerName, stickerHow } from '../content/stickers';
 import { nb } from '../content/text';
+import { tipOf } from '../content/messages';
 import { frNum, gateQuestion, gateSolved, newGate } from './gate';
-import { gridCount, rowPct, tablesDone } from './mastery';
-import { buy, cleanName, freeColors, isWorn, randomizeAvatar, wear } from './profile';
+import { gridCount, rowPct, seriesDone, seriesPct, tablesDone } from './mastery';
+import { factsOf } from './series';
+import { factKey } from './keys';
+import { buy, cleanName, createProfile, defaultAvatar, freeColors, isWorn, randomizeAvatar, setGrade, wear } from './profile';
+import { opProg } from './progress';
 import { seeded } from './random';
 import { hardList, weekMinutes } from './stats';
 import { ActiveClock, Countdown, fmtTime } from './timer';
-import { newKid, TODAY } from './test-helpers';
+import { mulOf, newKid, TODAY } from './test-helpers';
 
 describe('Chrono', () => {
   it('compte à rebours, en pause pendant le feedback d\'erreur', () => {
@@ -65,8 +69,10 @@ describe('Verrou parent', () => {
 
 describe('Espace parent', () => {
   it('minutes par jour de la semaine en cours', () => {
-    const p = newKid({ days: { '2026-09-28': { ms: 12 * 60_000, sessions: 3 }, [TODAY]: { ms: 4.4 * 60_000, sessions: 1 } } });
+    const p = newKid({ days: { '2026-09-28': { ms: 12 * 60_000, sessions: 3, ops: { mul: { ms: 12 * 60_000, sessions: 3 } } }, [TODAY]: { ms: 4.4 * 60_000, sessions: 1, ops: { add: { ms: 4.4 * 60_000, sessions: 1 } } } } });
     expect(weekMinutes(p.days, TODAY)).toEqual([12, 0, 0, 0, 4, 0, 0]);
+    expect(weekMinutes(p.days, TODAY, 'mul')).toEqual([12, 0, 0, 0, 0, 0, 0]);
+    expect(weekMinutes(p.days, TODAY, 'add')).toEqual([0, 0, 0, 0, 4, 0, 0]);
   });
   it('tables maîtrisées et part par table', () => {
     const m = Array.from({ length: 10 }, (_, i) => `2x${i + 1}`) as `${number}x${number}`[];
@@ -75,9 +81,24 @@ describe('Espace parent', () => {
     expect(tablesDone(m)).toBe(1);
     expect(gridCount(m, ['2x7'])).toBe(17); // 10 + 9 symétriques - le piège 2×7 et sa symétrique
   });
+  it('part maîtrisée par série : identique à la part par table pour ×, symétrique pour +, pas pour −', () => {
+    const m = ['2x3', '7x2', '5x5', '9x9'] as `${number}x${number}`[];
+    for (let r = 1; r <= 10; r++) expect(seriesPct(m, `mul-${r}` as 'mul-1')).toBe(rowPct(m, r));
+    const all = factsOf('add-10').map((f) => factKey('add', f.a, f.b));
+    expect(seriesPct(all, 'add-10')).toBe(100);
+    expect(seriesDone(all, 'add')).toBe(1);
+    // 66 calculs : 3+4 compte aussi pour 4+3
+    expect(seriesPct(['3+4'], 'add-10')).toBe(Math.round((2 * 100) / 66));
+    expect(seriesPct(['9-2'], 'sub-10')).toBe(Math.round(100 / 66));
+    expect(seriesPct(['2-9'], 'sub-10')).toBe(0);
+  });
   it('multiplications difficiles triées par erreurs récentes', () => {
-    const p = newKid({ traps: ['4x7', '7x8'], trapLog: { '7x8': [TODAY, TODAY, TODAY] } });
-    expect(hardList(p, TODAY).map((h) => [h.key, h.errors])).toEqual([['7x8', 3], ['4x7', 1]]);
+    const p = newKid({}, { traps: ['4x7', '7x8'], trapLog: { '7x8': [TODAY, TODAY, TODAY] } });
+    expect(hardList(mulOf(p), TODAY).map((h) => [h.key, h.errors])).toEqual([['7x8', 3], ['4x7', 1]]);
+  });
+  it('soustractions difficiles : résultat calculé, 9-2 et 2-9 distincts', () => {
+    const h = hardList({ traps: ['13-5', '9+4'], trapLog: { '13-5': [TODAY, TODAY], '4+9': [TODAY] } }, TODAY);
+    expect(h.map((x) => [x.key, x.op, x.r, x.errors])).toEqual([['13-5', 'sub', 8, 2], ['9+4', 'add', 13, 1]]);
   });
 });
 
@@ -87,7 +108,22 @@ describe('Profil et boutique', () => {
   });
   it('nouveau profil : 50 pièces, 1 bouée, Plage en cours', () => {
     const p = newKid();
-    expect(p).toMatchObject({ coins: 50, level: 1, xp: 0, isle: 1, streak: { buoys: 1, current: 0 } });
+    expect(p).toMatchObject({ coins: 50, level: 1, xp: 0, grade: 'CM1', op: 'mul', autoSpeech: false, streak: { buoys: 1, current: 0 } });
+    expect(mulOf(p).current).toBe('mul-1');
+  });
+  it('nouveau profil de CP : addition en cours, lecture automatique', () => {
+    const p = createProfile({ name: 'tom', color: '#0D7A5F', av: defaultAvatar(), pepin: 'pousse', grade: 'CP' });
+    expect(p).toMatchObject({ name: 'Tom', grade: 'CP', op: 'add', autoSpeech: true, prog: {} });
+    expect(opProg(p).current).toBe('add-10');
+  });
+  it('changer de classe garde la progression de chaque opération', () => {
+    const p = newKid({}, { mastered: ['7x8'] });
+    const cp = setGrade(p, 'CP');
+    expect(cp).toMatchObject({ grade: 'CP', op: 'add' });
+    const back = setGrade(cp, 'CM1');
+    expect(back.op).toBe('mul');
+    expect(mulOf(back).mastered).toEqual(['7x8']);
+    expect(setGrade(back, 'CM1')).toBe(back);
   });
   it('couleurs de profil libres', () => {
     const a = newKid({ color: '#C8371D' }), b = newKid({ color: '#0D7A5F' });
@@ -138,9 +174,32 @@ describe('Textes', () => {
   });
   it('compléments d\'île et noms de stickers', () => {
     expect([1, 6, 7, 8, 10].map((n) => ofIsle(n as 1))).toEqual(['de la Plage', 'Bonbon', 'du Volcan', 'des Collines du vent', "de l'Espace"]);
-    expect(stickerName('7-pepin')).toBe('Pépin au Volcan');
-    expect(stickerName('10-pepin')).toBe("Pépin dans l'Espace");
-    expect(stickerName('3-gardien')).toBe('Pommax le gardien');
-    expect(stickerHow('1-pepin')).toBe("Fais 9 étoiles sur l'île de la Plage.");
+    expect(stickerName('mul-7-pepin')).toBe('Pépin au Volcan');
+    expect(stickerName('mul-10-pepin')).toBe("Pépin dans l'Espace");
+    expect(stickerName('mul-3-gardien')).toBe('Pommax le gardien');
+    expect(stickerHow('mul-1-pepin')).toBe("Fais 9 étoiles sur l'île de la Plage.");
+  });
+});
+
+describe('Astuces du CP', () => {
+  it('pour chaque calcul : jamais de nombre négatif, le bon résultat est donné', () => {
+    for (const series of ['add-10', 'add-20', 'sub-10', 'sub-20'] as const)
+      for (const f of factsOf(series)) {
+        const op = series.startsWith('add') ? 'add' : 'sub', p = op === 'add' ? f.a + f.b : f.a - f.b;
+        const t = tipOf({ op, a: f.a, b: f.b });
+        expect(t).not.toMatch(/(^|[^\d])-\d|−\s*-/);
+        expect(t).toMatch(new RegExp(`\\b${p}\\b`));
+        // Chaque nombre écrit dans l'astuce est entre 0 et 20.
+        for (const n of t.match(/\d+/g) ?? []) expect(Number(n)).toBeLessThanOrEqual(20);
+      }
+  });
+  it('quelques astuces', () => {
+    expect(tipOf({ op: 'add', a: 8, b: 5 })).toBe('Passe par 10 : 8 + 2 = 10, puis 10 + 3 = 13.');
+    expect(tipOf({ op: 'add', a: 4, b: 4 })).toBe("C'est un double : 4 + 4 = 8.");
+    expect(tipOf({ op: 'add', a: 3, b: 7 })).toBe('Ce sont des amis de 10 : 3 et 7 font 10.');
+    expect(tipOf({ op: 'sub', a: 13, b: 5 })).toBe("Descends jusqu'à 10 : 13 − 3 = 10, puis 10 − 2 = 8.");
+    expect(tipOf({ op: 'sub', a: 20, b: 5 })).toBe("20, c'est 10 et encore 10 : 10 − 5 = 5, puis 10 + 5 = 15.");
+    expect(tipOf({ op: 'sub', a: 8, b: 3 })).toBe('Recule de 3 à partir de 8 : 7, 6, 5.');
+    expect(tipOf({ op: 'mul', a: 7, b: 8 })).toBe('Retiens la suite 5, 6, 7, 8 : 56 = 7 × 8.');
   });
 });

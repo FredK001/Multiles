@@ -30,6 +30,8 @@ for (const HOST of HOSTS) test(`100 % hors ligne après le premier chargement, s
   await page.getByRole('button', { name: 'Nouveau joueur' }).click();
   await page.getByLabel('Ton prénom').fill('Lou');
   await page.getByRole('button', { name: 'Suivant' }).click();
+  await page.getByRole('group', { name: 'Classe' }).getByRole('button', { name: /^CM1 / }).click();
+  await page.getByRole('button', { name: 'Suivant' }).click();
   await page.getByRole('button', { name: 'Suivant' }).click();
   await page.locator('.pep-card').first().click();
   await page.getByRole('button', { name: /C'est parti/ }).click();

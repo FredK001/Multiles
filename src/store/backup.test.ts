@@ -4,7 +4,7 @@ import { BackupError, makeBackup, readBackup } from './backup';
 import { FutureVersionError } from './migrations';
 import { emptyData } from './schema';
 
-const data = () => ({ ...emptyData(), profiles: [{ ...createProfile({ name: 'Nina', color: '#0D7A5F', av: defaultAvatar(), pepin: 'braise' }), stars: 12, coins: 40 }] });
+const data = () => ({ ...emptyData(), profiles: [{ ...createProfile({ name: 'Nina', color: '#0D7A5F', av: defaultAvatar(), pepin: 'braise' }), level: 4, coins: 40 }] });
 
 describe('Sauvegarde', () => {
   it('aller-retour : la progression revient à l\'identique', () => {

@@ -19,9 +19,9 @@ export function decorSvg(kind: DecorKind, fort: string): string {
   return '';
 }
 
-/** Île vue de la carte (180 × 130), grisée si fermée. */
-export function islandArt(n: IsleId, locked: boolean): string {
-  const I = ISLES[n], f = locked ? '#9AA2B6' : I.fort, d = mix(f, '#000000', 0.25), l = mix(f, '#FFFFFF', 0.5), sand = locked ? '#D7DBE4' : '#F3DDA6', g = locked ? '#B9BFCC' : null;
+/** Île vue de la carte (180 × 130), grisée si fermée. `fort` recolore l'île (îles du CP). */
+export function islandArt(n: IsleId, locked: boolean, fort: string = ISLES[n].fort): string {
+  const f = locked ? '#9AA2B6' : fort, d = mix(f, '#000000', 0.25), l = mix(f, '#FFFFFF', 0.5), sand = locked ? '#D7DBE4' : '#F3DDA6', g = locked ? '#B9BFCC' : null;
   const C = (c: string) => (locked ? g! : c), o = `stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"`;
   let m = '';
   if (n === 1) m = `<path d="M98 82 Q104 58 94 34" fill="none" stroke="${INK}" stroke-width="8" stroke-linecap="round"/><path d="M98 82 Q104 58 94 34" fill="none" stroke="${C('#B07A3A')}" stroke-width="4" stroke-linecap="round"/>${[-40, 0, 35, 70].map((a) => `<ellipse cx="94" cy="34" rx="22" ry="7" transform="rotate(${a} 94 34) translate(16 0)" fill="${C('#3F9A3A')}" ${o}/>`).join('')}<circle cx="128" cy="80" r="7" fill="${C('#FFC93C')}" ${o}/>`;
@@ -41,9 +41,9 @@ export function islandArt(n: IsleId, locked: boolean): string {
     ${m}</svg>`;
 }
 
-/** Gardien de l'île (carré 120), grisé si pas encore accessible. */
-export function bossSvg(n: IsleId, size: number, locked: boolean): string {
-  const f = locked ? '#9AA2B6' : ISLES[n].fort, d = mix(f, '#000000', 0.3), l = mix(f, '#FFFFFF', 0.55);
+/** Gardien de l'île (carré 120), grisé si pas encore accessible. `fort` le recolore (îles du CP). */
+export function bossSvg(n: IsleId, size: number, locked: boolean, fort: string = ISLES[n].fort): string {
+  const f = locked ? '#9AA2B6' : fort, d = mix(f, '#000000', 0.3), l = mix(f, '#FFFFFF', 0.55);
   return `<svg width="${size}" height="${size}" viewBox="0 0 120 120" aria-hidden="true">
   <ellipse cx="60" cy="112" rx="40" ry="5" fill="${INK}" opacity=".15"/>
   <path d="M30 34 L24 12 L44 26Z M90 34 L96 12 L76 26Z" fill="${d}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>

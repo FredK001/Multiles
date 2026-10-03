@@ -1,22 +1,33 @@
 import type { Page } from '@playwright/test';
 
-/** Répond à la question affichée en lisant son énoncé (aria-label de l'expression). */
+const OPS: Record<string, (a: number, b: number) => number> = { fois: (a, b) => a * b, plus: (a, b) => a + b, moins: (a, b) => a - b };
+const W = '(fois|plus|moins)';
+
+/** Répond à la question affichée en lisant son énoncé (aria-label de l'expression) : ×, + ou −. */
 export async function answer(page: Page, right = true) {
   await page.locator('.expr[aria-label]').waitFor();
   const label = (await page.locator('.expr').getAttribute('aria-label'))!;
   if (await page.locator('.pad').count()) {
-    const m = label.match(/^(\d+) fois combien font (\d+)/);
-    let v = m ? Number(m[2]) / Number(m[1]) : (() => { const [, a, b] = label.match(/(\d+) fois (\d+)/)!; return Number(a) * Number(b); })();
+    // Nombre manquant : « a op combien font r ? » → b tel que a op b = r.
+    const m = label.match(new RegExp(`^(\\d+) ${W} combien font (\\d+)`));
+    let v: number;
+    if (m) {
+      const a = Number(m[1]), r = Number(m[3]);
+      v = m[2] === 'fois' ? r / a : m[2] === 'plus' ? r - a : a - r;
+    } else {
+      const [, a, w, b] = label.match(new RegExp(`(\\d+) ${W} (\\d+)`))!;
+      v = OPS[w!]!(Number(a), Number(b));
+    }
     if (!right) v += 1;
     for (const d of String(v)) await page.locator('.pad .key', { hasText: new RegExp(`^${d}$`) }).click();
     await page.getByRole('button', { name: 'Valider' }).click();
   } else if (await page.locator('.vf').count()) {
-    const [, a, b, s] = label.match(/(\d+) fois (\d+) égale (\d+)/)!;
-    const truth = Number(a) * Number(b) === Number(s);
+    const [, a, w, b, s] = label.match(new RegExp(`(\\d+) ${W} (\\d+) égale (\\d+)`))!;
+    const truth = OPS[w!]!(Number(a), Number(b)) === Number(s);
     await page.locator('.vf .choice', { hasText: truth === right ? 'Vrai' : 'Faux' }).click();
   } else {
-    const [, a, b] = label.match(/(\d+) fois (\d+)/)!;
-    const p = Number(a) * Number(b);
+    const [, a, w, b] = label.match(new RegExp(`(\\d+) ${W} (\\d+)`))!;
+    const p = OPS[w!]!(Number(a), Number(b));
     const target = right ? page.locator('.choices .choice', { hasText: new RegExp(`^${p}$`) }) : page.locator('.choices .choice').filter({ hasNotText: new RegExp(`^${p}$`) }).first();
     await target.click();
   }
@@ -60,8 +71,11 @@ export const kid = (over: Record<string, unknown> = {}) => ({
 });
 
 /** Écrit des profils dans l'IndexedDB du build de production puis recharge. */
-export async function seedProd(page: Page, profiles: unknown[], settings = { sound: true, bossTime: 2 }) {
+/** `version` : 1 par défaut (les profils de `kid` passent par toutes les migrations), 3 pour des profils déjà au format CP. */
+export async function seedProd(page: Page, profiles: unknown[], settings = { sound: true, bossTime: 2 }, version = 1) {
   await page.goto(PROD + '/');
+  // L'écran s'affiche après la première sauvegarde de l'app : écrire avant, c'était risquer d'être écrasé.
+  await page.locator('[data-screen]').first().waitFor();
   await page.evaluate((d) => new Promise<void>((res, rej) => {
     const r = indexedDB.open('multiles');
     r.onupgradeneeded = () => r.result.createObjectStore('kv');
@@ -71,6 +85,6 @@ export async function seedProd(page: Page, profiles: unknown[], settings = { sou
       tx.objectStore('kv').put(d, 'data');
       tx.oncomplete = () => { r.result.close(); res(); };
     };
-  }), { version: 1, profiles, settings, persistAsked: true });
+  }), { version, profiles, settings, persistAsked: true });
   await page.reload();
 }

@@ -5,6 +5,7 @@ import { speak } from '../audio';
 import { useApp, useBack } from '../app/context';
 import { BackChip, BtnSay, Svg } from '../app/ui';
 import { VARIANTS, VARIANT_IDS, type PepinVariant } from '../content/pepins';
+import { CP_ZONE, GRADE_DESC, GRADES, type Grade } from '../content/series';
 import { nb } from '../content/text';
 import { cleanName, createProfile, defaultAvatar, freeColors } from '../engine/profile';
 import { AvatarEditor, type Draft } from './AvatarEditor';
@@ -14,6 +15,7 @@ export function Create() {
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [draft, setDraft] = useState<Draft>(() => ({ name: '', color: freeColors(data.profiles)[0] ?? '#C8371D', av: defaultAvatar() }));
+  const [grade, setGrade] = useState<Grade | null>(null);
   const [pepin, setPepin] = useState<PepinVariant | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const back = route.name === 'create' ? () => (step === 1 ? go({ name: 'who' }) : setStep(step - 1)) : () => {};
@@ -30,14 +32,14 @@ export function Create() {
   };
 
   const done = async () => {
-    if (!pepin) return;
-    const p = createProfile({ name: draft.name, color: draft.color, av: draft.av, pepin });
+    if (!pepin || !grade) return;
+    const p = createProfile({ name: draft.name, color: draft.color, av: draft.av, pepin, grade });
     await store.addProfile(p);
     setFreshId(p.id);
     go({ name: 'who' });
   };
 
-  const labels = ['Prénom', 'Avatar', 'Pépin'];
+  const labels = ['Prénom', 'Classe', 'Avatar', 'Pépin'];
   return (
     <section class="screen" data-screen="create" aria-label="Nouveau joueur">
       <div class="topbar">
@@ -77,12 +79,46 @@ export function Create() {
 
       {step === 2 && (
         <div class="pane">
-          <AvatarEditor draft={draft} onChange={setDraft} owner={null} />
-          <button class="btn-primary" onClick={() => setStep(3)}>Suivant</button>
+          <div class="buddy" style={{ gridTemplateColumns: '1fr 56px' }}>
+            <div>
+              <h2 class="pane-title">{nb('Tu es en quelle classe ?')}</h2>
+              <p style={{ fontSize: '16px', color: 'var(--ink-2)', marginTop: '4px' }}>Demande à un grand si tu ne sais pas.</p>
+            </div>
+            <BtnSay text="Tu es en quelle classe ? Au CP, les additions et les soustractions. Au CM1, les tables de multiplication." />
+          </div>
+          <div class="pep-list" role="group" aria-label="Classe">
+            {GRADES.map((g) => {
+              const on = grade === g;
+              return (
+                <button
+                  key={g}
+                  class="pep-card"
+                  aria-pressed={on}
+                  onClick={() => {
+                    setGrade(g);
+                    speak(`${g}. ${GRADE_DESC[g]}.`);
+                  }}
+                >
+                  <span class="gsign" aria-hidden="true" style={{ background: g === 'CP' ? CP_ZONE.fort : 'var(--ballon)' }}>{g === 'CP' ? '+−' : '×'}</span>
+                  <span><b>{g}</b><span class="tr">{GRADE_DESC[g]}</span></span>
+                  <span class="chk">{on && <Svg html={icoCheck} />}</span>
+                </button>
+              );
+            })}
+          </div>
+          <p class="name-help">{nb('Le parent pourra changer la classe plus tard.')}</p>
+          <button class="btn-primary" aria-disabled={grade ? 'false' : 'true'} style={{ marginTop: 'auto' }} onClick={() => grade && setStep(3)}>Suivant</button>
         </div>
       )}
 
       {step === 3 && (
+        <div class="pane">
+          <AvatarEditor draft={draft} onChange={setDraft} owner={null} />
+          <button class="btn-primary" onClick={() => setStep(4)}>Suivant</button>
+        </div>
+      )}
+
+      {step === 4 && (
         <div class="pane">
           <div class="buddy" style={{ gridTemplateColumns: '1fr 56px' }}>
             <div>

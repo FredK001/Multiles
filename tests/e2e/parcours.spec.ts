@@ -5,10 +5,13 @@ import { answer, kid, next, PROD, seedProd, solveGate as solve } from '../helper
 
 
 
-async function createKid(page: Page, name: string, pepin = 0) {
+async function createKid(page: Page, name: string, pepin = 0, grade: 'CP' | 'CM1' = 'CM1') {
   await page.getByRole('button', { name: 'Nouveau joueur' }).click();
   await expect(page.getByRole('button', { name: 'Suivant' })).toHaveAttribute('aria-disabled', 'true');
   await page.getByLabel('Ton prénom').fill(name);
+  await page.getByRole('button', { name: 'Suivant' }).click();
+  await expect(page.getByRole('button', { name: 'Suivant' })).toHaveAttribute('aria-disabled', 'true');
+  await page.getByRole('group', { name: 'Classe' }).getByRole('button', { name: new RegExp(`^${grade} `) }).click();
   await page.getByRole('button', { name: 'Suivant' }).click();
   await page.locator('.ed-tabs .tab', { hasText: 'Coiffure' }).click();
   await page.getByRole('button', { name: 'Bouclé' }).click();

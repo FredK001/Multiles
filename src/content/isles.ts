@@ -1,3 +1,5 @@
+import { CP_ZONE, type SeriesId } from './series';
+
 export type IsleId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type DecorKind =
   | 'plage' | 'jungle' | 'verger' | 'desert' | 'glace'
@@ -49,4 +51,38 @@ export function ofIsle(n: IsleId): string {
   if (a.startsWith('le ')) return 'du ' + a.slice(3);
   if (a.startsWith('les ')) return 'des ' + a.slice(4);
   return 'de ' + a;
+}
+
+/* ---- Habillage par série : les tables reprennent leur île, le CP réutilise 4 motifs en Mandarine. ---- */
+
+export interface IsleLook {
+  name: string;
+  fort: string;
+  clair: string;
+  decor: DecorKind;
+  /** Île dont on reprend le dessin (motif et gardien). */
+  motif: IsleId;
+  boss: string;
+  /** Nom du sticker Lieu. */
+  sticker: string;
+  /** « de la Plage », « du Lagon »… */
+  of: string;
+}
+
+type CpSeries = 'add-10' | 'add-20' | 'sub-10' | 'sub-20';
+
+const CP_ISLES: Record<CpSeries, Omit<IsleLook, 'fort' | 'clair'>> = {
+  'add-10': { name: 'Lagon', decor: 'plage', motif: 1, boss: 'Plouf', sticker: 'Palmier dansant', of: 'du Lagon' },
+  'add-20': { name: 'Jardin', decor: 'verger', motif: 3, boss: 'Radix', sticker: 'Arbre à pommes', of: 'du Jardin' },
+  'sub-10': { name: 'Banquise', decor: 'glace', motif: 5, boss: 'Frimas', sticker: 'Iceberg malin', of: 'de la Banquise' },
+  'sub-20': { name: 'Ciel', decor: 'nuages', motif: 9, boss: 'Zéphyr', sticker: 'Ballon volant', of: 'du Ciel' },
+};
+
+/** Habillage de l'île d'une série. */
+export function lookOf(id: SeriesId): IsleLook {
+  if (id.startsWith('mul-')) {
+    const n = Number(id.slice(4)) as IsleId, I = ISLES[n];
+    return { name: I.name, fort: I.fort, clair: I.clair, decor: I.decor, motif: n, boss: BOSS[n], sticker: STICKER_NAMES[n], of: ofIsle(n) };
+  }
+  return { ...CP_ISLES[id as CpSeries], fort: CP_ZONE.fort, clair: CP_ZONE.clair };
 }

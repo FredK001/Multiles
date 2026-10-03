@@ -1,14 +1,16 @@
 /* Fin de session : étoiles, pièces, XP, maîtrise, pièges, trophée, stickers, records, défi, série. */
-import type { IsleId } from '../content/isles';
-import type { Profile } from '../store/schema';
+import { SERIES, type Op, type SeriesId } from '../content/series';
+import { stickerKey } from '../content/stickers';
+import type { OpProgress, Profile } from '../store/schema';
 import { defiBonus } from './daily';
 import type { DayKey } from './dates';
-import { hasKey, type MulKey } from './keys';
+import { hasKey, type FactKey } from './keys';
 import { addXp, xpGain } from './level';
 import { freshMastered, updateTraps } from './mastery';
 import { defaultRng, type Rng } from './random';
 import type { Session, SessionMode } from './session';
 import { checkStreak, recordPlayedDay } from './streak';
+import { emptyOp } from './progress';
 import { emptyIsle, isleStars } from './unlock';
 
 /** Pièces : +1 par bonne réponse (créditée en direct), +2 par étoile en fin de session. */
@@ -23,7 +25,7 @@ export const starsFor = (first: number): number => (first >= 9 ? 3 : first >= 7 
 
 export interface EndSummary {
   mode: SessionMode;
-  isle: IsleId;
+  series: SeriesId;
   label: string;
   stars: number;
   /** Bonnes réponses du premier coup (classique) ou score (chrono). */
@@ -31,7 +33,7 @@ export interface EndSummary {
   starGain: number;
   coinsGain: number;
   /** Nouvelles cases de la grille. */
-  fresh: MulKey[];
+  fresh: FactKey[];
   xp0: number;
   levelUp: boolean;
   evolved: boolean;
@@ -62,12 +64,16 @@ export function creditCoin(p: Profile): Profile {
   return { ...p, coins: p.coins + 1 };
 }
 
-/** Temps de jeu, sessions et série du jour. */
-function recordDay(p: Profile, today: DayKey, activeMs: number, finished: boolean): boolean {
-  const d = (p.days[today] ??= { ms: 0, sessions: 0 });
-  d.ms += Math.max(0, Math.round(activeMs));
+/** Temps de jeu, sessions (au total et par opération) et série du jour. */
+function recordDay(p: Profile, op: Op, today: DayKey, activeMs: number, finished: boolean): boolean {
+  const d = (p.days[today] ??= { ms: 0, sessions: 0, ops: {} });
+  const o = (d.ops[op] ??= { ms: 0, sessions: 0 });
+  const ms = Math.max(0, Math.round(activeMs));
+  d.ms += ms;
+  o.ms += ms;
   if (!finished) return false;
   d.sessions++;
+  o.sessions++;
   // L'app a pu rester ouverte plusieurs jours sans repasser par l'accueil : bouées d'abord.
   const c = checkStreak(p.streak, today);
   if (c.event) p.pendingStreak = c.event;
@@ -77,13 +83,19 @@ function recordDay(p: Profile, today: DayKey, activeMs: number, finished: boolea
 }
 
 /** L'enfant quitte en cours de session : on garde les pièces (déjà créditées) et le temps joué. */
-export function recordQuit(p0: Profile, ctx: FinishContext): Profile {
+export function recordQuit(p0: Profile, op: Op, ctx: FinishContext): Profile {
   const p = structuredClone(p0);
-  recordDay(p, ctx.today, ctx.activeMs ?? 0, false);
+  recordDay(p, op, ctx.today, ctx.activeMs ?? 0, false);
   return p;
 }
 
-function applyMasteryAndTraps(p: Profile, s: Session, today: DayKey): MulKey[] {
+/** Progression de l'opération de la série jouée (créée au besoin), dans la copie `p`. */
+function progressOf(p: Profile, id: SeriesId): OpProgress {
+  const op = SERIES[id].op;
+  return (p.prog[op] ??= emptyOp(op));
+}
+
+function applyMasteryAndTraps(p: OpProgress, s: Session, today: DayKey): FactKey[] {
   // Une multiplication ratée pendant la session n'est pas maîtrisée, même réussie ailleurs du premier coup.
   const fresh = freshMastered(p.mastered, s.firstOK.filter((k) => !hasKey(s.missed, k)));
   p.mastered.push(...fresh);
@@ -99,9 +111,9 @@ export function finishSession(p0: Profile, s: Session, ctx: FinishContext): { pr
 }
 
 function finishClassic(p0: Profile, s: Session, ctx: FinishContext): { profile: Profile; end: EndSummary } {
-  const p = structuredClone(p0), rng = ctx.rng ?? defaultRng, cfg = s.cfg, n = cfg.isle;
+  const p = structuredClone(p0), rng = ctx.rng ?? defaultRng, cfg = s.cfg, id = cfg.series, o = progressOf(p, id);
   const first = s.firstOK.length, stars = starsFor(first);
-  const st = (p.isl[n] ??= emptyIsle());
+  const st = (o.series[id] ??= emptyIsle());
   let starGain = 0, stepDone = false;
   if (cfg.mode === 'step' && cfg.stepIdx != null && cfg.stepIdx < 3) {
     const i = cfg.stepIdx, prev = st.stepStars[i] ?? 0;
@@ -113,62 +125,61 @@ function finishClassic(p0: Profile, s: Session, ctx: FinishContext): { profile: 
     starGain = Math.max(0, stars - prev);
     st.stepStars[i] = Math.max(prev, stars);
   }
-  if (cfg.mode === 'step' || cfg.mode === 'boss') p.isle = n;
+  if (cfg.mode === 'step' || cfg.mode === 'boss') o.current = id;
   const trophy = cfg.mode === 'boss' && first >= BOSS_MIN_FIRST && !st.trophy && !s.timeUp;
   if (trophy) st.trophy = true;
-  p.stars += starGain;
   const bonus = stars * COINS_PER_STAR;
   p.coins += bonus;
-  const fresh = applyMasteryAndTraps(p, s, ctx.today);
+  const fresh = applyMasteryAndTraps(o, s, ctx.today);
   const xp0 = p.xp, lv = addXp(p.level, p.xp, xpGain(stars, false));
   p.level = lv.level;
   p.xp = lv.xp;
   // Stickers : Gardien en le battant, Lieu 1 fois sur 2 à 3 étoiles, Pépin à 9 étoiles sur l'île.
   const stickers: string[] = [];
   const add = (k: string, announce: boolean) => {
-    if (p.stickers.includes(k)) return;
-    p.stickers.push(k);
+    if (o.stickers.includes(k)) return;
+    o.stickers.push(k);
     if (announce) stickers.push(k);
   };
-  if (trophy) add(`${n}-gardien`, false);
-  if (stars === 3 && !p.stickers.includes(`${n}-lieu`) && rng() < LIEU_CHANCE) add(`${n}-lieu`, true);
-  if (isleStars(st) >= 9) add(`${n}-pepin`, true);
-  const buoyEarned = recordDay(p, ctx.today, ctx.activeMs ?? 0, true);
+  if (trophy) add(stickerKey(id, 'gardien'), false);
+  if (stars === 3 && !o.stickers.includes(stickerKey(id, 'lieu')) && rng() < LIEU_CHANCE) add(stickerKey(id, 'lieu'), true);
+  if (isleStars(st) >= 9) add(stickerKey(id, 'pepin'), true);
+  const buoyEarned = recordDay(p, SERIES[id].op, ctx.today, ctx.activeMs ?? 0, true);
   return {
     profile: p,
     end: {
-      mode: cfg.mode, isle: n, label: cfg.label, stars, first, starGain, coinsGain: s.good + bonus, fresh,
+      mode: cfg.mode, series: id, label: cfg.label, stars, first, starGain, coinsGain: s.good + bonus, fresh,
       xp0, levelUp: lv.levelUp, evolved: lv.evolved, stickers, trophy, stepDone, timedOut: s.timeUp, buoyEarned,
     },
   };
 }
 
 function finishTimed(p0: Profile, s: Session, ctx: FinishContext): { profile: Profile; end: EndSummary } {
-  const p = structuredClone(p0), cfg = s.cfg, n = cfg.isle, score = s.good, target = cfg.target ?? 0;
-  const rec = p.records[n] ?? 0;
+  const p = structuredClone(p0), cfg = s.cfg, id = cfg.series, o = progressOf(p, id), score = s.good, target = cfg.target ?? 0;
+  const rec = o.records[id] ?? 0;
   let stars: number, newRec = false, success = false, bonus = 0;
   if (cfg.mode === 'chrono') {
     newRec = score > rec;
-    if (newRec) p.records[n] = score;
+    if (newRec) o.records[id] = score;
     stars = newRec ? 3 : score > 0 && score >= rec * 0.8 ? 2 : 1;
   } else {
     success = score >= target;
-    if (success && p.defiDay !== ctx.today) {
-      p.defiDay = ctx.today;
-      bonus = defiBonus(cfg.table);
+    if (success && o.defiDay !== ctx.today) {
+      o.defiDay = ctx.today;
+      bonus = defiBonus(id);
     }
     stars = success ? 3 : score >= target * 0.6 ? 2 : 1;
   }
   p.coins += bonus;
-  const fresh = applyMasteryAndTraps(p, s, ctx.today);
+  const fresh = applyMasteryAndTraps(o, s, ctx.today);
   const xp0 = p.xp, lv = addXp(p.level, p.xp, xpGain(stars, true));
   p.level = lv.level;
   p.xp = lv.xp;
-  const buoyEarned = recordDay(p, ctx.today, ctx.activeMs ?? 0, true);
+  const buoyEarned = recordDay(p, SERIES[id].op, ctx.today, ctx.activeMs ?? 0, true);
   return {
     profile: p,
     end: {
-      mode: cfg.mode, isle: n, label: cfg.label, stars, first: score, starGain: 0, coinsGain: score + bonus, fresh,
+      mode: cfg.mode, series: id, label: cfg.label, stars, first: score, starGain: 0, coinsGain: score + bonus, fresh,
       xp0, levelUp: lv.levelUp, evolved: lv.evolved, stickers: [], trophy: false, stepDone: false, timedOut: s.timeUp,
       buoyEarned, score, target, rec, newRec, success, bonus,
     },

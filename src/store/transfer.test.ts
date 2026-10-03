@@ -6,7 +6,7 @@ import { emptyData } from './schema';
 import { forgetTransfer, receiveTransfer, sendTransfer, TransferError } from './transfer';
 import { CODE_ALPHABET, formatCode, isValidCode, newCode } from './transfer-shared';
 
-const data = () => ({ ...emptyData(), profiles: [{ ...createProfile({ name: 'Nina', color: '#0D7A5F', av: defaultAvatar(), pepin: 'braise' }), stars: 12 }] });
+const data = () => ({ ...emptyData(), profiles: [{ ...createProfile({ name: 'Nina', color: '#0D7A5F', av: defaultAvatar(), pepin: 'braise' }), level: 4 }] });
 
 /** fetch branché directement sur la fonction, avec son stockage en mémoire. */
 const fakeServer = () => {

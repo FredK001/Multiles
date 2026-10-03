@@ -1,8 +1,10 @@
 /* Composition des sessions : étape (avec répétition intelligente), gardien, pièges, chrono. */
 import { addDays, dayNumber, type DayKey } from './dates';
-import { hasKey, mulKey, normKey, parseKey } from './keys';
-import { CHRONO_ORDER, FORMAT_ORDER, makeQ, type Question } from './questions';
+import { SERIES, type SeriesId } from '../content/series';
+import { canonKey, factKey, hasKey, mulKey, parseFact, parseKey } from './keys';
+import { CHRONO_ORDER, FORMAT_ORDER, generateQuestion, makeQ, type Question } from './questions';
 import { defaultRng, shuffle, weightedSample, type Rng } from './random';
+import { drawFact, drawFacts, factsOf, seriesForFact, type Fact } from './series';
 import { ALL_MULTIPLIERS, RANGES } from './unlock';
 
 export const SESSION_LENGTH = 10;
@@ -11,10 +13,10 @@ export const MAX_TRAP_EXTRAS = 3;
 /** Fenêtre des « erreurs récentes » (jours). */
 export const RECENT_DAYS = 14;
 
-/** Erreurs d'une multiplication dans les RECENT_DAYS derniers jours (aujourd'hui compris). */
-export function recentErrors(log: Record<string, readonly string[]>, a: number, b: number, today: DayKey): number {
+/** Erreurs d'un calcul dans les RECENT_DAYS derniers jours (aujourd'hui compris). */
+export function recentErrors(log: Record<string, readonly string[]>, key: string, today: DayKey): number {
   const from = dayNumber(addDays(today, -(RECENT_DAYS - 1)));
-  return (log[normKey(a, b)] ?? []).filter((d) => dayNumber(d) >= from).length;
+  return (log[canonKey(key)] ?? []).filter((d) => dayNumber(d) >= from).length;
 }
 
 /** Multiplicateurs de `table` qui sont des pièges, limités à `range` (null = toute la table). */
@@ -90,7 +92,7 @@ export function stepMultipliers({ table, stepIdx, traps, trapLog, mastered, toda
   }
   const trapMs = trapMultipliers(traps, table, range);
   const isTrap = (m: number) => trapMs.includes(m);
-  const drawn = weightedSample(trapMs, (m) => 1 + recentErrors(trapLog, table, m, today), MAX_TRAP_EXTRAS, rng);
+  const drawn = weightedSample(trapMs, (m) => 1 + recentErrors(trapLog, mulKey(table, m), today), MAX_TRAP_EXTRAS, rng);
   const extras: number[] = [];
   for (const t of drawn) {
     // Donneur : un doublon d'une multiplication non piège (étapes 1-2),
@@ -129,19 +131,73 @@ export function buildBossPlan(table: number, rng: Rng = defaultRng): Question[] 
   return bs.map((b, i) => makeQ(table, b, FORMAT_ORDER[i % 4]!, rng));
 }
 
-/** Session « Pièges » lancée depuis la grille : les pièges en boucle sur 10 questions. */
+/** Session « Pièges » lancée depuis la grille : les pièges (d'une même opération) en boucle sur 10 questions. */
 export function buildTrapsPlan(traps: readonly string[], rng: Rng = defaultRng): Question[] {
-  const pairs = traps.map(parseKey);
-  if (!pairs.length) return [];
-  // Ordre anti-répétition : jamais deux fois la même multiplication de suite (sauf avec un seul piège).
-  const idx = arrange(Array.from({ length: SESSION_LENGTH }, (_, i) => i % pairs.length), () => false, rng);
-  return idx.map((j, i) => makeQ(pairs[j]![0], pairs[j]![1], FORMAT_ORDER[i % 4]!, rng));
+  const facts = traps.flatMap((k) => {
+    const f = parseFact(k), s = f && seriesForFact(f.op, f);
+    return f && s ? [{ series: s, fact: { a: f.a, b: f.b } }] : [];
+  });
+  if (!facts.length) return [];
+  // Ordre anti-répétition : jamais deux fois le même calcul de suite (sauf avec un seul piège).
+  const idx = arrange(Array.from({ length: SESSION_LENGTH }, (_, i) => i % facts.length), () => false, rng);
+  return idx.map((j, i) => generateQuestion({ ...facts[j]!, fmt: FORMAT_ORDER[i % 4]!, rng }));
 }
 
-/** Question suivante en mode chrono : jamais deux fois le même multiplicateur de suite. */
-export function nextTimedQuestion(table: number, prev: Question | null, done: number, rng: Rng = defaultRng): Question {
-  let b: number;
-  do b = 1 + Math.floor(rng() * 10);
-  while (prev && b === prev.b && table === prev.a);
-  return makeQ(table, b, CHRONO_ORDER[done % 5]!, rng);
+/* ---- Toutes séries ---- */
+
+export interface SeriesPlanInput extends Omit<StepPlanInput, 'table'> {
+  series: SeriesId;
+}
+
+/** Session d'étape d'une série : les tables gardent leur composition historique, les plages (CP) tirent dans l'étape. */
+export function seriesStepPlan(input: SeriesPlanInput): Question[] {
+  const s = SERIES[input.series];
+  if (s.spec.kind === 'table') return buildStepPlan({ ...input, table: s.spec.n });
+  return buildRangeStepPlan(input);
+}
+
+/** Gardien d'une série : toute la série, 10 questions. */
+export function seriesBossPlan(series: SeriesId, rng: Rng = defaultRng): Question[] {
+  const s = SERIES[series];
+  if (s.spec.kind === 'table') return buildBossPlan(s.spec.n, rng);
+  return drawFacts(factsOf(s), SESSION_LENGTH, rng, (f) => canonKey(factKey(s.op, f.a, f.b))).map((fact, i) => generateQuestion({ series: s, fact, fmt: FORMAT_ORDER[i % 4]!, rng }));
+}
+
+/** Étape d'une plage : 10 calculs différents de l'étape, puis la répétition intelligente (comme les tables) :
+    jusqu'à 3 apparitions en plus pour les pièges de l'étape, à la place de calculs non pièges, déjà maîtrisés d'abord. */
+export function buildRangeStepPlan({ series, stepIdx, traps, trapLog, mastered, today, rng = defaultRng }: SeriesPlanInput): Question[] {
+  const s = SERIES[series], key = (f: Fact) => factKey(s.op, f.a, f.b), isTrap = (f: Fact) => hasKey(traps, key(f));
+  const canon = (f: Fact) => canonKey(key(f));
+  const pool = factsOf(s, stepIdx);
+  const chosen = drawFacts(pool, SESSION_LENGTH, rng, canon);
+  // Pièges de l'étape, une seule fois chacun (8+5 et 5+8 sont le même piège).
+  const trapPool = pool.filter((f, i) => isTrap(f) && pool.findIndex((g) => canon(g) === canon(f)) === i);
+  for (const t of weightedSample(trapPool, (f) => 1 + recentErrors(trapLog, key(f), today), MAX_TRAP_EXTRAS, rng)) {
+    const donors = chosen.flatMap((f, i) => (isTrap(f) ? [] : [i]));
+    if (!donors.length) break;
+    const known = donors.filter((i) => hasKey(mastered, key(chosen[i]!)));
+    const from = known.length ? known : donors;
+    chosen[from[Math.floor(rng() * from.length)]!] = t;
+  }
+  // Ordre : jamais deux fois le même calcul de suite, pas de piège en premier ni deux pièges consécutifs.
+  // Un même calcul (ou son symétrique) n'apparaît jamais deux fois de suite.
+  const ids = [...new Set(chosen.map(canon))];
+  const order = arrange(chosen.map((f) => ids.indexOf(canon(f))), (id) => isTrap(chosen.find((f) => canon(f) === ids[id])!), rng);
+  const queue = new Map(ids.map((id) => [id, chosen.filter((f) => canon(f) === id)]));
+  const factOf = (id: number) => queue.get(ids[id]!)!.shift()!;
+  return order.map((id, i) => {
+    const fact = factOf(id), q = generateQuestion({ series: s, fact, fmt: FORMAT_ORDER[i % 4]!, rng });
+    if (isTrap(fact)) q.trap = true;
+    return q;
+  });
+}
+
+/** Question suivante en mode chrono : jamais deux fois le même calcul de suite.
+    Pour une table, le tirage est celui d'avant la généralisation (un multiplicateur de 1 à 10). */
+export function nextTimedQuestion(series: SeriesId, prev: Question | null, done: number, rng: Rng = defaultRng): Question {
+  const pool = factsOf(series);
+  let f: Fact;
+  do f = drawFact(pool, rng);
+  while (prev && pool.length > 1 && f.a === prev.a && f.b === prev.b);
+  return generateQuestion({ series, fact: f, fmt: CHRONO_ORDER[done % 5]!, rng });
 }

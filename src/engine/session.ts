@@ -1,18 +1,16 @@
 /* Déroulé d'une session : file de questions, erreurs remises en fin de file, compteurs. */
-import type { IsleId } from '../content/isles';
-import { mulKey, type MulKey } from './keys';
+import { SERIES, type Op, type SeriesId } from '../content/series';
+import { factKey, type FactKey } from './keys';
 import { nextTimedQuestion } from './plan';
-import { makeQ, type Question } from './questions';
+import { remakeQ, type Question } from './questions';
 import { defaultRng, type Rng } from './random';
 
 export type SessionMode = 'step' | 'boss' | 'chrono' | 'defi' | 'traps';
 
 export interface SessionConfig {
   mode: SessionMode;
-  /** Île dont les couleurs habillent la session (et dont on joue la table). */
-  isle: IsleId;
-  /** Table jouée (modes chronométrés). */
-  table: number;
+  /** Série jouée (son île habille la session) : sa progression reçoit les étoiles, le trophée et le record. */
+  series: SeriesId;
   /** Étape 0 à 2, ou 3 pour le gardien. */
   stepIdx?: number;
   /** Durée en secondes ; absente = sans chrono. */
@@ -28,6 +26,14 @@ export interface SessionConfig {
 /** Durées du défi chrono et du défi du jour. */
 export const TIMED_SECONDS = 60;
 export const DEFI_TARGET = 8;
+
+/** Modes chronométrés : 1 minute et 8 réponses en multiplication ; plus doux au CP (2 minutes, 6 réponses). */
+export function timedRules(op: Op): { seconds: number; target: number } {
+  return op === 'mul' ? { seconds: TIMED_SECONDS, target: DEFI_TARGET } : { seconds: 120, target: 6 };
+}
+
+/** Opération d'une session. */
+export const opOf = (cfg: Pick<SessionConfig, 'series'>): Op => SERIES[cfg.series].op;
 /** Durée d'affichage du feedback de bonne réponse. */
 export const OK_FEEDBACK_MS = { timed: 650, classic: 1500 } as const;
 /** Paliers de série annoncés (« 3 d'affilée ! »). */
@@ -51,9 +57,9 @@ export class Session {
   done = 0;
   combo = 0;
   /** Réussies du premier coup. */
-  firstOK: MulKey[] = [];
+  firstOK: FactKey[] = [];
   /** Une entrée par erreur. */
-  missed: MulKey[] = [];
+  missed: FactKey[] = [];
   timeUp = false;
   finished = false;
   private readonly rng: Rng;
@@ -70,7 +76,7 @@ export class Session {
     if (this.finished) return null;
     if (this.cfg.target && this.good >= this.cfg.target) return this.finish();
     if (!this.queue.length) {
-      if (this.cfg.endless && !this.timeUp) this.queue.push(nextTimedQuestion(this.cfg.table, this.cur, this.done, this.rng));
+      if (this.cfg.endless && !this.timeUp) this.queue.push(nextTimedQuestion(this.cfg.series, this.cur, this.done, this.rng));
       else return this.finish();
     }
     this.cur = this.queue.shift()!;
@@ -81,7 +87,7 @@ export class Session {
   answer(ok: boolean): AnswerOutcome {
     const q = this.cur;
     if (!q || this.finished) throw new Error('Aucune question en cours');
-    const k = mulKey(q.a, q.b);
+    const k = factKey(q.op, q.a, q.b);
     if (ok) {
       this.good++;
       this.done++;
@@ -90,7 +96,7 @@ export class Session {
     } else {
       this.combo = 0;
       this.missed.push(k);
-      const rq = makeQ(q.a, q.b, q.fmt, this.rng);
+      const rq = remakeQ(q, this.rng);
       rq.retry = true;
       if (q.trap) rq.trap = true;
       this.queue.push(rq);

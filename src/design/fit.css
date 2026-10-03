@@ -42,6 +42,9 @@
   .key{height:56px}
   .choice{height:92px}
   .vf .choice{height:104px}
+  .scr-q.cp .key{height:62px;font-size:36px}
+  .scr-q.cp .choice{height:100px;font-size:50px}
+  .scr-q.cp .vf .choice{height:108px}
 
   /* Détail d'une île */
   .isd-hero svg.art{width:160px;height:116px}
@@ -85,6 +88,10 @@
   .pad{gap:8px}
   .choice{height:80px}
   .vf .choice{height:88px}
+  .scr-q.cp .key{height:54px;font-size:32px}
+  .scr-q.cp .choice{height:84px;font-size:44px}
+  .scr-q.cp .vf .choice{height:90px}
+  .scr-q.cp .bubble .t{font-size:18px}
 }
 
 /* ===== Écran étroit (< 360 px de large) ===== */
