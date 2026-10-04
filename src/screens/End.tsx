@@ -46,7 +46,7 @@ export function End({ end: E, cfg, back }: { end: EndSummary; cfg: SessionConfig
   const def = SERIES[E.series], mul = def.op === 'mul', I = lookOf(E.series);
   const minutes = timedRules(def.op).seconds / 60;
   /** « table de 7 », « additions jusqu'à 10 ». */
-  const what = mul ? `table de ${tableNum(E.series)}` : `${OP_SINGULAR[def.op].toLowerCase()}s ${def.title.toLowerCase()}`;
+  const what = mul ? `table de ${tableNum(E.series)}` : def.op === 'eng' ? `île ${I.name}` : `${OP_SINGULAR[def.op].toLowerCase()}s ${def.title.toLowerCase()}`;
   const starsRef = useRef<HTMLDivElement>(null);
   const [xpW, setXpW] = useState(E.levelUp ? 0 : Math.round(E.xp0 * 100));
   const [title] = useState(() => {
@@ -156,7 +156,7 @@ export function End({ end: E, cfg, back }: { end: EndSummary; cfg: SessionConfig
         <button class="end-grid" onClick={() => go({ name: 'grid' })}>
           {mul && <MiniGrid mastered={opProg(p, 'mul').mastered} fresh={E.fresh} />}
           <span>
-            <b>{nf ? `+${nf} ${mul ? 'case' : 'calcul'}${nf > 1 ? 's' : ''}` : 'Ta grille'}</b>
+            <b>{nf ? `+${nf} ${mul ? 'case' : def.op === 'eng' ? 'mot' : 'calcul'}${nf > 1 ? 's' : ''}` : 'Ta grille'}</b>
             <small>{nf ? (mul ? 'dans ta grille de Pythagore' : 'réussis du premier coup') : 'Rejoue pour la colorier'}</small>
             <span class="xp"><span>Niv. {p.level}</span><span class="bar"><i style={{ width: `${xpW}%` }}></i></span></span>
           </span>

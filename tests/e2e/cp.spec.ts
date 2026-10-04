@@ -1,7 +1,7 @@
 /* Niveau CP sur le build de production : création, choix de l'opération mémorisé, session complète
    sans nombre négatif, coexistence avec un enfant de CM1, changement de classe sans perte. */
 import { expect, test, type Page } from '@playwright/test';
-import { answer, kid, next, PROD, seedProd, solveGate } from '../helpers';
+import { answer, kid, next, openMap, playOp, PROD, seedProd, solveGate } from '../helpers';
 
 /** Profil CP au format v3. */
 const cpKid = (over: Record<string, unknown> = {}) => {
@@ -83,10 +83,10 @@ test('CP et CM1 sur le même appareil ; changer de classe garde la progression',
   const nina = { ...cpKid({ id: 'cm1', name: 'Nina', color: '#0D7A5F', grade: 'CM1', op: 'mul', prog: { mul: mulProg } }) };
   await seedProd(page, [nina, cpKid()], undefined, 3);
 
-  // Nina (CM1) : Jouer lance directement la multiplication de son île.
+  // Nina (CM1) : Jouer passe par le choix « × ou anglais », puis la multiplication de son île.
   await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
-  await expect(page.locator('.btn-play small')).toHaveText('Île de la Glace, étape 2');
-  await page.locator('.btn-play').click();
+  await expect(page.locator('.btn-play small')).toHaveText('× ou EN ?');
+  await playOp(page, 'Fois');
   await expect(page.locator('.expr .op').first()).toHaveText('×');
   await page.locator('#btnQuit').click();
   await page.locator('#btnSwitch').click();
@@ -104,8 +104,9 @@ test('CP et CM1 sur le même appareil ; changer de classe garde la progression',
   await row.getByRole('group', { name: 'Classe de Nina' }).getByRole('button', { name: 'CM1' }).click();
   await page.getByRole('button', { name: "Fermer l'espace parent" }).click();
   await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
-  await expect(page.locator('.btn-play small')).toHaveText('Île de la Glace, étape 2');
   await expect(page.locator('.home-stats .stat').first()).toContainText('3');
+  await openMap(page, 'Fois');
+  await expect(page.locator('.map-foot small')).toHaveText('Île de la Glace, étape 2');
 });
 
 test('CP : la lecture à voix haute se règle par profil', async ({ page }) => {

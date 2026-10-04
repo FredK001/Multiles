@@ -88,3 +88,15 @@ export async function seedProd(page: Page, profiles: unknown[], settings = { sou
   }), { version, profiles, settings, persistAsked: true });
   await page.reload();
 }
+
+/** Au CM1 (× et anglais), « Mes îles » et « Jouer » passent par le choix de l'opération : on choisit la carte `op`. */
+async function viaOps(page: Page, target: string, op: string) {
+  await page.locator(target).click();
+  await page.locator('[data-screen="ops"]').waitFor();
+  await page.locator('.op-card', { hasText: op }).click();
+}
+
+/** Ouvre la carte des îles d'une opération (« Fois » par défaut). */
+export const openMap = (page: Page, op = 'Fois') => viaOps(page, '.isles-strip', op);
+/** « Jouer » sur l'opération choisie (« Fois » par défaut). */
+export const playOp = (page: Page, op = 'Fois') => viaOps(page, '.btn-play', op);

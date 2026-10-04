@@ -56,6 +56,9 @@ export function App({ store }: { store: Store }) {
     setRoute(r.name === 'question' ? { ...r, nonce: Date.now() + Math.random() } : r);
   }, []);
 
+  // Développement uniquement : ouvre un écran depuis la console (aperçu de l'anglais avant son ouverture au CM1).
+  if (import.meta.env.DEV) (window as unknown as { __multilesGo?: (r: Route) => void }).__multilesGo = go;
+
   const toast = useCallback((t: string) => {
     setToastText(nb(t));
     clearTimeout(toastTimer.current);

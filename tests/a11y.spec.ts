@@ -1,7 +1,7 @@
 /* Audit d'accessibilité axe-core (WCAG 2.1 A et AA) sur tous les écrans, avec des données réelles. */
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { answer } from './helpers';
+import { answer, openMap } from './helpers';
 
 const report: string[] = [];
 
@@ -38,7 +38,7 @@ test('aucune violation WCAG 2.1 AA sur les écrans', async ({ page }) => {
   await page.locator('.home-disc').click();
   await audit(page, 'Éditeur');
   await page.getByRole('button', { name: 'Retour' }).click();
-  await page.locator('.isles-strip').click();
+  await openMap(page);
   await audit(page, 'Carte');
   await page.locator('.isle[aria-label^="Île 1,"]').click();
   await audit(page, 'Île');

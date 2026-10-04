@@ -2,7 +2,7 @@
    Pour changer le schéma : incrémenter SCHEMA_VERSION et ajouter MIGRATIONS[ancienne version]. */
 import { VARIANT_IDS } from '../content/pepins';
 import { AV, PROFILE_COLORS, type AvatarLook } from '../content/avatar';
-import { CURRICULUM, GRADES, seriesOf, type Op, type SeriesId } from '../content/series';
+import { CURRICULUM, GRADES, OPS, seriesOf, type Op, type SeriesId } from '../content/series';
 import { KINDS, stickerParts } from '../content/stickers';
 import type { PepWear } from '../art/mascot';
 import type { DayKey } from '../engine/dates';
@@ -86,7 +86,6 @@ const int = (v: unknown, d: number, min = 0, max = Number.MAX_SAFE_INTEGER) => M
 const oneOf = <T extends string>(v: unknown, allowed: readonly T[], d: T): T => (allowed.includes(v as T) ? (v as T) : d);
 const day = (v: unknown) => (typeof v === 'string' && DAY_RE.test(v) ? (v as DayKey) : null);
 const days = (v: unknown) => strArr(v).filter((x) => DAY_RE.test(x)) as DayKey[];
-const ALL_OPS: readonly Op[] = ['mul', 'add', 'sub'];
 /** Clé bien écrite d'un calcul de l'opération qui existe dans l'une de ses séries (« 7x8 », pas « 0x3 » ni « 07x8 »). */
 const factOk = (op: Op, k: string): boolean => {
   const f = parseFact(k);
@@ -133,7 +132,7 @@ function normTime(v: unknown): PlayTime {
 
 function normDay(d: Raw): DayStats {
   const ops: DayStats['ops'] = {};
-  if (isObj(d.ops)) for (const op of ALL_OPS) if (isObj(d.ops[op])) ops[op] = normTime(d.ops[op]);
+  if (isObj(d.ops)) for (const op of OPS) if (isObj(d.ops[op])) ops[op] = normTime(d.ops[op]);
   return { ...normTime(d), ops };
 }
 
@@ -167,7 +166,7 @@ export function normalizeProfile(v: Raw): Profile {
   const grade = oneOf(v.grade, GRADES, 'CM1'), ops = CURRICULUM[grade];
   const prog: Profile['prog'] = {};
   // Toutes les opérations sont gardées, même hors de la classe : un changement de classe ne perd rien.
-  if (isObj(v.prog)) for (const op of ALL_OPS) if (isObj(v.prog[op])) prog[op] = normOp(op, v.prog[op]);
+  if (isObj(v.prog)) for (const op of OPS) if (isObj(v.prog[op])) prog[op] = normOp(op, v.prog[op]);
   const dayStats: Profile['days'] = {};
   if (isObj(v.days)) for (const [k, d] of Object.entries(v.days)) if (DAY_RE.test(k) && isObj(d)) dayStats[k] = normDay(d);
   return {

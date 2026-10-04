@@ -1,10 +1,10 @@
 /* Composition des sessions : étape (avec répétition intelligente), gardien, pièges, chrono. */
 import { addDays, dayNumber, type DayKey } from './dates';
-import { SERIES, type SeriesId } from '../content/series';
+import { SERIES, type SeriesDef, type SeriesId } from '../content/series';
 import { canonKey, factKey, hasKey, mulKey, parseFact, parseKey } from './keys';
-import { CHRONO_ORDER, FORMAT_ORDER, generateQuestion, makeQ, type Question } from './questions';
+import { FORMAT_ORDER, formatsOf, generateQuestion, makeQ, type Question } from './questions';
 import { defaultRng, shuffle, weightedSample, type Rng } from './random';
-import { drawFact, drawFacts, factsOf, seriesForFact, type Fact } from './series';
+import { drawFact, drawFacts, factsOf, isDrill, seriesForFact, weightOf, type Fact } from './series';
 import { ALL_MULTIPLIERS, RANGES } from './unlock';
 
 export const SESSION_LENGTH = 10;
@@ -140,7 +140,8 @@ export function buildTrapsPlan(traps: readonly string[], rng: Rng = defaultRng):
   if (!facts.length) return [];
   // Ordre anti-répétition : jamais deux fois le même calcul de suite (sauf avec un seul piège).
   const idx = arrange(Array.from({ length: SESSION_LENGTH }, (_, i) => i % facts.length), () => false, rng);
-  return idx.map((j, i) => generateQuestion({ ...facts[j]!, fmt: FORMAT_ORDER[i % 4]!, rng }));
+  const fmts = formatsOf(facts[0]!.series.op);
+  return idx.map((j, i) => generateQuestion({ ...facts[j]!, fmt: fmts[i % fmts.length]!, rng }));
 }
 
 /* ---- Toutes séries ---- */
@@ -156,11 +157,21 @@ export function seriesStepPlan(input: SeriesPlanInput): Question[] {
   return buildRangeStepPlan(input);
 }
 
+/** Les 10 calculs d'une session, tirés sans remise. En anglais, quand l'étape mêle mots et phrases
+    (étape 3, gardien), moitié mots, moitié phrases : un thème a souvent bien plus de mots que de phrases. */
+function drawSession(s: SeriesDef, pool: readonly Fact[], rng: Rng, same: (f: Fact) => string): Fact[] {
+  const words = pool.filter((f) => !isDrill(f)), drills = pool.filter(isDrill);
+  if (s.op !== 'eng' || !words.length || !drills.length) return drawFacts(pool, SESSION_LENGTH, rng, same, weightOf(s));
+  const half = SESSION_LENGTH / 2;
+  return shuffle([...drawFacts(words, half, rng, same), ...drawFacts(drills, SESSION_LENGTH - half, rng, same)], rng);
+}
+
 /** Gardien d'une série : toute la série, 10 questions. */
 export function seriesBossPlan(series: SeriesId, rng: Rng = defaultRng): Question[] {
   const s = SERIES[series];
   if (s.spec.kind === 'table') return buildBossPlan(s.spec.n, rng);
-  return drawFacts(factsOf(s), SESSION_LENGTH, rng, (f) => canonKey(factKey(s.op, f.a, f.b))).map((fact, i) => generateQuestion({ series: s, fact, fmt: FORMAT_ORDER[i % 4]!, rng }));
+  const fmts = formatsOf(s.op);
+  return drawSession(s, factsOf(s), rng, (f) => canonKey(factKey(s.op, f.a, f.b))).map((fact, i) => generateQuestion({ series: s, fact, fmt: fmts[i % fmts.length]!, rng }));
 }
 
 /** Étape d'une plage : 10 calculs différents de l'étape, puis la répétition intelligente (comme les tables) :
@@ -168,8 +179,8 @@ export function seriesBossPlan(series: SeriesId, rng: Rng = defaultRng): Questio
 export function buildRangeStepPlan({ series, stepIdx, traps, trapLog, mastered, today, rng = defaultRng }: SeriesPlanInput): Question[] {
   const s = SERIES[series], key = (f: Fact) => factKey(s.op, f.a, f.b), isTrap = (f: Fact) => hasKey(traps, key(f));
   const canon = (f: Fact) => canonKey(key(f));
-  const pool = factsOf(s, stepIdx);
-  const chosen = drawFacts(pool, SESSION_LENGTH, rng, canon);
+  const pool = factsOf(s, stepIdx), fmts = formatsOf(s.op);
+  const chosen = drawSession(s, pool, rng, canon);
   // Pièges de l'étape, une seule fois chacun (8+5 et 5+8 sont le même piège).
   const trapPool = pool.filter((f, i) => isTrap(f) && pool.findIndex((g) => canon(g) === canon(f)) === i);
   for (const t of weightedSample(trapPool, (f) => 1 + recentErrors(trapLog, key(f), today), MAX_TRAP_EXTRAS, rng)) {
@@ -186,7 +197,7 @@ export function buildRangeStepPlan({ series, stepIdx, traps, trapLog, mastered, 
   const queue = new Map(ids.map((id) => [id, chosen.filter((f) => canon(f) === id)]));
   const factOf = (id: number) => queue.get(ids[id]!)!.shift()!;
   return order.map((id, i) => {
-    const fact = factOf(id), q = generateQuestion({ series: s, fact, fmt: FORMAT_ORDER[i % 4]!, rng });
+    const fact = factOf(id), q = generateQuestion({ series: s, fact, fmt: fmts[i % fmts.length]!, rng });
     if (isTrap(fact)) q.trap = true;
     return q;
   });
@@ -195,9 +206,9 @@ export function buildRangeStepPlan({ series, stepIdx, traps, trapLog, mastered, 
 /** Question suivante en mode chrono : jamais deux fois le même calcul de suite.
     Pour une table, le tirage est celui d'avant la généralisation (un multiplicateur de 1 à 10). */
 export function nextTimedQuestion(series: SeriesId, prev: Question | null, done: number, rng: Rng = defaultRng): Question {
-  const pool = factsOf(series);
+  const pool = factsOf(series), w = weightOf(series), fmts = formatsOf(SERIES[series].op, true);
   let f: Fact;
-  do f = drawFact(pool, rng);
+  do f = drawFact(pool, rng, w);
   while (prev && pool.length > 1 && f.a === prev.a && f.b === prev.b);
-  return generateQuestion({ series, fact: f, fmt: CHRONO_ORDER[done % 5]!, rng });
+  return generateQuestion({ series, fact: f, fmt: fmts[done % fmts.length]!, rng });
 }

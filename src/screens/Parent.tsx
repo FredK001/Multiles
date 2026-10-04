@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { avatar, icoClose, icoErase } from '../art';
 import { useApp, useBack } from '../app/context';
 import { Svg } from '../app/ui';
-import { ISLES, type IsleId } from '../content/isles';
-import { CP_ZONE, GRADES, OP_NAME, OP_SIGN, seriesOf, type Op, type SeriesDef } from '../content/series';
+import { ISLES, lookOf, seriesBadge as badgeText, type IsleId } from '../content/isles';
+import { GRADE_DESC, GRADES, OP_NAME, OP_SIGN, OPS, seriesOf, zoneOf, type Op, type SeriesDef } from '../content/series';
+import { engFactLabel } from '../engine/english';
 import { cleanName, setGrade } from '../engine/profile';
 import { checkStreak } from '../engine/streak';
 import { checkForUpdate, useUpdate } from '../pwa';
@@ -61,19 +62,19 @@ function GateView({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-const ALL_OPS: readonly Op[] = ['mul', 'add', 'sub'];
 
 /** Opérations à montrer dans le suivi : celles de la classe, plus celles déjà travaillées (changement de classe). */
 function shownOps(k: Profile): Op[] {
-  return ALL_OPS.filter((op) => {
+  return OPS.filter((op) => {
     const o = k.prog[op];
     return opsOf(k).includes(op) || (!!o && (o.mastered.length > 0 || o.traps.length > 0 || Object.keys(o.series).length > 0));
   });
 }
 
-/** Pastille d'une série dans le suivi : numéro de la table (couleur de l'île), ou signe en Mandarine pour le CP. */
+/** Pastille d'une série dans le suivi : numéro de la table (couleur de l'île), signe en Mandarine pour le CP,
+    numéro du thème en bleu marine pour l'anglais. */
 function seriesBadge(s: SeriesDef): { text: string; color: string } {
-  return s.op === 'mul' ? { text: String(tableNum(s.id)), color: ISLES[tableNum(s.id) as IsleId].fort } : { text: OP_SIGN[s.op], color: CP_ZONE.fort };
+  return s.op === 'mul' ? { text: String(tableNum(s.id)), color: ISLES[tableNum(s.id) as IsleId].fort } : { text: badgeText(s.id), color: zoneOf(s.op) };
 }
 
 function KidSettings({ k }: { k: Profile }) {
@@ -82,7 +83,7 @@ function KidSettings({ k }: { k: Profile }) {
   return (
     <div class="prow-set">
       <div class="setrow">
-        <span>Classe<small>{k.grade === 'CP' ? 'Additions et soustractions' : 'Tables de multiplication'}</small></span>
+        <span>Classe<small>{GRADE_DESC[k.grade]}</small></span>
         <span class="opts" role="group" aria-label={`Classe de ${k.name}`}>
           {GRADES.map((g) => (
             <button
@@ -367,7 +368,7 @@ export function Parent() {
   if (open) {
     const ops = p ? shownOps(p) : [], split = ops.length > 1;
     const op: Op = pop && ops.includes(pop) ? pop : (p?.op ?? 'mul');
-    const o = p ? opProg(p, op) : null, mul = op === 'mul';
+    const o = p ? opProg(p, op) : null, mul = op === 'mul', eng = op === 'eng';
     // Une seule opération : le temps de jeu est le total (comme avant le CP) ; sinon celui de l'opération suivie.
     const mins = p ? weekMinutes(p.days, today, split ? op : undefined) : [];
     const tot = mins.reduce((a, b) => a + b, 0), mx = Math.max(20, ...mins);
@@ -404,7 +405,7 @@ export function Parent() {
               <h2>Cette semaine <small>{split ? `${what}, du lundi à aujourd'hui` : "du lundi à aujourd'hui"}</small></h2>
               <div class="kpis">
                 <div class="kpi"><b>{tot} min</b><small>de jeu</small></div>
-                <div class="kpi"><b>{seriesDone(o.mastered, op)}/{seriesOf(op).length}</b><small>{mul ? 'tables maîtrisées' : 'séries maîtrisées'}</small></div>
+                <div class="kpi"><b>{seriesDone(o.mastered, op)}/{seriesOf(op).length}</b><small>{mul ? 'tables maîtrisées' : eng ? 'thèmes maîtrisés' : 'séries maîtrisées'}</small></div>
                 <div class="kpi"><b>{streak}</b><small>jour{streak > 1 ? 's' : ''} de suite</small></div>
               </div>
               <div class="week-bars" role="img" aria-label={`Minutes par jour : ${['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map((d, i) => `${d} ${mins[i]}`).join(', ')}`}>
@@ -419,7 +420,7 @@ export function Parent() {
               <p style={{ fontSize: '14px', color: 'var(--ink-2)' }}>{plural(totalSessions(p.days, split ? op : undefined), 'session')} depuis le début. Une session dure 3 à 5 minutes.</p>
             </div>
             <div class="pcard2">
-              <h2>{mul ? 'Tables' : 'Séries'} <small>part des {what} réussies</small></h2>
+              <h2>{mul ? 'Tables' : eng ? 'Thèmes' : 'Séries'} <small>{eng ? 'part des mots et phrases réussis' : `part des ${what} réussies`}</small></h2>
               <div class="tbl">
                 {seriesOf(op).map((s) => {
                   const v = seriesPct(o.mastered, s.id), b = seriesBadge(s);
@@ -428,7 +429,7 @@ export function Parent() {
                     <div key={s.id} class="tr">
                       <span class="n" style={{ background: b.color }} aria-hidden={!mul}>{b.text}</span>
                       <span>
-                        <span class="lb"><span>{mul ? state : s.title}</span><span>{v}%</span></span>
+                        <span class="lb"><span>{mul ? state : eng ? <><span lang="en">{lookOf(s.id).name}</span> · {s.title}</> : s.title}</span><span>{v}%</span></span>
                         <span class="bar"><i style={{ width: `${v}%`, background: b.color }}></i></span>
                       </span>
                     </div>
@@ -437,15 +438,19 @@ export function Parent() {
               </div>
             </div>
             <div class="pcard2">
-              <h2>{OP_NAME[op]} difficiles <small>{hard.length}</small></h2>
+              <h2>{eng ? 'Mots et phrases difficiles' : `${OP_NAME[op]} difficiles`} <small>{hard.length}</small></h2>
               {hard.length ? (
                 <>
                   <div class="hard">
                     {hard.map((h) => (
                       <div key={h.key} class="row">
-                        <span class="eq">{h.a} {OP_SIGN[h.op]} {h.b}</span>
+                        {h.op === 'eng' ? (
+                          <span class="eq eng"><span lang="en">{engFactLabel(h.a, h.b).en}</span>{engFactLabel(h.a, h.b).fr && <small>{engFactLabel(h.a, h.b).fr}</small>}</span>
+                        ) : (
+                          <span class="eq">{h.a} {OP_SIGN[h.op]} {h.b}</span>
+                        )}
                         <small>{h.errors} erreur{h.errors > 1 ? 's' : ''} récente{h.errors > 1 ? 's' : ''}</small>
-                        <small>{h.r}</small>
+                        {h.op !== 'eng' && <small>{h.r}</small>}
                       </div>
                     ))}
                   </div>

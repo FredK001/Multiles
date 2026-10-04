@@ -2,15 +2,24 @@
 import { SERIES, type Op, type SeriesDef, type SeriesId } from '../content/series';
 import { factKey } from './keys';
 import { defaultRng, pick, shuffle, type Rng } from './random';
-import { displayBounds, drawFact, factsOf, inSeries, resultOf, type Fact } from './series';
+import { engDraft, type EngQ } from './english';
+import { displayBounds, drawFact, factsOf, inSeries, resultOf, weightOf, type Fact } from './series';
 
-/** Les 4 formats : pavé numérique, QCM à 3 choix, facteur manquant, vrai/faux. */
-export type Format = 'pave' | 'qcm' | 'manquant' | 'vf';
+/** Les 4 formats : pavé numérique, QCM à 3 choix, facteur manquant, vrai/faux ;
+    plus, en anglais, l'écoute (la voix dit le mot, l'enfant touche le dessin). */
+export type Format = 'pave' | 'qcm' | 'manquant' | 'vf' | 'ecoute';
 
 /** Rotation des formats en session classique. */
 export const FORMAT_ORDER: readonly Format[] = ['pave', 'qcm', 'manquant', 'vf'];
 /** Rotation des formats en mode chrono (questions illimitées). */
 export const CHRONO_ORDER: readonly Format[] = ['pave', 'qcm', 'vf', 'pave', 'manquant'];
+/** Anglais : pas de pavé ni de nombre manquant. Les phrases sont toujours des choix, quel que soit leur rang. */
+export const ENG_ORDER: readonly Format[] = ['qcm', 'ecoute', 'vf', 'ecoute'];
+export const ENG_CHRONO_ORDER: readonly Format[] = ['qcm', 'ecoute', 'vf', 'qcm', 'ecoute'];
+
+/** Rotation des formats d'une opération (session classique, ou chrono). */
+export const formatsOf = (op: Op, chrono = false): readonly Format[] =>
+  op === 'eng' ? (chrono ? ENG_CHRONO_ORDER : ENG_ORDER) : chrono ? CHRONO_ORDER : FORMAT_ORDER;
 
 export interface Question {
   op: Op;
@@ -30,6 +39,8 @@ export interface Question {
   retry?: boolean;
   /** Question ajoutée par la répétition intelligente. */
   trap?: boolean;
+  /** Anglais : ce qui est montré et proposé ; `p` est alors l'indice de la bonne proposition. */
+  eng?: EngQ;
 }
 
 export interface GenOptions {
@@ -59,8 +70,16 @@ function vfCandidates(op: Op, a: number, b: number, r: number): number[] {
     résultat jamais négatif ni hors plage, propositions bornées (voir assertValid). */
 export function generateQuestion({ series, fmt, fact, step = null, rng = defaultRng }: GenOptions): Question {
   const s = typeof series === 'string' ? SERIES[series] : series;
-  const f = fact ?? drawFact(factsOf(s, step), rng);
+  const f = fact ?? drawFact(factsOf(s, step), rng, weightOf(s));
   if (!inSeries(s, f)) throw new RangeError(`${factKey(s.op, f.a, f.b)} n'appartient pas à la série ${s.id}`);
+  if (s.op === 'eng') {
+    const d = engDraft(s, f, fmt === 'ecoute' || fmt === 'vf' ? fmt : 'qcm', rng);
+    const q: Question = { op: 'eng', series: s.id, a: f.a, b: f.b, fmt: d.fmt, p: d.p, eng: d.eng };
+    if (d.fmt === 'qcm' || d.fmt === 'ecoute') q.choices = d.eng.options.map((_, i) => i);
+    if (d.truth !== undefined) q.truth = d.truth;
+    assertValid(q);
+    return q;
+  }
   const { a, b } = f, r = resultOf(s.op, a, b), { lo, hi } = displayBounds(s);
   const wrong = (x: number) => x >= lo && x <= hi && x !== r;
   const q: Question = { op: s.op, series: s.id, a, b, fmt, p: r };
@@ -88,6 +107,16 @@ export function assertValid(q: Question): void {
   };
   if (q.op !== s.op) fail('opération');
   if (!inSeries(s, q)) fail('calcul hors série');
+  if (q.op === 'eng') {
+    const o = q.eng?.options ?? [];
+    if (!q.eng) fail('anglais sans contenu');
+    if (new Set(o.map((x) => x.text)).size !== o.length) fail('propositions en double');
+    if (q.fmt === 'vf') {
+      if (o.length !== 1 || q.truth === undefined) fail('vrai/faux');
+    } else if (o.length < 2 || o.length > 3 || q.p < 0 || q.p >= o.length || q.choices?.length !== o.length) fail('propositions');
+    if (q.fmt === 'ecoute' && o.some((x) => x.word === undefined)) fail('écoute sans dessins');
+    return;
+  }
   if (q.p !== resultOf(q.op, q.a, q.b)) fail('résultat');
   if (q.p < 0 || q.p < lo || q.p > hi) fail('résultat hors plage');
   if (q.fmt === 'qcm') {
@@ -106,13 +135,17 @@ export function makeQ(a: number, b: number, fmt: Format, rng: Rng = defaultRng):
 /** Même calcul, même format, nouvelles propositions (question remise en fin de file). */
 export const remakeQ = (q: Question, rng: Rng = defaultRng): Question => generateQuestion({ series: q.series, fact: q, fmt: q.fmt, rng });
 
+/** Sans voix anglaise, une question d'écoute devient une question dessin → mot sur le même mot. */
+export const withoutListening = (q: Question, rng: Rng = defaultRng): Question =>
+  q.fmt === 'ecoute' ? { ...generateQuestion({ series: q.series, fact: q, fmt: 'qcm', rng }), ...(q.retry ? { retry: true } : {}), ...(q.trap ? { trap: true } : {}) } : q;
+
 /** Valeur attendue au pavé : le résultat, ou le nombre manquant (second terme). */
 export const expected = (q: Question): number => (q.fmt === 'manquant' ? q.b : q.p);
 
 /** Vérifie une réponse : nombre (pavé, QCM, facteur manquant) ou booléen (vrai/faux). */
 export function isCorrect(q: Question, answer: number | boolean): boolean {
   if (q.fmt === 'vf') return answer === q.truth;
-  if (q.fmt === 'qcm') return answer === q.p;
+  if (q.fmt === 'qcm' || q.fmt === 'ecoute') return answer === q.p;
   return answer === expected(q);
 }
 

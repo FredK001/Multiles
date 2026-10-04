@@ -3,7 +3,7 @@ import { CURRICULUM, GRADES, SERIES, SERIES_IDS, seriesOf, type SeriesId } from 
 import { factKey, parseFact, sameFact } from './keys';
 import { assertValid, FORMAT_ORDER, generateQuestion, makeQ, type Question } from './questions';
 import { seeded } from './random';
-import { crossesTen, drawFact, drawFacts, factsOf, resultOf, type Fact } from './series';
+import { crossesTen, drawFact, drawFacts, factsOf, isDrill, resultOf, type Fact } from './series';
 import { RANGES } from './unlock';
 
 const CP: SeriesId[] = ['add-10', 'add-20', 'sub-10', 'sub-20'];
@@ -13,7 +13,7 @@ describe('catalogue des séries', () => {
   it('chaque niveau propose des opérations qui ont des séries', () => {
     for (const g of GRADES) for (const op of CURRICULUM[g]) expect(seriesOf(op).length).toBeGreaterThan(0);
     expect(CURRICULUM.CP).toEqual(['add', 'sub']);
-    expect(CURRICULUM.CM1).toEqual(['mul']);
+    expect(CURRICULUM.CM1).toEqual(['mul', 'eng']);
   });
   it('les tables du CM1 gardent leurs étapes ×1-5, ×6-10, toute la table', () => {
     for (let n = 1; n <= 10; n++) {
@@ -35,7 +35,9 @@ describe('catalogue des séries', () => {
       expect(e1.length).toBeGreaterThan(0);
       expect(e2.length).toBeGreaterThan(0);
       expect(e1.filter((k) => e2.includes(k))).toEqual([]);
-      expect([...e1, ...e2].sort()).toEqual([...all].sort());
+      // En anglais, les phrases n'arrivent qu'à l'étape 3 : les étapes 1 et 2 se partagent les mots.
+      const words = SERIES[id].op === 'eng' ? factsOf(id).filter((f) => !isDrill(f)).map(key) : all;
+      expect([...e1, ...e2].sort()).toEqual([...words].sort());
       expect(factsOf(id, 2).map(key)).toEqual(all);
       expect(factsOf(id, 3).map(key)).toEqual(all);
     }

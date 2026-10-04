@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { answer, next } from '../helpers';
+import { answer, next, playOp } from '../helpers';
 
 const PROD = 'http://localhost:4173';
 /** Racine d'un domaine et sous-dossier : l'app doit fonctionner aux deux adresses. */
@@ -36,7 +36,7 @@ for (const HOST of HOSTS) test(`100 % hors ligne après le premier chargement, s
   await page.locator('.pep-card').first().click();
   await page.getByRole('button', { name: /C'est parti/ }).click();
   await page.getByRole('button', { name: 'Jouer avec le profil de Lou' }).click();
-  await page.locator('.btn-play').click();
+  await playOp(page);
   for (let i = 0; i < 10; i++) { await answer(page); await next(page); }
   await expect(page.locator('[data-screen="end"]')).toBeVisible();
 

@@ -560,3 +560,41 @@
 .ten i.b{background:var(--ballon);border:2px solid var(--ink)}
 .ten i.out{position:relative;background:var(--ile-clair);border:2px solid var(--ink)}
 .ten i.out::after{content:"";position:absolute;left:-3px;right:-3px;top:8px;height:3px;border-radius:2px;background:var(--ink);transform:rotate(-45deg)}
+
+/* ---- Anglais : dessins, mots et phrases à la place des nombres ---- */
+.scr-q.eng .q-card{max-height:none;padding:10px 12px}
+.eng-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;width:100%}
+.eng-visual{position:relative;display:flex;justify-content:center}
+.eng-pic{display:inline-flex;align-items:center;justify-content:center}
+.eng-pic.fr{font-family:var(--ui);font-weight:800;font-style:italic;font-size:26px;line-height:1.1;text-align:center;color:var(--ink);padding:8px 16px;border:3px dashed var(--ile);border-radius:18px;background:var(--ile-clair)}
+.eng-count{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;max-width:270px}
+.eng-count .eng-pic.fr{font-size:15px;padding:4px 8px}
+.eng-cue{position:absolute;right:-34px;bottom:-4px}
+.eng-shown{font-family:var(--titre);font-weight:700;font-size:40px;line-height:1.05;text-align:center}
+.eng-shown.ok{color:var(--feuille)}
+.eng-shown.no{text-decoration:line-through;text-decoration-thickness:4px;color:var(--ink-2)}
+.eng-text{margin:0;font-family:var(--titre);font-weight:700;font-size:clamp(20px,6vw,27px);line-height:1.15;text-align:center}
+.eng-text.fr{font-family:var(--ui);font-weight:800;font-style:italic;font-size:clamp(18px,5.4vw,23px)}
+.eng-listen{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--ile-clair);border:3px solid var(--ink);border-radius:24px;padding:14px 28px;font-weight:800;font-size:18px;box-shadow:0 5px 0 var(--ink)}
+.eng-listen:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
+.eng-listen svg{width:64px;height:58px}
+.eng-choices{display:grid;gap:10px}
+.eng-choices .choice{height:auto;min-height:66px;padding:8px 14px;font-size:30px;line-height:1.15}
+.eng-choices.long .choice{min-height:58px;font-family:var(--ui);font-weight:800;font-size:20px;text-align:left}
+.eng-pics .choice{display:flex;align-items:center;justify-content:center;padding:4px;overflow:hidden}
+.eng-pics .eng-pic.fr{font-size:17px;padding:4px 6px;border-width:2px}
+.fb-eq.eng{font-size:clamp(22px,7vw,32px);line-height:1.15;padding:12px 10px}
+.eng-aid{display:flex;align-items:center;justify-content:center;gap:14px}
+.eng-aid b{display:block;font-family:var(--titre);font-size:32px;line-height:1.1}
+.eng-aid small{display:block;font-size:18px;color:var(--ink-2)}
+.eng-aid.phrase{flex-direction:column;gap:6px;text-align:center}
+.eng-aid.phrase b{font-size:24px;color:var(--feuille)}
+
+/* ---- Anglais au CM1 : choix, accueil, île, espace parent ---- */
+.op-sign.txt{font-size:62px;padding-bottom:0;letter-spacing:1px}
+.dots10.rows{flex-direction:column;align-items:flex-end;gap:4px}
+.dots-row{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.dots10.rows i{width:10px;height:10px}
+.modes2.one{grid-template-columns:1fr}
+.hard .eq.eng{font-family:var(--ui);font-weight:800;font-size:16px;line-height:1.2;background:var(--ile-clair,#DCE3F5);max-width:210px}
+.hard .eq.eng small{display:block;font-weight:600;font-size:13px;color:var(--ink-2)}

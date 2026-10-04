@@ -16,7 +16,7 @@ import { bossOpen, chronoOpen, defaultSelection, isleOf, isleStars } from '../en
 export function IsleScreen({ s }: { s: SeriesId }) {
   const p = usePlayer();
   const { go, toast, data } = useApp();
-  const def = SERIES[s], mul = def.op === 'mul', I = lookOf(s), n = I.motif, o = opProg(p, def.op), st = isleOf(o.series, s);
+  const def = SERIES[s], mul = def.op === 'mul', eng = def.op === 'eng', I = lookOf(s), n = I.motif, o = opProg(p, def.op), st = isleOf(o.series, s);
   const [sel, setSel] = useState(() => defaultSelection(st));
   const back = () => go({ name: 'map', op: def.op });
   useBack(back);
@@ -39,7 +39,7 @@ export function IsleScreen({ s }: { s: SeriesId }) {
         </div>
         <div class="isd-hero">
           <Svg html={islandArt(n, false, I.fort)} />
-          <h1>{I.name}</h1>
+          <h1 lang={eng ? 'en' : undefined}>{I.name}</h1>
           {mul ? <p>{def.title}</p> : <p class="isd-op"><b aria-hidden="true">{OP_SIGN[def.op]}</b>{def.title}</p>}
         </div>
         <div class="isd-prog">
@@ -49,11 +49,12 @@ export function IsleScreen({ s }: { s: SeriesId }) {
         </div>
       </div>
       <div class="isd-body">
-        <div class="modes2">
-          <button class="discover" onClick={() => go({ name: 'discover', s, m: def.spec.kind === 'range' ? Math.max(1, def.spec.min) : 1 })}>
+        <div class={eng ? 'modes2 one' : 'modes2'}>
+          {/* Découvrir en anglais (imagier) : à venir. */}
+          {!eng && <button class="discover" onClick={() => go({ name: 'discover', s, m: def.spec.kind === 'range' ? Math.max(1, def.spec.min) : 1 })}>
             <span class="ic"><Svg html={icoDiscover} /></span>
             <span><b>Découvrir</b><small>{mul ? 'Voir la table avant de jouer' : 'Voir les nombres avant de jouer'}</small></span>
-          </button>
+          </button>}
           <button
             class={`discover${chrOpen ? '' : ' lock'}`}
             onClick={() => {
@@ -109,7 +110,7 @@ export function IsleScreen({ s }: { s: SeriesId }) {
           <Svg html={bossSvg(n, 92, !bOpen, I.fort)} />
           <span>
             <b>Le gardien {I.boss}</b>
-            <small>{bOpen ? (st.trophy ? nb('Battu ! Tu peux le défier encore.') : `${mul ? 'Toute la table' : 'Toute la série'}${bossTime ? ` en ${bossTime} minutes` : ', sans chrono'}`) : 'Finis les 3 étapes pour le défier.'}</small>
+            <small>{bOpen ? (st.trophy ? nb('Battu ! Tu peux le défier encore.') : `${mul ? 'Toute la table' : eng ? 'Tout le thème' : 'Toute la série'}${bossTime ? ` en ${bossTime} minutes` : ', sans chrono'}`) : 'Finis les 3 étapes pour le défier.'}</small>
           </span>
           <Svg html={bOpen ? trophyIcon(40) : icoLock} />
         </button>

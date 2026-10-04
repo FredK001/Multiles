@@ -7,6 +7,7 @@ import { useApp, usePlayer } from '../app/context';
 import { defiCfg, playCurrentCfg } from '../app/sessions';
 import { BtnSay, Overlay, Svg, TabBar } from '../app/ui';
 import { lookOf } from '../content/isles';
+import type { SeriesId } from '../content/series';
 import { OP_SIGN, OP_WORD, SERIES, seriesOf } from '../content/series';
 import { DAYS, HELLO, PEP_LINES } from '../content/messages';
 import { nb } from '../content/text';
@@ -27,7 +28,10 @@ export function Home() {
   const step = currentStep(isleOf(o.series, o.current));
   const streak = p.streak.current;
   const hello = useMemo(() => nb(pick(HELLO({ name: p.name, streak, of: look.of, step }))), [p.id]);
-  const isles = ops.flatMap((op) => seriesOf(op).map((s) => ({ s: s.id, won: !!opProg(p, op).series[s.id]?.trophy })));
+  const byOp = ops.map((op) => seriesOf(op).map((s) => ({ s: s.id, won: !!opProg(p, op).series[s.id]?.trophy })));
+  const isles = byOp.flat();
+  // Beaucoup d'îles (CM1 : 10 tables + 18 thèmes) : une rangée de pastilles par opération.
+  const dotRows = isles.length > 14 ? byOp : [isles];
   const stars = ops.reduce((t, op) => t + totalStars(opProg(p, op).series), 0);
   const won = ops.reduce((t, op) => t + trophies(opProg(p, op).series, op), 0);
   const [pepLine, setPepLine] = useState<string | null>(null);
@@ -35,7 +39,7 @@ export function Home() {
   const stage = stageFor(p.level);
   const defiSeries = o.defiPick?.day === today ? o.defiPick.series : dailySeries(today, openSeries(o.series, p.op));
   const rules = timedRules(p.op), minutes = rules.seconds / 60;
-  const defiWhat = p.op === 'mul' ? `Table de ${tableNum(defiSeries)}` : `${OP_WORD[p.op]}, ${SERIES[defiSeries].title.toLowerCase()}`;
+  const defiWhat = p.op === 'mul' ? `Table de ${tableNum(defiSeries)}` : p.op === 'eng' ? `Anglais, île ${lookOf(defiSeries).name}` : `${OP_WORD[p.op]}, ${SERIES[defiSeries].title.toLowerCase()}`;
   const done = defiDone(o.defiDay, today);
 
   useProfileTheme(p.color);
@@ -120,9 +124,13 @@ export function Home() {
       <div class="home-body">
         <button class="isles-strip" onClick={() => go(several ? { name: 'ops', then: 'map' } : { name: 'map', op: p.op })}>
           <span><b>Mes îles</b><small>{won} sur {isles.length} conquises</small></span>
-          <span class="dots10">
-            {isles.map(({ s, won: w }) => (
-              <i key={s} style={w ? { background: lookOf(s).fort } : s === o.current ? { background: 'var(--miel)' } : undefined}></i>
+          <span class={`dots10${dotRows.length > 1 ? ' rows' : ''}`}>
+            {dotRows.map((row, r) => (
+              <span key={r} class="dots-row">
+                {row.map(({ s, won: w }: { s: SeriesId; won: boolean }) => (
+                  <i key={s} style={w ? { background: lookOf(s).fort } : s === o.current ? { background: 'var(--miel)' } : undefined}></i>
+                ))}
+              </span>
             ))}
           </span>
         </button>

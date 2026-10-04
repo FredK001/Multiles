@@ -1,11 +1,11 @@
-/* Choix de l'opération (CP) : deux grandes cartes + et −, avant de jouer ou d'ouvrir la carte.
+/* Choix de l'opération : deux grandes cartes (+ et − au CP, × et anglais au CM1), avant de jouer ou d'ouvrir la carte.
    La dernière opération choisie est mise en avant et mémorisée dans le profil. */
 import { starIcon } from '../art';
 import { useProfileTheme } from '../app/theme';
 import { useApp, useBack, usePlayer } from '../app/context';
 import { playCurrentCfg } from '../app/sessions';
 import { BackChip, BtnSay, Svg, useAutoSay } from '../app/ui';
-import { CP_ZONE, OP_SIGN, OP_SINGULAR, OP_WORD, type Op } from '../content/series';
+import { OP_SIGN, OP_SINGULAR, OP_WORD, zoneOf, type Op } from '../content/series';
 import { opProg, opsOf } from '../engine/progress';
 import { totalStars } from '../engine/unlock';
 
@@ -38,10 +38,10 @@ export function OpsScreen({ then }: { then: 'play' | 'map' }) {
             return (
               <button key={op} class={`op-card${last ? ' last' : ''}`} aria-label={`${OP_WORD[op]} : ${OP_SINGULAR[op].toLowerCase()}. ${stars} étoile${stars > 1 ? 's' : ''}.${last ? ' Dernier choix.' : ''}`} onClick={() => choose(op)}>
                 {last && <span class="now" aria-hidden="true">Dernier choix</span>}
-                <span class="op-sign" aria-hidden="true" style={{ background: CP_ZONE.fort }}>{OP_SIGN[op]}</span>
+                <span class={`op-sign${op === 'eng' ? ' txt' : ''}`} aria-hidden="true" style={{ background: zoneOf(op) }}>{OP_SIGN[op]}</span>
                 <span aria-hidden="true">
                   <b>{OP_WORD[op]}</b>
-                  <small>{OP_SINGULAR[op]}</small>
+                  <small lang={op === 'eng' ? 'en' : undefined}>{op === 'eng' ? 'English' : OP_SINGULAR[op]}</small>
                   <span class="op-stars"><Svg html={starIcon(26)} />{stars}</span>
                 </span>
               </button>

@@ -1,7 +1,7 @@
 /* Règles vérifiées à travers l'interface (build de production) : gardien et trophée, déblocage
    des îles, sticker du gardien, bouées et série, bouton Écouter, bouton retour Android. */
 import { expect, test, type Page } from '@playwright/test';
-import { answer, kid, next, seedProd } from '../helpers';
+import { answer, kid, next, seedProd, openMap } from '../helpers';
 
 const won = { steps: 3, trophy: true, stepStars: [3, 3, 3] };
 const openKid = async (page: Page, name = 'Nina') => {
@@ -13,8 +13,8 @@ test('gardien battu : trophée, sticker, île suivante débloquée', async ({ pa
   // 1 trophée déjà gagné (Jungle) ; le Verger (île 3) demande 2 trophées.
   await seedProd(page, [kid({ isl: { 1: { steps: 3, trophy: false, stepStars: [3, 3, 2] }, 2: won } })]);
   await openKid(page);
-  await expect(page.locator('.isles-strip small')).toHaveText('1 sur 10 conquises');
-  await page.locator('.isles-strip').click();
+  await expect(page.locator('.isles-strip small')).toHaveText('1 sur 28 conquises');
+  await openMap(page);
   await page.locator('.isle[aria-label^="Île 3,"]').click();
   await expect(page.locator('.toast')).toHaveText("Encore 1 trophée pour ouvrir l'île du Verger !");
   await page.locator('.isle[aria-label^="Île 1,"]').click();
@@ -38,13 +38,13 @@ test('gardien battu : trophée, sticker, île suivante débloquée', async ({ pa
   await page.locator('.tabbtn', { hasText: 'Trésors' }).click();
   await page.getByRole('button', { name: 'Album' }).click();
   await expect(page.getByRole('button', { name: 'Sticker Coquillo le gardien' })).toBeVisible();
-  await expect(page.locator('.alb-h span').first()).toHaveText('2 sur 10');
+  await expect(page.locator('.alb-h span').first()).toHaveText('2 sur 28');
 });
 
 test('gardien raté (7 du premier coup) : pas de trophée, revanche possible', async ({ page }) => {
   await seedProd(page, [kid({ isl: { 1: { steps: 3, trophy: false, stepStars: [3, 3, 3] } } })], { sound: true, bossTime: 0 });
   await openKid(page);
-  await page.locator('.isles-strip').click();
+  await openMap(page);
   await page.locator('.isle[aria-label^="Île 1,"]').click();
   await page.locator('.boss').click();
   await expect(page.locator('.boss small')).toHaveText('Toute la table, sans chrono');
@@ -97,7 +97,7 @@ test('Écouter : masqué sans voix française, visible avec', async ({ browser }
 test('bouton retour Android : même effet que Retour / Quitter', async ({ page }) => {
   await seedProd(page, [kid()]);
   await openKid(page);
-  await page.locator('.isles-strip').click();
+  await openMap(page);
   await page.locator('.isle[aria-label^="Île 1,"]').click();
   await page.getByRole('button', { name: "Jouer l'étape 1" }).click();
   await answer(page);
@@ -110,7 +110,7 @@ test('bouton retour Android : même effet que Retour / Quitter', async ({ page }
   await expect(page.locator('.stat.coin')).toHaveText('51');
   await page.goBack(); // sur l'accueil : rien
   await expect(page.locator('[data-screen="home"]')).toBeVisible();
-  await page.locator('.isles-strip').click();
+  await openMap(page);
   await page.goBack();
   await expect(page.locator('[data-screen="home"]')).toBeVisible();
 });

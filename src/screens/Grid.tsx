@@ -19,7 +19,8 @@ import { GridCP } from './GridCP';
 
 export function Grid() {
   const p = usePlayer();
-  return p.op === 'mul' ? <GridTable /> : <GridCP />;
+  // Anglais : sa propre grille arrive au bloc 7 ; d'ici là, le CM1 garde la grille de Pythagore.
+  return p.op === 'add' || p.op === 'sub' ? <GridCP /> : <GridTable />;
 }
 
 function GridTable() {

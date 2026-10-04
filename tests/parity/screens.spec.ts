@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { test, type Page } from '@playwright/test';
 import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
-import { answer, next, seedDb } from '../helpers';
+import { answer, next, openMap, seedDb } from '../helpers';
 import { PROTOTYPE_URL } from './proto';
 
 const OUT = resolve(process.cwd(), 'test-results/screens');
@@ -78,7 +78,7 @@ const lea = async (page: Page) => {
 };
 const isle7 = async (page: Page) => {
   await lea(page);
-  await page.locator('.isles-strip').click();
+  await openMap(page);
   await page.locator('.isle[aria-label^="Île 7,"]').click();
   await page.locator('[data-screen="isle"]').waitFor();
 };
@@ -98,7 +98,7 @@ const STEPS: Step[] = [
   { name: '02-creation', proto: 'startCreate()', app: async (p) => { await p.goto('/'); await p.locator('#btnAdd').click(); } },
   { name: '03-editeur', proto: "PLAYER=PROFILES[0];openEditor('home')", app: async (p) => { await lea(p); await p.locator('.home-disc').click(); } },
   { name: '04-accueil', proto: "PLAYER=PROFILES[0];go('home')", app: lea },
-  { name: '05-carte', proto: "PLAYER=PROFILES[0];go('map')", app: async (p) => { await lea(p); await p.locator('.isles-strip').click(); } },
+  { name: '05-carte', proto: "PLAYER=PROFILES[0];go('map')", app: async (p) => { await lea(p); await openMap(p); } },
   { name: '06-ile', proto: "PLAYER=PROFILES[0];ISEL={n:7,sel:null};go('isle')", app: isle7 },
   { name: '06b-decouvrir', proto: "PLAYER=PROFILES[0];DSEL={n:7,m:4};go('discover')", app: async (p) => { await isle7(p); await p.locator('.modes2 .discover').first().click(); await p.locator('.mchip').nth(3).click(); } },
   { name: '07a-question-pave', proto: PROTO_Q + "S.cur=makeQ(7,8,'pave');renderQ()", app: async (p) => { await stepQuestion(p); await force({ a: 7, b: 8, fmt: 'pave', p: 56 })(p); } },

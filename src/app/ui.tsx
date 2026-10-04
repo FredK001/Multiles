@@ -2,13 +2,13 @@
 import type { ComponentChildren, CSSProperties } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { icoBack, icoSay, icoTabGrid, icoTabHome, icoTabTreasure, svgHtml } from '../art';
-import { canSpeak, onVoiceChange, speak } from '../audio';
+import { canSpeak, onVoiceChange, speak, type Lang, type Speakable } from '../audio';
 import { useApp } from './context';
 
-/** Vrai si une voix française est disponible (sinon les boutons Écouter sont masqués). */
-export function useCanSpeak(): boolean {
-  const [ok, setOk] = useState(canSpeak());
-  useEffect(() => onVoiceChange(setOk), []);
+/** Vrai si une voix de cette langue est disponible (sans voix française, les boutons Écouter sont masqués). */
+export function useCanSpeak(lang: Lang = 'fr'): boolean {
+  const [ok, setOk] = useState(canSpeak(lang));
+  useEffect(() => onVoiceChange(setOk, lang), [lang]);
   return ok;
 }
 
@@ -16,7 +16,7 @@ export function useCanSpeak(): boolean {
 export const AUTO_SAY_DELAY = 250;
 
 /** Lecture automatique (réglage du profil) : lit `text` à l'affichage (après `delay` ms), puis à chaque changement de `key`. */
-export function useAutoSay(text: string | null, key: unknown = text, delay = AUTO_SAY_DELAY): void {
+export function useAutoSay(text: Speakable | null, key: unknown = text, delay = AUTO_SAY_DELAY): void {
   const { player } = useApp();
   const on = !!player?.autoSpeech;
   const latest = useRef(text);
@@ -30,8 +30,10 @@ export function useAutoSay(text: string | null, key: unknown = text, delay = AUT
 }
 
 interface SayProps {
-  /** Texte lu, ou fonction appelée au moment du tap. */
-  text: string | (() => string);
+  /** Texte lu (en français, ou en morceaux français et anglais), ou fonction appelée au moment du tap. */
+  text: Speakable | (() => Speakable);
+  /** Langues lues : le bouton s'affiche si l'une d'elles a une voix (français par défaut). */
+  langs?: readonly Lang[];
   label?: string;
   id?: string;
   class?: string;
@@ -41,8 +43,9 @@ interface SayProps {
 }
 
 /** Bouton « Écouter » (56 × 56). */
-export function BtnSay({ text, label = 'Écouter', id, class: cls, style, wrap }: SayProps) {
-  const ok = useCanSpeak();
+export function BtnSay({ text, label = 'Écouter', id, class: cls, style, wrap, langs = ['fr'] }: SayProps) {
+  const fr = useCanSpeak('fr'), en = useCanSpeak('en');
+  const ok = langs.some((l) => (l === 'fr' ? fr : en));
   const [speaking, setSpeaking] = useState(false);
   if (!ok) return null;
   return (

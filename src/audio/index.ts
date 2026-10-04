@@ -15,7 +15,7 @@ export function installTapSound(): void {
     true,
   );
 }
-export { speak, stopSpeech, canSpeak, onVoiceChange } from './speech';
+export { speak, stopSpeech, canSpeak, canSay, onVoiceChange, type Lang, type SayPart, type Speakable } from './speech';
 
 /** Débloque l'AudioContext et la synthèse vocale au premier geste de l'utilisateur. */
 export function installAudioUnlock(): void {

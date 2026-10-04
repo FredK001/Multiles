@@ -5,10 +5,10 @@ import { useProfileTheme } from '../app/theme';
 import { useApp, useBack, usePlayer } from '../app/context';
 import { playCurrentCfg } from '../app/sessions';
 import { BackChip, Svg } from '../app/ui';
-import { lookOf } from '../content/isles';
+import { lookOf, seriesBadge } from '../content/isles';
 import { OP_NAME, OP_SIGN, seriesOf, type Op, type SeriesId } from '../content/series';
 import { opProg } from '../engine/progress';
-import { currentStep, isOpen, isleOf, missingTrophies, tableNum, trophies } from '../engine/unlock';
+import { currentStep, isOpen, isleOf, missingTrophies, trophies } from '../engine/unlock';
 
 const MAP_X = [0.3, 0.7, 0.34, 0.68, 0.3, 0.7, 0.36, 0.66, 0.32, 0.62];
 
@@ -20,12 +20,12 @@ export function MapScreen({ op }: { op: Op }) {
   const back = () => go({ name: 'home' });
   useBack(back);
   useProfileTheme(p.color);
-  const list = seriesOf(op), mul = op === 'mul';
+  const list = seriesOf(op), mul = op === 'mul', eng = op === 'eng';
   const o = opProg(p, op), here = o.current;
   // Hauteur de la mer : 2220 px pour les 10 îles du CM1, comme le prototype.
   const H = 348 + (list.length - 1) * 208;
 
-  const pos = (i: number) => ({ x: MAP_X[i]! * W, y: H - 150 - i * 208 });
+  const pos = (i: number) => ({ x: MAP_X[i % MAP_X.length]! * W, y: H - 150 - i * 208 });
 
   useLayoutEffect(() => {
     const sea = seaRef.current;
@@ -77,9 +77,9 @@ export function MapScreen({ op }: { op: Op }) {
           <svg class="trail" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true" dangerouslySetInnerHTML={{ __html: trail }} />
           {list.map((def, i) => {
             const id = def.id, { x, y } = pos(i), open = isOpen(o.series, id), st = isleOf(o.series, id), I = lookOf(id), need = def.need;
-            // Pastille : numéro de la table au CM1, signe de l'opération au CP.
-            const num = mul ? String(tableNum(id)) : OP_SIGN[op];
-            const name = mul ? `Île ${num}, ${I.name}` : `Île ${I.name}, ${def.title.toLowerCase()}`;
+            // Pastille : numéro de la table au CM1, signe de l'opération au CP, numéro du thème en anglais.
+            const num = seriesBadge(id);
+            const name = mul ? `Île ${num}, ${I.name}` : eng ? `Île ${I.name}, ${def.title}` : `Île ${I.name}, ${def.title.toLowerCase()}`;
             const label = open
               ? `${name}. ${st.steps} étapes sur 3${st.trophy ? ', trophée gagné' : ''}.`
               : `${name}, fermée. Il faut ${need} trophée${need > 1 ? 's' : ''}.`;
@@ -92,7 +92,7 @@ export function MapScreen({ op }: { op: Op }) {
                   </span>
                 )}
                 <Svg html={islandArt(I.motif, !open, I.fort)} />
-                <span class="plate"><span class="num" style={{ background: open ? I.fort : '#6B7390' }}>{num}</span>{mul ? I.name : def.title}</span>
+                <span class="plate"><span class="num" style={{ background: open ? I.fort : '#6B7390' }}>{num}</span>{mul ? I.name : eng ? <span lang="en">{I.name}</span> : def.title}</span>
                 {open ? (
                   <span class="pips" aria-hidden="true">
                     {[0, 1, 2].map((i) => <span key={i} class={`pip ${i < st.steps ? 'on' : ''}`}></span>)}

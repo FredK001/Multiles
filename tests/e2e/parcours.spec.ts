@@ -1,7 +1,7 @@
 /* Parcours de bout en bout sur le build de production : création de profil, session complète,
    achat en boutique, défi chrono, défi du jour, verrou parent. */
 import { expect, test, type Page } from '@playwright/test';
-import { answer, kid, next, PROD, seedProd, solveGate as solve } from '../helpers';
+import { answer, kid, next, PROD, seedProd, solveGate as solve, openMap, playOp } from '../helpers';
 
 
 
@@ -57,7 +57,7 @@ test('session complète : étoiles, pièces, grille, île suivante', async ({ pa
   await page.goto(PROD + '/');
   await createKid(page, 'Léo');
   await openKid(page, 'Léo');
-  await page.locator('.btn-play').click();
+  await playOp(page);
   await expect(page.locator('.q-place small')).toHaveText('Étape 1');
   let asked = 0;
   for (let i = 0; i < 14 && !(await page.locator('[data-screen="end"]').count()); i++) {
@@ -114,7 +114,7 @@ test('défi chrono : 60 s, questions illimitées, nouveau record', async ({ page
   await page.clock.install();
   await seed(page, kid({ isl: { 1: { steps: 1, trophy: false, stepStars: [2, 0, 0] } }, records: { 1: 3 } }));
   await openKid(page, 'Nina');
-  await page.locator('.isles-strip').click();
+  await openMap(page);
   await page.locator('.isle[aria-label^="Île 1,"]').click();
   await expect(page.locator('.modes2 .discover').nth(1)).toContainText('Ton record : 3');
   await page.locator('.modes2 .discover').nth(1).click();
@@ -190,7 +190,7 @@ test('verrou parent : nouvelle opération en cas d\'erreur, accès, réglages en
 test('toucher le feedback vert ne saute pas de question', async ({ page }) => {
   await seed(page, kid());
   await openKid(page, 'Nina');
-  await page.locator('.btn-play').click();
+  await playOp(page);
   await answer(page);
   await page.locator('.fb-sheet.ok').click({ force: true });
   await page.waitForTimeout(2000);

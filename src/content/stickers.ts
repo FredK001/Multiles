@@ -19,6 +19,8 @@ export function stickerName(k: string): string {
   const { series, kind } = stickerParts(k), I = lookOf(series);
   if (kind === 'lieu') return I.sticker;
   if (kind === 'gardien') return `${I.boss} le gardien`;
+  // Îles d'anglais : « of » est le titre seul (« Animals »).
+  if (!/^(de|du|des) /.test(I.of)) return `Pépin sur l'île ${I.name}`;
   return `Pépin ${I.name === 'Espace' ? "dans l'Espace" : I.of.replace(/^de la /, 'à la ').replace(/^du /, 'au ').replace(/^des /, 'aux ').replace(/^de l'/, "à l'")}`;
 }
 

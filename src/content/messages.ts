@@ -1,6 +1,7 @@
 /* Textes de l'interface enfant, repris mot pour mot du prototype. Tutoiement partout. */
 import type { Question } from '../engine/questions';
-import { OP_SIGN, OP_SPOKEN } from './series';
+import { themeOf } from './english';
+import { DRILL_BASE, OP_SIGN, OP_SPOKEN } from './series';
 import { nb } from './text';
 
 export const MSG = {
@@ -8,6 +9,7 @@ export const MSG = {
   qcm: ['Touche la bonne réponse.', 'Laquelle est juste, {name} ?'],
   manquant: ['Trouve le nombre qui manque.', 'Quel nombre se cache ici ?'],
   vf: ["Est-ce que c'est juste ?", 'Vrai ou faux, {name} ?'],
+  ecoute: ['Écoute et touche le bon dessin.', 'Écoute bien, {name} !'],
 } as const;
 
 /** Consignes du CP : très courtes, sans prénom, appuyées par un pictogramme du format. */
@@ -16,6 +18,7 @@ export const MSG_CP = {
   qcm: ['Touche le bon nombre.'],
   manquant: ['Quel nombre manque ?'],
   vf: ['Juste ou pas juste ?'],
+  ecoute: ['Écoute et touche le bon dessin.'],
 } as const;
 
 export const OK_TITLES = ['Bravo {name} !', 'Super !', 'Exact !', 'Bien joué, {name} !', 'Tu assures !', 'Génial !', 'Et voilà !'];
@@ -79,9 +82,48 @@ function subTip(a: number, b: number): string {
   return `Compte de ${b} jusqu'à ${a} : il y a ${p} pas.`;
 }
 
+/** Consignes de l'anglais (en français : l'enfant lit l'anglais dans les propositions). */
+export const MSG_ENG = {
+  word: ['Comment dit-on en anglais ?', 'Quel est le mot anglais, {name} ?'],
+  ecoute: ['Écoute et touche le bon dessin.', 'Écoute bien, {name} !'],
+  vf: ['Est-ce le bon mot ?', 'Juste ou pas, {name} ?'],
+  /** Phrase anglaise à comprendre (question du thème, oui/non, combien). */
+  phrase: ['Choisis la bonne réponse.', 'Quelle est la bonne réponse, {name} ?'],
+  /** Situation en français à dire en anglais. */
+  dire: ['Comment le dire en anglais ?'],
+} as const;
+
+/** Consigne d'une question d'anglais. */
+export function engPrompt(q: Question): readonly string[] {
+  const e = q.eng!;
+  if (q.fmt === 'ecoute') return MSG_ENG.ecoute;
+  if (q.fmt === 'vf') return MSG_ENG.vf;
+  if (q.b > DRILL_BASE) return e.textFr ? MSG_ENG.dire : MSG_ENG.phrase;
+  return MSG_ENG.word;
+}
+
+/** Aide après une erreur en anglais : le sens du mot, ou la phrase à retenir. */
+type TipQ = Pick<Question, 'op' | 'a' | 'b'> & Partial<Pick<Question, 'eng' | 'p'>>;
+
+function engTip(q: TipQ): string {
+  const e = q.eng, t = e && themeOf(e.theme);
+  if (!e || !t) return '';
+  if (q.b <= DRILL_BASE) {
+    const w = t.words[q.b - 1]!;
+    return `« ${w.en} » veut dire « ${w.fr} ».`;
+  }
+  // La phrase juste est déjà affichée au-dessus : l'astuce dit comment la retrouver.
+  const d = t.drills[q.b - DRILL_BASE - 1]!;
+  if (d.kind === 'count') return `Compte les dessins : il y en a ${e.count}.`;
+  if (d.kind === 'yesno' && e.cue) return e.cue === 'like' || e.cue === 'dislike' ? 'Regarde le visage : il aime, ou il n\'aime pas ?' : 'Regarde le signe : coché, il sait faire ; barré, il ne sait pas.';
+  if (d.kind === 'yesno') return 'Regarde bien le dessin, puis réponds par oui ou par non.';
+  if (d.kind === 'pick') return 'Regarde bien le dessin : la bonne phrase parle de lui.';
+  return e.textFr ? 'Redis la phrase en anglais à voix haute pour la retenir.' : 'Redis la question et sa réponse à voix haute pour les retenir.';
+}
+
 /** Astuce adaptée au calcul, quelle que soit l'opération. */
-export function tipOf(q: Pick<Question, 'op' | 'a' | 'b'>): string {
-  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'add' ? addTip(q.a, q.b) : subTip(q.a, q.b);
+export function tipOf(q: TipQ): string {
+  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
 }
 
 /** Bulle d'accueil. */

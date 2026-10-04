@@ -1,4 +1,5 @@
-import { CP_ZONE, type SeriesId } from './series';
+import { THEMES, type ThemeId } from './english';
+import { CP_ZONE, ENG_ZONE, OP_SIGN, SERIES, type SeriesId } from './series';
 
 export type IsleId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type DecorKind =
@@ -78,11 +79,45 @@ const CP_ISLES: Record<CpSeries, Omit<IsleLook, 'fort' | 'clair'>> = {
   'sub-20': { name: 'Ciel', decor: 'nuages', motif: 9, boss: 'Zéphyr', sticker: 'Ballon volant', of: 'du Ciel' },
 };
 
+/* Anglais : l'île porte le titre de la fiche (« Animals »), son gardien un nom anglais ;
+   le dessin reprend un motif du CM1 proche du thème, en bleu marine. Le sticker Lieu porte un mot du thème. */
+const ENG_ISLES: Record<ThemeId, { motif: IsleId; boss: string; sticker: string }> = {
+  hello: { motif: 1, boss: 'Mister Hi', sticker: 'Palette de couleurs' },
+  school: { motif: 5, boss: 'Professor Chalk', sticker: 'Trousse' },
+  toys: { motif: 6, boss: 'Teddy', sticker: 'Ours en peluche' },
+  family: { motif: 3, boss: 'Granny Bee', sticker: 'Papi et mamie' },
+  home: { motif: 8, boss: 'Mr Key', sticker: 'Petite maison' },
+  body: { motif: 9, boss: 'Bony', sticker: 'Grand sourire' },
+  food: { motif: 3, boss: 'Chef Yummy', sticker: 'Banane' },
+  actions: { motif: 4, boss: 'Jumpy', sticker: 'Grand saut' },
+  animals: { motif: 2, boss: 'King Leo', sticker: 'Girafe' },
+  transport: { motif: 10, boss: 'Captain Wheels', sticker: 'Bus à étage' },
+  pets: { motif: 2, boss: 'Whiskers', sticker: 'Chaton' },
+  clothes: { motif: 5, boss: 'Lady Sock', sticker: 'Chaussettes' },
+  rooms: { motif: 6, boss: 'Sir Sofa', sticker: 'Lampe' },
+  meals: { motif: 7, boss: 'Mrs Pancake', sticker: 'Saucisses' },
+  activities: { motif: 8, boss: 'Coach Kite', sticker: 'Cerf-volant' },
+  town: { motif: 10, boss: 'Mayor Map', sticker: 'Supermarché' },
+  farm: { motif: 8, boss: 'Farmer Moo', sticker: 'Mouton' },
+  classroom: { motif: 4, boss: 'Miss Bell', sticker: 'Tableau' },
+};
+
+/** Pastille d'une île : numéro de la table, signe de l'opération au CP, numéro du thème en anglais. */
+export function seriesBadge(id: SeriesId): string {
+  const sp = SERIES[id].spec;
+  return sp.kind === 'table' ? String(sp.n) : sp.kind === 'theme' ? String(sp.n) : OP_SIGN[SERIES[id].op];
+}
+
 /** Habillage de l'île d'une série. */
 export function lookOf(id: SeriesId): IsleLook {
   if (id.startsWith('mul-')) {
     const n = Number(id.slice(4)) as IsleId, I = ISLES[n];
     return { name: I.name, fort: I.fort, clair: I.clair, decor: I.decor, motif: n, boss: BOSS[n], sticker: STICKER_NAMES[n], of: ofIsle(n) };
+  }
+  const spec = SERIES[id].spec;
+  if (spec.kind === 'theme') {
+    const t = THEMES[spec.n - 1]!, e = ENG_ISLES[t.id];
+    return { name: t.en, fort: ENG_ZONE.fort, clair: ENG_ZONE.clair, decor: ISLES[e.motif].decor, motif: e.motif, boss: e.boss, sticker: e.sticker, of: t.en };
   }
   return { ...CP_ISLES[id as CpSeries], fort: CP_ZONE.fort, clair: CP_ZONE.clair };
 }

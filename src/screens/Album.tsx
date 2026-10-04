@@ -5,16 +5,14 @@ import { coinIcon, stickerArt, trophyIcon } from '../art';
 import { useProfileTheme } from '../app/theme';
 import { useApp, useBack, usePlayer } from '../app/context';
 import { BtnSay, Overlay, Svg, TabBar } from '../app/ui';
-import { lookOf } from '../content/isles';
-import { OP_SIGN, seriesOf, type Op, type SeriesDef } from '../content/series';
+import { lookOf, seriesBadge } from '../content/isles';
+import { OPS, seriesOf, type SeriesDef } from '../content/series';
 import { KINDS, stickerHow, stickerKey, stickerName } from '../content/stickers';
 import { nb } from '../content/text';
 import { allStickers, opProg, opsOf } from '../engine/progress';
-import { tableNum } from '../engine/unlock';
 
-const ALL_OPS: readonly Op[] = ['mul', 'add', 'sub'];
 /** Pastille d'une île : numéro de la table, ou signe de l'opération au CP. */
-const badge = (d: SeriesDef) => (d.op === 'mul' ? String(tableNum(d.id)) : OP_SIGN[d.op]);
+const badge = (d: SeriesDef) => seriesBadge(d.id);
 
 interface Pop { art: ComponentChildren; title: string; text: string }
 
@@ -27,7 +25,7 @@ export function Album() {
   useProfileTheme(p.color);
 
   // Îles de la classe, plus celles d'une autre opération où l'enfant a déjà gagné des stickers.
-  const ops = ALL_OPS.filter((op) => opsOf(p).includes(op) || opProg(p, op).stickers.length > 0);
+  const ops = OPS.filter((op) => opsOf(p).includes(op) || opProg(p, op).stickers.length > 0);
   const list = ops.flatMap((op) => seriesOf(op));
   const won = (d: SeriesDef) => !!opProg(p, d.op).series[d.id]?.trophy;
   const has = (d: SeriesDef, k: string) => opProg(p, d.op).stickers.includes(k);

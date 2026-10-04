@@ -1,7 +1,7 @@
 /* Écrans 7 et 8 : question (4 formats), feedback, et mode chronométré (défi chrono, défi du jour, gardien). */
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { coinIcon, decorSvg, icoBulb, icoClock, icoErase, icoFalse, icoFmtMissing, icoFmtPad, icoFmtPick, icoQuit, icoTrue, mascot, type Mood } from '../art';
-import { chime, speak, stopSpeech } from '../audio';
+import { canSpeak, chime, speak, stopSpeech, type Speakable } from '../audio';
 import { useApp, useBack, usePlayer } from '../app/context';
 import { confetti, flyCoin, pop } from '../app/effects';
 import type { Route } from '../app/routes';
@@ -9,18 +9,19 @@ import { planFor } from '../app/sessions';
 import { AUTO_SAY_DELAY, BtnSay, Svg } from '../app/ui';
 import { lookOf } from '../content/isles';
 import { SERIES } from '../content/series';
-import { equation, fill, goodAnswers, HELP_TITLES, MSG, MSG_CP, OK_TITLES, spoken, tipOf } from '../content/messages';
+import { engPrompt, equation, fill, goodAnswers, HELP_TITLES, MSG, MSG_CP, OK_TITLES, spoken, tipOf } from '../content/messages';
 import { OP_SIGN, OP_SPOKEN } from '../content/series';
 import type { Format } from '../engine/questions';
 import { nb } from '../content/text';
 import { useIsleTheme } from '../app/theme';
 import { stageFor } from '../engine/level';
-import { expected, isCorrect, typeDigit, type Question as Q } from '../engine/questions';
+import { expected, isCorrect, typeDigit, withoutListening, type Question as Q } from '../engine/questions';
 import { pick } from '../engine/random';
 import { creditCoin, finishSession, recordQuit } from '../engine/rewards';
 import { OK_FEEDBACK_MS, opOf, Session, type SessionConfig } from '../engine/session';
 import { ActiveClock, Countdown, fmtTime } from '../engine/timer';
 import { AidGrid, AidTokens } from './Aid';
+import { EngAid, EngAnswers, EngCard, engRight, engSayParts } from './EngQuestion';
 
 type Feedback =
   | { ok: true; title: string; sub: string; eq: string; combo: number | null; delay: number }
@@ -68,9 +69,10 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
 
   useIsleTheme(I.fort, I.clair);
   // Au CP : consignes courtes, chiffres et touches plus grands, aide avec jetons.
-  const cp = opOf(cfg) !== 'mul', msgs = cp ? MSG_CP : MSG;
+  // En anglais : dessins, mots et phrases à la place des nombres (EngQuestion).
+  const op = opOf(cfg), cp = op === 'add' || op === 'sub', eng = op === 'eng', msgs = cp ? MSG_CP : MSG;
   /** Lecture automatique (réglage du profil) ; jamais quand le chrono tourne, la lecture mangerait le temps. */
-  const autoSay = (text: string) => {
+  const autoSay = (text: Speakable) => {
     if (p.autoSpeech && !cfg.timed) later(() => speak(text), AUTO_SAY_DELAY);
   };
   const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(() => alive.current && fn(), ms));
@@ -78,17 +80,22 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
   const q = session.cur;
 
   const nextQ = () => {
-    const n = session.next();
+    let n = session.next();
     if (!n) return endSession();
+    // Sans voix anglaise, pas d'écoute : la question devient dessin → mot.
+    if (n.op === 'eng' && !canSpeak('en')) n = session.cur = withoutListening(n);
     phase.current = 'asking';
     setInput('');
     setLocked(false);
     setMark('');
     setPicked(null);
     setBuddy({ mood: 'neutre', anim: 'idle' });
-    const text = fill(pick(msgs[n.fmt]), n, p.name);
+    const text = fill(pick(n.op === 'eng' ? engPrompt(n) : msgs[n.fmt as keyof typeof msgs]), n, p.name);
     setBubble(text);
-    autoSay(sayQuestion(n, text));
+    if (n.op !== 'eng') autoSay(sayQuestion(n, text));
+    else if (p.autoSpeech && !cfg.timed) autoSay(engSayParts(n, text));
+    // Écoute : le mot est toujours dit, même sans lecture automatique et pendant le chrono.
+    else if (n.fmt === 'ecoute') later(() => speak(engSayParts(n, text).slice(1)), AUTO_SAY_DELAY);
     render();
   };
 
@@ -167,7 +174,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
       setMark('');
       setPicked(null);
       setBuddy({ mood: 'neutre', anim: 'idle' });
-      setBubble(fill(pick(msgs[fq.fmt]), fq, p.name));
+      setBubble(fill(pick(fq.op === 'eng' ? engPrompt(fq) : msgs[fq.fmt as keyof typeof msgs]), fq, p.name));
       render();
     };
   }
@@ -230,15 +237,18 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
         ? cfg.target ? `${session.good} sur ${cfg.target}` : goodAnswers(session.good)
         : session.done < session.total ? `Encore ${session.remaining} question${session.remaining > 1 ? 's' : ''}` : 'Dernière réponse !';
       const title = fill(pick(OK_TITLES), q, p.name);
-      setFb({ ok: true, title, sub: nb(sub), eq: equation(q), combo, delay });
+      setFb({ ok: true, title, sub: nb(sub), eq: eng ? engRight(q) : equation(q), combo, delay });
       chime(combo ? 'combo' : 'ok');
+      // Anglais : on entend la bonne réponse (pas pendant le chrono, qui doit rester rapide).
+      if (eng && !cfg.timed) later(() => speak([{ text: engRight(q), lang: 'en' }]), 350);
       requestAnimationFrame(() => confetti(sheetRef.current));
       later(continueQ, delay);
     } else {
       setBuddy({ mood: 'encourage', anim: 'idle' });
       const title = fill(pick(HELP_TITLES), q, p.name);
-      setFb({ ok: false, title, eq: equation(q), q });
-      autoSay(`${title} ${q.a} ${OP_SPOKEN[q.op]} ${q.b} égale ${q.p}.`);
+      setFb({ ok: false, title, eq: eng ? engRight(q) : equation(q), q });
+      if (eng) autoSay([{ text: `${title} La bonne réponse :`, lang: 'fr' }, { text: engRight(q), lang: 'en' }]);
+      else autoSay(`${title} ${q.a} ${OP_SPOKEN[q.op]} ${q.b} égale ${q.p}.`);
       chime('help');
       if (countdown.current) {
         helpPause.current = true;
@@ -306,14 +316,15 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
   );
   let expr = null;
   const sign = q ? OP_SIGN[q.op] : '×';
-  if (q) {
+  if (q && !eng) {
     if (q.fmt === 'pave' || q.fmt === 'qcm') expr = <><span>{q.a}</span><span class="op">{sign}</span><span>{q.b}</span><span class="op">=</span>{slot}</>;
     if (q.fmt === 'manquant') expr = <><span>{q.a}</span><span class="op">{sign}</span>{slot}<span class="op">=</span><span>{q.p}</span></>;
     if (q.fmt === 'vf') expr = <><span>{q.a}</span><span class="op">{sign}</span><span>{q.b}</span><span class="op">=</span><span class={`shown ${mark ? 'ok' : ''}`} id="shown" ref={slotRef}>{mark && !q.truth ? q.p : q.shown}</span></>;
   }
 
   let answer = null;
-  if (q && (q.fmt === 'pave' || q.fmt === 'manquant')) {
+  if (q && eng) answer = <EngAnswers q={q} picked={picked} locked={locked} onPick={(v) => check(isCorrect(q, v), v)} />;
+  else if (q && (q.fmt === 'pave' || q.fmt === 'manquant')) {
     answer = (
       <div class="pad">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => <button key={n} class="key" onClick={() => key(String(n))}>{n}</button>)}
@@ -323,7 +334,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
       </div>
     );
   }
-  if (q && q.fmt === 'qcm') {
+  if (q && !eng && q.fmt === 'qcm') {
     answer = (
       <div class="choices">
         {q.choices!.map((c) => {
@@ -333,7 +344,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
       </div>
     );
   }
-  if (q && q.fmt === 'vf') {
+  if (q && !eng && q.fmt === 'vf') {
     const cls = (v: boolean) => (!picked ? '' : picked.value === v ? (picked.ok ? 'ok' : 'help') : 'off');
     answer = (
       <div class="vf">
@@ -351,7 +362,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
           <div class="m jump"><Svg html={mascot({ variant: p.pepin, stage, wear: p.pw, mood: 'joie', size: 86, noSparkle: true })} /></div>
           <div><p class="fb-title">{fb.title}</p><p class="fb-sub">{fb.sub}</p></div>
         </div>
-        <p class="fb-eq">{fb.eq}</p>
+        <p class={`fb-eq${eng ? ' eng' : ''}`} lang={eng ? 'en' : undefined}>{fb.eq}</p>
         {fb.combo && <span class="combo">{nb(`${fb.combo} d'affilée !`)}</span>}
         <div class="fb-auto"><i style={{ animationDuration: `${fb.delay}ms` }}></i></div>
         <p class="fb-skip">Touche pour continuer</p>
@@ -366,16 +377,22 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
             <Svg html={mascot({ variant: p.pepin, stage, wear: p.pw, mood: 'encourage', size: 72 })} />
           </div>
           <div style={{ flex: 1 }}><p class="fb-title" style={{ fontSize: '28px' }}>{fb.title}</p><p class="fb-sub">{nb('La bonne réponse :')}</p></div>
-          <BtnSay wrap id="fbSay" label="Écouter l'astuce" style={{ background: '#fff' }} text={`${fb.title} ${fq.a} ${OP_SPOKEN[fq.op]} ${fq.b} égale ${fq.p}. ${tip}`} />
+          {eng ? (
+            <BtnSay wrap id="fbSay" label="Écouter la bonne réponse" style={{ background: '#fff' }} langs={['fr', 'en']} text={[{ text: `${fb.title} La bonne réponse :`, lang: 'fr' }, { text: engRight(fq), lang: 'en' }]} />
+          ) : (
+            <BtnSay wrap id="fbSay" label="Écouter l'astuce" style={{ background: '#fff' }} text={`${fb.title} ${fq.a} ${OP_SPOKEN[fq.op]} ${fq.b} égale ${fq.p}. ${tip}`} />
+          )}
         </div>
-        <p class="fb-eq">{fb.eq}</p>
+        {!eng && <p class="fb-eq">{fb.eq}</p>}
         <div class="aid">
-          {fq.op === 'mul' ? (
+          {eng ? (
+            <EngAid q={fq} />
+          ) : fq.op === 'mul' ? (
             <>
               <div class="aid-top"><span>{fq.a} rangées de {fq.b}</span><span>{fq.p} en tout</span></div>
               <AidGrid rows={fq.a} cols={fq.b} />
             </>
-          ) : (
+          ) : fq.op === 'add' || fq.op === 'sub' ? (
             <>
               <div class="aid-top">
                 <span>{fq.op === 'add' ? `${fq.a} et encore ${fq.b}` : `${fq.a}, on en enlève ${fq.b}`}</span>
@@ -383,7 +400,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
               </div>
               <AidTokens op={fq.op} a={fq.a} b={fq.b} />
             </>
-          )}
+          ) : null}
           <p class="tip"><span class="bulb"><Svg html={icoBulb} /></span><span id="fbTip">{tip}</span></p>
         </div>
         <p class="fb-sub" style={{ textAlign: 'center' }}>{cfg.timed ? 'Le chrono est en pause pendant que tu regardes.' : 'Elle reviendra plus tard dans la session.'}</p>
@@ -393,7 +410,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
   }
 
   return (
-    <section class={`screen scr-q${cp ? ' cp' : ''}`} data-screen="question" aria-label="Question">
+    <section class={`screen scr-q${cp ? ' cp' : ''}${eng ? ' eng' : ''}`} data-screen="question" aria-label="Question">
       <header class="q-band">
         <div class="q-top">
           <button class="btn-chip" id="btnQuit" aria-label="Quitter la session" onClick={quit}>
@@ -422,12 +439,17 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
             <BtnSay
               id="btnSayQ"
               label="Écouter la question"
-              text={() => (q ? (locked ? bubble : cp ? sayQuestion(q, bubble) : `${bubble} ${spoken(q)}`) : bubble)}
+              langs={eng ? ['fr', 'en'] : ['fr']}
+              text={() => (q ? (locked ? bubble : eng ? engSayParts(q, bubble) : cp ? sayQuestion(q, bubble) : `${bubble} ${spoken(q)}`) : bubble)}
             />
           </div>
         </div>
         <div class="q-card">
-          <div class="expr" ref={exprRef} role="img" aria-label={q ? spoken(q) : undefined}>{expr}</div>
+          {q && eng ? (
+            <EngCard q={q} revealed={!!mark} />
+          ) : (
+            <div class="expr" ref={exprRef} role="img" aria-label={q ? spoken(q) : undefined}>{expr}</div>
+          )}
         </div>
         <div class="q-answer">{answer}</div>
       </div>
