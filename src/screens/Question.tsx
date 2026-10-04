@@ -1,7 +1,7 @@
 /* Écrans 7 et 8 : question (4 formats), feedback, et mode chronométré (défi chrono, défi du jour, gardien). */
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { coinIcon, decorSvg, icoBulb, icoClock, icoErase, icoFalse, icoFmtMissing, icoFmtPad, icoFmtPick, icoQuit, icoTrue, mascot, type Mood } from '../art';
-import { chime, speak } from '../audio';
+import { chime, speak, stopSpeech } from '../audio';
 import { useApp, useBack, usePlayer } from '../app/context';
 import { confetti, flyCoin, pop } from '../app/effects';
 import type { Route } from '../app/routes';
@@ -208,6 +208,8 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
   const check = (ok: boolean, value?: number | boolean) => {
     if (!q || phase.current !== 'asking' || session.finished) return;
     phase.current = 'feedback';
+    // L'enfant a répondu : la lecture en cours s'arrête, le carillon passe devant.
+    stopSpeech();
     setLocked(true);
     if (q.fmt !== 'vf') setInput(String(expected(q)));
     setMark(ok ? 'ok' : 'help');

@@ -15,8 +15,8 @@ export function useCanSpeak(): boolean {
 /** Délai avant une lecture automatique. */
 export const AUTO_SAY_DELAY = 250;
 
-/** Lecture automatique (réglage du profil) : lit `text` à l'affichage, puis à chaque changement de `key`. */
-export function useAutoSay(text: string | null, key: unknown = text): void {
+/** Lecture automatique (réglage du profil) : lit `text` à l'affichage (après `delay` ms), puis à chaque changement de `key`. */
+export function useAutoSay(text: string | null, key: unknown = text, delay = AUTO_SAY_DELAY): void {
   const { player } = useApp();
   const on = !!player?.autoSpeech;
   const latest = useRef(text);
@@ -24,7 +24,7 @@ export function useAutoSay(text: string | null, key: unknown = text): void {
   useEffect(() => {
     if (!on || !latest.current) return;
     // Petit délai : laisse l'écran s'afficher et le son de clic se terminer.
-    const t = setTimeout(() => latest.current && speak(latest.current), AUTO_SAY_DELAY);
+    const t = setTimeout(() => latest.current && speak(latest.current), delay);
     return () => clearTimeout(t);
   }, [on, key]);
 }

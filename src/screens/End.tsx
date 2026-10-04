@@ -91,7 +91,8 @@ export function End({ end: E, cfg, back }: { end: EndSummary; cfg: SessionConfig
             ? `Défi du gardien terminé, île ${I.of}`
             : `${E.mode === 'traps' ? 'Session pièges' : E.label} terminée, île ${I.of}`;
 
-  useAutoSay(`${title} ${sub}`, E);
+  // Après les carillons des étoiles (jusqu'à 1 s) : sur iOS, la voix couperait le son.
+  useAutoSay(`${title} ${sub}`, E, 1300);
   const timed = E.mode === 'chrono' || E.mode === 'defi';
   const nf = E.fresh.length;
 

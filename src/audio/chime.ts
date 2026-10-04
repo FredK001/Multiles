@@ -17,6 +17,15 @@ function audioContext(): AudioContext | null {
   return ctx;
 }
 
+/** Contexte audio prêt à jouer. La synthèse vocale (lecture automatique) interrompt l'audio sur iOS
+    (état « interrupted » ou « suspended ») : on le relance, ce qui marche pendant un geste de l'enfant. */
+function running(then: (ac: AudioContext) => void): void {
+  const ac = audioContext();
+  if (!ac) return;
+  if (ac.state === 'running') return then(ac);
+  ac.resume().then(() => then(ac), () => {});
+}
+
 /** À appeler lors du premier geste de l'utilisateur (contrainte iOS et Chrome). */
 export function unlockAudio(): void {
   try {
@@ -31,8 +40,14 @@ export function unlockAudio(): void {
 export function tap(): void {
   if (!enabled) return;
   try {
-    const AC = audioContext();
-    if (!AC || AC.state !== 'running') return;
+    running((AC) => playTap(AC));
+  } catch {
+    /* ignoré */
+  }
+}
+
+function playTap(AC: AudioContext): void {
+  try {
     const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime;
     o.type = 'sine';
     o.frequency.setValueAtTime(880, t);
@@ -55,8 +70,14 @@ export function chime(kind: ChimeKind): void {
     // Le carillon d'une bonne réponse part du même appui : on coupe le clic pour qu'il reste net.
     lastTap?.stop();
     lastTap = null;
-    const AC = audioContext();
-    if (!AC) return;
+    running((AC) => playChime(AC, kind));
+  } catch {
+    /* ignoré */
+  }
+}
+
+function playChime(AC: AudioContext, kind: ChimeKind): void {
+  try {
     const notes = kind === 'ok' ? [784, 1047] : kind === 'combo' ? [784, 988, 1319] : [392, 440];
     notes.forEach((f, i) => {
       const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime + i * 0.09;
