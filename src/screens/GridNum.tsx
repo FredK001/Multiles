@@ -24,12 +24,12 @@ export function GridNum({ tabs, op = 'num' }: { tabs?: ComponentChildren; op?: '
       <div class="topbar tri">
         <span></span>
         <div class="ttl" style={{ fontSize: '26px' }}>Ma grille</div>
-        <BtnSay style={{ justifySelf: 'end', background: '#fff' }} text={`${OP_NAME[op]} : ${done} îles réussies sur ${list.length}.`} />
+        <BtnSay style={{ justifySelf: 'end', background: '#fff' }} text={`${OP_NAME[op]} : ${done} ${done > 1 ? 'îles réussies' : 'île réussie'} sur ${list.length}.`} />
       </div>
       <div class="grid-scroll">
         {tabs}
         <div class="pcard2">
-          <h2>{OP_NAME[op]} <small>réussis du premier coup</small></h2>
+          <h2>{OP_NAME[op]} <small>{op === 'frac' ? 'réussies' : 'réussis'} du premier coup</small></h2>
           <div class="tbl">
             {list.map((d) => {
               const v = seriesPct(o.mastered, d.id);

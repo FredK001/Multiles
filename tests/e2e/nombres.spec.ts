@@ -9,7 +9,7 @@ const cpKid = () => {
 
 /** Répond juste en lisant l'énoncé (aria-label de la carte). */
 async function answerNum(page: Page) {
-  const t = (await page.locator('.num-wrap').getAttribute('aria-label'))!;
+  const t = (await page.locator('.num-wrap').getAttribute('data-q'))!;
   let r: number;
   const du = /^(\d+) dizaines? et (\d+) unités?/.exec(t), suite = /juste (après|avant) (\d+)/.exec(t), comp = /plus grand : (\d+) ou (\d+)/.exec(t);
   if (du) r = Number(du[1]) * 10 + Number(du[2]);

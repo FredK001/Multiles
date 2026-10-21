@@ -2,6 +2,7 @@
 import type { Question } from '../engine/questions';
 import { themeOf } from './english';
 import { fillBlank, quizOf, ruleOf } from './french';
+import { sayFrac } from './fractions';
 import { DRILL_BASE, OP_SIGN, OP_SPOKEN, SERIES } from './series';
 import { seriesStory } from './stories';
 import { nb } from './text';
@@ -46,7 +47,7 @@ export function spoken(q: Question): string {
   // Français : le trou est lu comme un silence (a et à se prononcent pareil, mais pas toujours et/est).
   // Petit problème : l'histoire elle-même (le calcul n'est pas donné).
   if (SERIES[q.series]?.story && (q.op === 'add' || q.op === 'sub')) return seriesStory(q.series, q.op, q.a, q.b);
-  if (q.op === 'frac' && q.frac) return q.frac.text.replace(/(\d+)\/(\d+)/g, (_, n, d) => `${n} sur ${d}`);
+  if (q.op === 'frac' && q.frac) return sayFrac(q.frac.text);
   if (q.op === 'num' && q.num) return numSpoken(q.num.set, q.num.x, q.num.y);
   if (q.op === 'lec' && q.read) return q.fmt === 'qcm' ? `Trouve : ${q.read.target}.` : 'Écoute bien.';
   if (q.op === 'fr' && q.fr) return q.fr.text.replace(/___/g, '…') + (q.fr.verb ? ` Verbe ${q.fr.verb}.` : '');
@@ -193,7 +194,9 @@ function numTip(q: TipQ): string {
     const ta = Math.floor(a / 10), tb = Math.floor(b / 10), big = Math.max(a, b);
     return ta !== tb ? `On regarde d'abord les dizaines : ${Math.max(ta, tb)} dizaines, c'est plus que ${Math.min(ta, tb)}. Le plus grand est ${big}.` : `Même nombre de dizaines : on regarde les unités. Le plus grand est ${big}.`;
   }
-  return `Compte les traits à partir de ${a} : ${Array.from({ length: Math.min(b - a, 4) }, (_, i) => a + i + 1).join(', ')}${b - a > 4 ? '…' : ''} Le nombre caché est ${b}.`;
+  // Près de la dizaine suivante, on compte à rebours.
+  if (b - a >= 8) return `Compte les traits à rebours depuis ${a + 10} : ${Array.from({ length: a + 10 - b }, (_, i) => a + 9 - i).join(', ')}. Le nombre caché est ${b}.`;
+  return `Compte les traits à partir de ${a} : ${Array.from({ length: Math.min(b - a, 4) }, (_, i) => a + i + 1).join(', ')}${b - a > 4 ? '…' : '.'} Le nombre caché est ${b}.`;
 }
 
 /** Astuce de lecture : les lettres qui se ressemblent, ou l'ordre des lettres. */

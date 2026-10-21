@@ -9,6 +9,7 @@ import { planFor } from '../app/sessions';
 import { AUTO_SAY_DELAY, BtnSay, Svg } from '../app/ui';
 import { lookOf } from '../content/isles';
 import { SERIES } from '../content/series';
+import { sayFrac } from '../content/fractions';
 import { CONJ_PROMPTS, LEC_PROMPTS, numEq, STORY_PROMPTS, engPrompt, equation, fill, FR_PROMPTS, goodAnswers, HELP_TITLES, MSG, MSG_CP, OK_TITLES, spoken, tipOf } from '../content/messages';
 import { OP_SIGN, OP_SPOKEN } from '../content/series';
 import type { Format } from '../engine/questions';
@@ -267,7 +268,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
       setFb({ ok: false, title, eq: eng ? engRight(q) : fr ? frRight(q) : lec ? q.read!.target : num ? numEq(q.num!) : frac ? fracRight(q) : equation(q), q });
       if (eng) autoSay([{ text: `${title} La bonne réponse :`, lang: 'fr' }, { text: engRight(q), lang: 'en' }]);
       else if (fr) autoSay(`${title} ${frRight(q)}`);
-      else if (num || frac) autoSay(`${title} ${tipOf(q)}`);
+      else if (num || frac) autoSay(sayFrac(`${title} ${tipOf(q)}`));
       else if (lec) autoSay(q.fmt === 'ecoute' ? [{ text: `${title} ${tipOf(q)} Écoute :`, lang: 'fr' }, { text: q.read!.say, lang: 'fr' }] : `${title} ${tipOf(q)}`);
       else autoSay(`${title} ${q.a} ${OP_SPOKEN[q.op]} ${q.b} égale ${q.p}.`);
       chime('help');
@@ -404,7 +405,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
           {eng ? (
             <BtnSay wrap id="fbSay" label="Écouter la bonne réponse" style={{ background: '#fff' }} langs={['fr', 'en']} text={[{ text: `${fb.title} La bonne réponse :`, lang: 'fr' }, { text: engRight(fq), lang: 'en' }]} />
           ) : (
-            <BtnSay wrap id="fbSay" label="Écouter l'astuce" style={{ background: '#fff' }} text={fr || lec || num || frac ? `${fb.title} ${fr ? frRight(fq) : frac ? fracRight(fq) : ''} ${tip}` : `${fb.title} ${fq.a} ${OP_SPOKEN[fq.op]} ${fq.b} égale ${fq.p}. ${tip}`} />
+            <BtnSay wrap id="fbSay" label="Écouter l'astuce" style={{ background: '#fff' }} text={fr || lec || num || frac ? sayFrac(`${fb.title} ${fr ? frRight(fq) : frac ? fracRight(fq) : ''} ${tip}`) : `${fb.title} ${fq.a} ${OP_SPOKEN[fq.op]} ${fq.b} égale ${fq.p}. ${tip}`} />
           )}
         </div>
         {!eng && !lec && <p class={`fb-eq${fr ? ' fr' : ''}`}>{fb.eq}</p>}
@@ -477,7 +478,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
               id="btnSayQ"
               label="Écouter la question"
               langs={eng ? ['fr', 'en'] : ['fr']}
-              text={() => (q ? (locked ? bubble : lec && q.fmt === 'ecoute' ? [{ text: bubble, lang: 'fr' }, { text: q.read!.say, lang: 'fr' }] : eng ? engSayParts(q, bubble) : cp ? sayQuestion(q, bubble) : `${bubble} ${spoken(q)}`) : bubble)}
+              text={() => (q ? (locked ? bubble : q.op === 'num' ? bubble : lec && q.fmt === 'ecoute' ? [{ text: bubble, lang: 'fr' }, { text: q.read!.say, lang: 'fr' }] : eng ? engSayParts(q, bubble) : cp ? sayQuestion(q, bubble) : `${bubble} ${spoken(q)}`) : bubble)}
             />
           </div>
         </div>
@@ -487,9 +488,9 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
           ) : q && lec ? (
             <ReadCard q={q} />
           ) : q && frac ? (
-            <div class="num-wrap" ref={exprRef} role="img" aria-label={spoken(q)}><FracCard q={q} /></div>
+            <div class="num-wrap" ref={exprRef}><FracCard q={q} /></div>
           ) : q && num ? (
-            <div class="num-wrap" ref={exprRef} role="img" aria-label={spoken(q)}><NumCard q={q} slot={slot} /></div>
+            <div class="num-wrap" ref={exprRef} data-q={spoken(q)}><NumCard q={q} slot={slot} /></div>
           ) : q && SERIES[q.series].story ? (
             <div class="story-card">
               <p class="story">{spoken(q)}</p>

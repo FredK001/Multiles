@@ -7,7 +7,11 @@ export function FracCard({ q }: { q: Question }) {
   const f = q.frac!;
   return (
     <div class="frac-card">
-      {f.pic && <Svg html={fractionArt(f.pic.n, f.pic.d)} />}
+      {f.pic && (
+        <span role="img" aria-label={`${f.pic.d >= 8 ? 'Une barre' : 'Un disque'} partagé en ${f.pic.d} parts égales, dont ${f.pic.n} ${f.pic.n > 1 ? 'sont coloriées' : 'est coloriée'}.`}>
+          <Svg html={fractionArt(f.pic.n, f.pic.d)} />
+        </span>
+      )}
       <p class="frac-q">{f.text}</p>
     </div>
   );

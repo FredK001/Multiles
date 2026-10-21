@@ -42,6 +42,3 @@ export const NUM_SETS: readonly NumSet[] = [
 ];
 
 export const numSetOf = (id: NumId): NumSet => NUM_SETS.find((s) => s.id === id)!;
-
-/** Nombre écrit en lettres (pour la voix et l'aide) : géré par la synthèse ; ici, seulement les dizaines pour l'astuce. */
-export const TENS = ['zéro', 'dix', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante', 'soixante-dix', 'quatre-vingts', 'quatre-vingt-dix'] as const;

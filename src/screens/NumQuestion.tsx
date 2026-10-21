@@ -13,11 +13,11 @@ export function tensArt(a: number, b: number, h = 120): string {
   let s = '';
   for (let i = 0; i < a; i++) {
     const x = 4 + i * (rodW + gap);
-    s += `<rect x="${x}" y="4" width="${rodW}" height="${10 * cell + 4}" rx="3" fill="${ROD}" stroke="${INK}" stroke-width="2.5"/>`;
-    for (let k = 1; k < 10; k++) s += `<path d="M${x} ${4 + 2 + k * cell} h${rodW}" stroke="${INK}" stroke-width="1.2"/>`;
+    s += `<rect x="${x}" y="4" width="${rodW}" height="${10 * cell}" rx="3" fill="${ROD}" stroke="${INK}" stroke-width="2.5"/>`;
+    for (let k = 1; k < 10; k++) s += `<path d="M${x} ${4 + k * cell} h${rodW}" stroke="${INK}" stroke-width="1.2"/>`;
   }
   for (let j = 0; j < b; j++) {
-    const x = 4 + a * (rodW + gap) + (j % 2) * (cell + 3), y = 4 + 10 * cell + 4 - (Math.floor(j / 2) + 1) * (cell + 3);
+    const x = 4 + a * (rodW + gap) + (j % 2) * (cell + 3), y = 4 + 10 * cell - (Math.floor(j / 2) + 1) * (cell + 3) + 3;
     s += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="2" fill="${CUBE}" stroke="${INK}" stroke-width="2"/>`;
   }
   const vw = Math.max(w + 8, 40), vh = 10 * cell + 12;
@@ -37,10 +37,10 @@ export function lineArt(a: number, b: number): string {
 
 export function NumCard({ q, slot }: { q: Question; slot: ComponentChildren }) {
   const { set, x: a, y: b } = q.num!;
-  if (set === 'du') return <div class="num-card"><Svg html={tensArt(a, b)} /><div class="expr num-ans"><span class="op">=</span>{slot}</div></div>;
+  if (set === 'du') return <div class="num-card"><span role="img" aria-label={`${a} barre${a > 1 ? 's' : ''} de dix et ${b} cube${b > 1 ? 's' : ''}`}><Svg html={tensArt(a, b)} /></span><div class="expr num-ans"><span class="op">=</span>{slot}</div></div>;
   if (set === 'suite') {
     return <div class="expr num-ans">{b === 1 ? <><span>{a}</span><span class="op">→</span>{slot}</> : <>{slot}<span class="op">→</span><span>{a}</span></>}</div>;
   }
   if (set === 'comp') return <div class="expr num-ans"><span>{a}</span><span class="op">ou</span><span>{b}</span><span class="op">?</span></div>;
-  return <div class="num-card"><Svg html={lineArt(a, b)} /><div class="expr num-ans"><span class="op">?</span><span class="op">=</span>{slot}</div></div>;
+  return <div class="num-card"><span role="img" aria-label={`Droite graduée de ${a} à ${a + 10}, un nombre caché`}><Svg html={lineArt(a, b)} /></span><div class="expr num-ans"><span class="op">?</span><span class="op">=</span>{slot}</div></div>;
 }
