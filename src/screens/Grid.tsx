@@ -20,6 +20,7 @@ import { AidGrid } from './Aid';
 import { GridCP } from './GridCP';
 import { GridDiv } from './GridDiv';
 import { GridEng } from './GridEng';
+import { GridFr } from './GridFr';
 
 export function Grid() {
   const p = usePlayer();
@@ -29,9 +30,9 @@ export function Grid() {
 /** CM1 : onglets Multiplications / Anglais quand l'enfant a les deux. */
 function GridCM1() {
   const p = usePlayer();
-  type CmOp = 'mul' | 'div' | 'eng';
-  const ops = opsOf(p).filter((x): x is CmOp => x === 'mul' || x === 'div' || x === 'eng');
-  const [op, setOp] = useState<CmOp>(p.op === 'eng' || p.op === 'div' ? p.op : 'mul');
+  type CmOp = 'mul' | 'div' | 'fr' | 'eng';
+  const ops = opsOf(p).filter((x): x is CmOp => x === 'mul' || x === 'div' || x === 'fr' || x === 'eng');
+  const [op, setOp] = useState<CmOp>(p.op === 'eng' || p.op === 'div' || p.op === 'fr' ? p.op : 'mul');
   const tabs = ops.length > 1 && (
     <div class="opts op-tabs" role="group" aria-label="Opération">
       {ops.map((x) => (
@@ -39,7 +40,7 @@ function GridCM1() {
       ))}
     </div>
   );
-  return op === 'eng' ? <GridEng key="eng" tabs={tabs} /> : op === 'div' ? <GridDiv key="div" tabs={tabs} /> : <GridTable key="mul" tabs={tabs} />;
+  return op === 'eng' ? <GridEng key="eng" tabs={tabs} /> : op === 'div' ? <GridDiv key="div" tabs={tabs} /> : op === 'fr' ? <GridFr key="fr" tabs={tabs} /> : <GridTable key="mul" tabs={tabs} />;
 }
 
 function GridTable({ tabs }: { tabs?: ComponentChildren }) {

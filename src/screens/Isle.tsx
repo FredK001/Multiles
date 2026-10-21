@@ -52,7 +52,7 @@ export function IsleScreen({ s }: { s: SeriesId }) {
         <div class="modes2">
           <button class="discover" onClick={() => go({ name: 'discover', s, m: def.spec.kind === 'range' ? Math.max(1, def.spec.min) : 1 })}>
             <span class="ic"><Svg html={icoDiscover} /></span>
-            <span><b>Découvrir</b><small>{mul ? 'Voir la table avant de jouer' : def.op === 'div' ? 'Voir la table à l\'envers' : eng ? 'Voir et écouter les mots' : 'Voir les nombres avant de jouer'}</small></span>
+            <span><b>Découvrir</b><small>{mul ? 'Voir la table avant de jouer' : def.op === 'div' ? 'Voir la table à l\'envers' : eng ? 'Voir et écouter les mots' : def.op === 'fr' ? 'Revoir la règle' : 'Voir les nombres avant de jouer'}</small></span>
           </button>
           <button
             class={`discover${chrOpen ? '' : ' lock'}`}
@@ -109,7 +109,7 @@ export function IsleScreen({ s }: { s: SeriesId }) {
           <Svg html={bossSvg(n, 92, !bOpen, I.fort)} />
           <span>
             <b>Le gardien {I.boss}</b>
-            <small>{bOpen ? (st.trophy ? nb('Battu ! Tu peux le défier encore.') : `${mul || def.op === 'div' ? 'Toute la table' : eng ? 'Tout le thème' : 'Toute la série'}${bossTime ? ` en ${bossTime} minutes` : ', sans chrono'}`) : 'Finis les 3 étapes pour le défier.'}</small>
+            <small>{bOpen ? (st.trophy ? nb('Battu ! Tu peux le défier encore.') : `${mul || def.op === 'div' ? 'Toute la table' : eng ? 'Tout le thème' : def.op === 'fr' ? 'Toutes les phrases' : 'Toute la série'}${bossTime ? ` en ${bossTime} minutes` : ', sans chrono'}`) : 'Finis les 3 étapes pour le défier.'}</small>
           </span>
           <Svg html={bOpen ? trophyIcon(40) : icoLock} />
         </button>

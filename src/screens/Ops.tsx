@@ -38,7 +38,7 @@ export function OpsScreen({ then }: { then: 'play' | 'map' }) {
             return (
               <button key={op} class={`op-card${last ? ' last' : ''}`} aria-label={`${OP_WORD[op]} : ${OP_SINGULAR[op].toLowerCase()}. ${stars} étoile${stars > 1 ? 's' : ''}.${last ? ' Dernier choix.' : ''}`} onClick={() => choose(op)}>
                 {last && <span class="now" aria-hidden="true">Dernier choix</span>}
-                <span class={`op-sign${op === 'eng' ? ' txt' : ''}`} aria-hidden="true" style={{ background: zoneOf(op) }}>{OP_SIGN[op]}</span>
+                <span class={`op-sign${op === 'eng' || op === 'fr' ? ' txt' : ''}`} aria-hidden="true" style={{ background: zoneOf(op) }}>{OP_SIGN[op]}</span>
                 <span aria-hidden="true">
                   <b>{OP_WORD[op]}</b>
                   <small lang={op === 'eng' ? 'en' : undefined}>{op === 'eng' ? 'English' : OP_SINGULAR[op]}</small>

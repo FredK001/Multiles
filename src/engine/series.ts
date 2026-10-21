@@ -1,6 +1,7 @@
 /* Calculs d'une série : liste exhaustive, filtrée par étape, construite une fois pour toutes.
    Toute question est tirée de cette liste : aucun calcul hors plage ni résultat négatif n'est possible. */
 import { themeOf } from '../content/english';
+import { quizOf } from '../content/french';
 import { DRILL_BASE, SERIES, seriesOf, type Op, type SeriesDef, type SeriesId, type StepFilter } from '../content/series';
 import { defaultRng, type Rng } from './random';
 
@@ -42,6 +43,7 @@ function allFacts(s: SeriesDef): Fact[] {
     t.drills.forEach((_, i) => out.push({ a: sp.n, b: DRILL_BASE + i + 1 }));
     return out;
   }
+  if (sp.kind === 'quiz') return quizOf(sp.quiz).items.map((_, i) => ({ a: sp.n, b: i + 1 }));
   if (sp.kind === 'list') return sp.facts.map((f) => ({ ...f }));
   const lo = sp.zero ? 0 : 1;
   if (s.op === 'add') {
@@ -60,6 +62,11 @@ function matches(s: SeriesDef, f: Fact, flt: StepFilter): boolean {
     // Même découpage que stepWords : la première moitié prend le mot du milieu.
     const half = Math.ceil(themeOf(s.spec.theme).words.length / 2);
     if (isDrill(f) || (flt.half === 0) !== f.b <= half) return false;
+  }
+  if (flt.half !== undefined && s.spec.kind === 'quiz') {
+    // Même découpage que stepItems.
+    const half = Math.ceil(quizOf(s.spec.quiz).items.length / 2);
+    if ((flt.half === 0) !== f.b <= half) return false;
   }
   if (flt.bs && !flt.bs.includes(f.b)) return false;
   if (flt.mult && !flt.mult.includes(op === 'div' ? f.a / f.b : f.b)) return false;

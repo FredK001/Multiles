@@ -8,12 +8,13 @@ import { lookOf } from '../content/isles';
 import { SERIES, type SeriesId } from '../content/series';
 import { DiscoverCP } from './DiscoverCP';
 import { DiscoverEng } from './DiscoverEng';
+import { DiscoverFr } from './DiscoverFr';
 import { opProg } from '../engine/progress';
 import { isleOf, tableNum } from '../engine/unlock';
 
 export function Discover({ s, m }: { s: SeriesId; m: number }) {
   const op = SERIES[s].op;
-  return op === 'mul' || op === 'div' ? <DiscoverTable s={s} m={m} /> : op === 'eng' ? <DiscoverEng s={s} /> : <DiscoverCP s={s} m={m} />;
+  return op === 'mul' || op === 'div' ? <DiscoverTable s={s} m={m} /> : op === 'eng' ? <DiscoverEng s={s} /> : op === 'fr' ? <DiscoverFr s={s} /> : <DiscoverCP s={s} m={m} />;
 }
 
 function DiscoverTable({ s, m }: { s: SeriesId; m: number }) {

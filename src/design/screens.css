@@ -629,3 +629,21 @@
 .eg-w.m > .eng-pic,.eg-w.t > .eng-pic{filter:none;opacity:1}
 .eg-w .eng-pic.fr{font-size:10px;padding:1px 2px;border-width:1px;min-height:0 !important}
 .tchip.eng{font-size:18px}
+
+/* Français : phrase à trou, deux mots, règle */
+.expr.fr{white-space:normal;letter-spacing:0;font-size:inherit;padding:0 4px}
+.fr-sent{font-family:var(--titre);font-weight:600;font-size:28px;line-height:1.35;text-align:center;color:var(--ink)}
+.fr-blank{display:inline-block;min-width:64px;margin:0 4px;padding:0 6px;border:3px dashed var(--ile);border-radius:12px;background:var(--ile-clair);color:var(--ink-2);line-height:1.15}
+.fr-word{display:inline-block;margin:0 4px;padding:0 6px;border-radius:12px;background:var(--ile);color:#fff;line-height:1.15}
+.fr-choices{grid-template-columns:1fr 1fr}
+.fr-choices .choice{font-size:40px}
+.fr-aid{display:grid;gap:8px}
+.fr-rule{font-size:16px;line-height:1.35;padding:8px 10px;border-radius:14px;background:var(--ile-clair)}
+.fr-rule b{font-family:var(--titre);font-size:20px;margin-right:4px}
+.fr-rule.ok{border:3px solid var(--feuille);background:#fff}
+.fr-card{background:#fff;border:3px solid var(--ink);border-radius:22px;padding:12px 14px;display:grid;gap:8px}
+.fr-card h2{font-family:var(--titre);font-size:34px;line-height:1;color:var(--ile)}
+.fr-card ul{margin:0;padding-left:20px;display:grid;gap:4px;font-size:17px;line-height:1.3}
+.fr-swap{font-size:15px;color:var(--ink-2);font-style:italic}
+.tchip.fr{font-size:16px;height:auto;min-height:48px;padding:6px 12px;text-align:left}
+.fb-eq.fr{font-size:28px;line-height:1.2}

@@ -1,6 +1,7 @@
 /* Textes de l'interface enfant, repris mot pour mot du prototype. Tutoiement partout. */
 import type { Question } from '../engine/questions';
 import { themeOf } from './english';
+import { fillBlank, quizOf } from './french';
 import { DRILL_BASE, OP_SIGN, OP_SPOKEN } from './series';
 import { nb } from './text';
 
@@ -21,6 +22,9 @@ export const MSG_CP = {
   ecoute: ['Écoute et touche le bon dessin.'],
 } as const;
 
+/** Consignes du français. */
+export const FR_PROMPTS = ['Choisis le bon mot.', 'Quel mot va dans le trou, {name} ?', 'Lequel des deux, {name} ?'];
+
 export const OK_TITLES = ['Bravo {name} !', 'Super !', 'Exact !', 'Bien joué, {name} !', 'Tu assures !', 'Génial !', 'Et voilà !'];
 export const HELP_TITLES = ['Presque, {name} !', 'Pas tout à fait !', 'On regarde ensemble ?'];
 
@@ -30,6 +34,8 @@ export const fill = (t: string, q: Pick<Question, 'a' | 'b' | 'op'>, name: strin
 
 /** Énoncé lu à voix haute et donné aux lecteurs d'écran. */
 export function spoken(q: Question): string {
+  // Français : le trou est lu comme un silence (a et à se prononcent pareil, mais pas toujours et/est).
+  if (q.op === 'fr' && q.fr) return q.fr.text.replace(/___/g, '…');
   const w = OP_SPOKEN[q.op];
   if (q.fmt === 'manquant') return q.op === 'div' ? `${q.a} ${w} combien égale ${q.p} ?` : `${q.a} ${w} combien font ${q.p} ?`;
   if (q.fmt === 'vf') return `${q.a} ${w} ${q.b} égale ${q.shown}. Vrai ou faux ?`;
@@ -113,7 +119,7 @@ export function engPrompt(q: Question): readonly string[] {
 }
 
 /** Aide après une erreur en anglais : le sens du mot, ou la phrase à retenir. */
-type TipQ = Pick<Question, 'op' | 'a' | 'b'> & Partial<Pick<Question, 'eng' | 'p'>>;
+type TipQ = Pick<Question, 'op' | 'a' | 'b'> & Partial<Pick<Question, 'eng' | 'fr' | 'p'>>;
 
 function engTip(q: TipQ): string {
   const e = q.eng, t = e && themeOf(e.theme);
@@ -131,9 +137,19 @@ function engTip(q: TipQ): string {
   return e.textFr ? 'Redis la phrase en anglais à voix haute pour la retenir.' : 'Redis la question et sa réponse à voix haute pour les retenir.';
 }
 
+/** Astuce du français : la règle du bon mot, et le mot d'essai mis dans la phrase. */
+function frTip(q: TipQ): string {
+  const f = q.fr;
+  if (!f || q.p === undefined) return '';
+  const quiz = quizOf(f.quiz), right = f.options[q.p]!, other = f.options[1 - q.p]!;
+  const swap = quiz.swap[right], test = quiz.swap[other], cite = (w: string) => fillBlank(f.text, w).replace(/[.?!]$/, '');
+  if (swap) return `${quiz.rule[right]} Ici : « ${cite(swap)} ».`;
+  return `${quiz.rule[right]} « ${cite(test ?? other)} », ça ne va pas.`;
+}
+
 /** Astuce adaptée au calcul, quelle que soit l'opération. */
 export function tipOf(q: TipQ): string {
-  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'div' ? divTip(q.a, q.b) : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
+  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'div' ? divTip(q.a, q.b) : q.op === 'fr' ? frTip(q) : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
 }
 
 /** Bulle d'accueil. */

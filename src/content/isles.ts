@@ -1,5 +1,6 @@
 import { THEMES, type ThemeId } from './english';
-import { CP_ZONE, DIV_ZONE, ENG_ZONE, OP_SIGN, SERIES, type SeriesId } from './series';
+import type { FrQuizId } from './french';
+import { CP_ZONE, DIV_ZONE, ENG_ZONE, FR_ZONE, OP_SIGN, SERIES, type SeriesId } from './series';
 
 export type IsleId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type DecorKind =
@@ -120,12 +121,20 @@ const DIV_ISLES: Record<IsleId, { name: string; boss: string; sticker: string; o
   10: { name: 'Comète', boss: 'Cométo', sticker: 'Comète filante', of: 'de la Comète' },
 };
 
+/* Français : une île par paire d'homophones (des mots qui se font écho). */
+const FR_ISLES: Record<FrQuizId, Omit<IsleLook, 'fort' | 'clair'>> = {
+  a: { name: 'Écho', decor: 'plage', motif: 1, boss: 'Échotin', sticker: 'Coquillage qui parle', of: "de l'Écho" },
+  et: { name: 'Brume', decor: 'nuages', motif: 9, boss: 'Brumo', sticker: 'Lanterne', of: 'de la Brume' },
+  son: { name: 'Récif', decor: 'glace', motif: 5, boss: 'Récifa', sticker: 'Corail', of: 'du Récif' },
+  on: { name: 'Falaise', decor: 'collines', motif: 8, boss: 'Falzor', sticker: 'Mouette', of: 'de la Falaise' },
+};
+
 /** Pastille d'une île : numéro de la table, signe de l'opération au CP, numéro du thème en anglais. */
 export function seriesBadge(id: SeriesId): string {
   const sp = SERIES[id].spec;
   // Division : « ÷7 », pour ne pas confondre avec la table de 7.
   if (sp.kind === 'table' && SERIES[id].op === 'div') return `÷${sp.n}`;
-  return sp.kind === 'table' ? String(sp.n) : sp.kind === 'theme' ? String(sp.n) : OP_SIGN[SERIES[id].op];
+  return sp.kind === 'table' || sp.kind === 'theme' || sp.kind === 'quiz' ? String(sp.n) : OP_SIGN[SERIES[id].op];
 }
 
 /** Habillage de l'île d'une série. */
@@ -139,6 +148,7 @@ export function lookOf(id: SeriesId): IsleLook {
     return { ...d, fort: DIV_ZONE.fort, clair: DIV_ZONE.clair, decor: ISLES[n].decor, motif: n };
   }
   const spec = SERIES[id].spec;
+  if (spec.kind === 'quiz') return { ...FR_ISLES[spec.quiz], fort: FR_ZONE.fort, clair: FR_ZONE.clair };
   if (spec.kind === 'theme') {
     const t = THEMES[spec.n - 1]!, e = ENG_ISLES[t.id];
     return { name: t.en, fort: ENG_ZONE.fort, clair: ENG_ZONE.clair, decor: ISLES[e.motif].decor, motif: e.motif, boss: e.boss, sticker: e.sticker, of: t.en, word: e.word };

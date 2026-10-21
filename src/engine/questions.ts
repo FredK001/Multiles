@@ -3,6 +3,7 @@ import { SERIES, type Op, type SeriesDef, type SeriesId } from '../content/serie
 import { factKey } from './keys';
 import { defaultRng, pick, shuffle, type Rng } from './random';
 import { engDraft, type EngQ } from './english';
+import { frDraft, type FrQ } from './french';
 import { displayBounds, drawFact, factsOf, inSeries, resultOf, weightOf, type Fact } from './series';
 
 /** Les 4 formats : pavé numérique, QCM à 3 choix, facteur manquant, vrai/faux ;
@@ -18,8 +19,11 @@ export const ENG_ORDER: readonly Format[] = ['qcm', 'ecoute', 'vf', 'ecoute'];
 export const ENG_CHRONO_ORDER: readonly Format[] = ['qcm', 'ecoute', 'vf', 'qcm', 'ecoute'];
 
 /** Rotation des formats d'une opération (session classique, ou chrono). */
+/** Français : toujours un choix entre les deux mots de la paire. */
+export const FR_ORDER: readonly Format[] = ['qcm'];
+
 export const formatsOf = (op: Op, chrono = false): readonly Format[] =>
-  op === 'eng' ? (chrono ? ENG_CHRONO_ORDER : ENG_ORDER) : chrono ? CHRONO_ORDER : FORMAT_ORDER;
+  op === 'fr' ? FR_ORDER : op === 'eng' ? (chrono ? ENG_CHRONO_ORDER : ENG_ORDER) : chrono ? CHRONO_ORDER : FORMAT_ORDER;
 
 export interface Question {
   op: Op;
@@ -41,6 +45,8 @@ export interface Question {
   trap?: boolean;
   /** Anglais : ce qui est montré et proposé ; `p` est alors l'indice de la bonne proposition. */
   eng?: EngQ;
+  /** Français : la phrase à trou ; `p` est l'indice du bon mot. */
+  fr?: FrQ;
 }
 
 export interface GenOptions {
@@ -83,6 +89,12 @@ export function generateQuestion({ series, fmt, fact, step = null, rng = default
     assertValid(q);
     return q;
   }
+  if (s.op === 'fr') {
+    const d = frDraft(s, f);
+    const q: Question = { op: 'fr', series: s.id, a: f.a, b: f.b, fmt: 'qcm', p: d.p, fr: d.fr, choices: d.fr.options.map((_, i) => i) };
+    assertValid(q);
+    return q;
+  }
   const { a, b } = f, r = resultOf(s.op, a, b), { lo, hi } = displayBounds(s);
   const wrong = (x: number) => x >= lo && x <= hi && x !== r;
   const q: Question = { op: s.op, series: s.id, a, b, fmt, p: r };
@@ -118,6 +130,10 @@ export function assertValid(q: Question): void {
       if (o.length !== 1 || q.truth === undefined) fail('vrai/faux');
     } else if (o.length < 2 || o.length > 3 || q.p < 0 || q.p >= o.length || q.choices?.length !== o.length) fail('propositions');
     if (q.fmt === 'ecoute' && o.some((x) => x.word === undefined)) fail('écoute sans dessins');
+    return;
+  }
+  if (q.op === 'fr') {
+    if (!q.fr || q.fmt !== 'qcm' || q.fr.options.length !== 2 || q.p < 0 || q.p > 1 || !q.fr.text.includes('___')) fail('français');
     return;
   }
   if (q.p !== resultOf(q.op, q.a, q.b)) fail('résultat');

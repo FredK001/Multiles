@@ -98,7 +98,7 @@ test('CP et CM1 sur le même appareil ; changer de classe garde la progression',
 
   // Nina (CM1) : Jouer passe par le choix « × ou anglais », puis la multiplication de son île.
   await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
-  await expect(page.locator('.btn-play small')).toHaveText('× ou ÷ ou EN ?');
+  await expect(page.locator('.btn-play small')).toHaveText('× ou ÷ ou Aa ou EN ?');
   await playOp(page, 'Fois');
   await expect(page.locator('.expr .op').first()).toHaveText('×');
   await page.locator('#btnQuit').click();
