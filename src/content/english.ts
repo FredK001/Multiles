@@ -28,8 +28,13 @@ export type Drill =
   | { kind: 'yesno'; cue: 'match' | 'like' | 'can'; q: string; yes: string; no: string; only?: readonly string[] }
   /** Dessin de 2 à 5 objets → choisir la phrase avec le bon nombre. */
   | { kind: 'count'; q: string; a: string; only?: readonly string[] }
-  /** Question (ou situation en français si `fr`) → bonne réponse parmi celles des autres paires du thème. */
-  | { kind: 'qa'; q: string; a: string; fr?: boolean };
+  /** Question (ou situation en français si `fr`) → bonne réponse parmi celles des autres paires du thème.
+      `scene` : petit dessin qui rend la réponse certaine (« Is the cat sleeping? » → le chat dort). */
+  | { kind: 'qa'; q: string; a: string; fr?: boolean; scene?: SceneId };
+
+/** Scènes dessinées pour les questions-réponses qui en ont besoin, avec leur description (lecteurs d'écran). */
+export const SCENES = { 'duck-swim': 'un canard qui nage', 'cat-sleep': 'un chat qui dort', 'cow-field': 'une vache dans un pré' } as const;
+export type SceneId = keyof typeof SCENES;
 
 export type ThemeId =
   | 'hello' | 'school' | 'toys' | 'family' | 'home' | 'body' | 'food' | 'actions' | 'animals'
@@ -268,9 +273,9 @@ export const THEMES: readonly Theme[] = [
       w('goat', 'chèvre'), w('horse', 'cheval'), w('pond', 'mare'), w('sheep', 'mouton', { pl: 'sheep' }),
     ],
     drills: [
-      { kind: 'qa', q: "What's the duck doing?", a: 'It is swimming.' },
-      { kind: 'qa', q: 'Is the cat sleeping?', a: 'Yes, it is.' },
-      { kind: 'qa', q: 'Is the cow swimming?', a: 'No, it is not.' },
+      { kind: 'qa', q: "What's the duck doing?", a: 'It is swimming.', scene: 'duck-swim' },
+      { kind: 'qa', q: 'Is the cat sleeping?', a: 'Yes, it is.', scene: 'cat-sleep' },
+      { kind: 'qa', q: 'Is the cow swimming?', a: 'No, it is not.', scene: 'cow-field' },
       { kind: 'pick', q: "What's this?", a: "It's {a}.", only: ['barn', 'cow', 'donkey', 'duck', 'field', 'goat', 'horse', 'pond'] },
     ],
   },
@@ -343,12 +348,13 @@ export interface Example {
   /** Indice du mot illustré, s'il y en a un, et combien de fois le dessiner (« I can see three books »). */
   word?: number;
   count?: number;
+  scene?: SceneId;
 }
 
 /** Un exemple par modèle de phrase, avec le premier mot concerné (oui/non : réponse « oui »). */
 export function themeExamples(t: Theme): Example[] {
   return t.drills.map((d) => {
-    if (d.kind === 'qa') return { q: d.q, a: d.a, fr: !!d.fr };
+    if (d.kind === 'qa') return { q: d.q, a: d.a, fr: !!d.fr, ...(d.scene ? { scene: d.scene } : {}) };
     const x = drillWords(t, d)[0]!, word = t.words.indexOf(x);
     if (d.kind === 'yesno') return { q: fillDrill(d.q, x), a: d.yes, fr: false, word };
     return { q: fillDrill(d.q, x), a: fillDrill(d.a, x, 3), fr: false, word, ...(d.kind === 'count' ? { count: 3 } : {}) };

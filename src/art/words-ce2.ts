@@ -66,6 +66,15 @@ export const CAT =
   dot(43, 38, 2.6) + dot(57, 38, 2.6) + p('M47 45 L53 45 L50 48Z', '#F48FB1', 2) + p('M30 44 L42 46 M30 50 L42 49 M70 44 L58 46 M70 50 L58 49', 'none', 1.8) +
   p('M40 80 L40 90 M60 80 L60 90', 'none', 3);
 
+/** Chat endormi en boule, avec des « z ». */
+export const CAT_ASLEEP =
+  e(50, 72, 34, 18, '#F28C28') + p('M80 76 Q92 70 86 60', 'none', 9) + p('M80 76 Q92 70 86 60', 'none', 4.5, '#F28C28') +
+  p('M22 62 L20 46 L32 56Z M40 58 L44 44 L50 56Z', '#F28C28') + c(34, 66, 15, '#F28C28') +
+  p('M26 66 Q29 69 32 66 M37 66 Q40 69 43 66', 'none', 2.5) + dot(34, 72, 1.6, '#F48FB1') +
+  `<text x="60" y="38" font-family="Fredoka Variable, sans-serif" font-weight="700" font-size="16" fill="${INK}">z</text>` +
+  `<text x="72" y="26" font-family="Fredoka Variable, sans-serif" font-weight="700" font-size="22" fill="${INK}">Z</text>` +
+  p('M8 92 L92 92', 'none', 4);
+
 export const PETS: Record<string, string> = {
   baby:
     e(50, 80, 26, 18, '#F48FB1') + r(38, 62, 24, 10, '#fff', 4, 3) + c(50, 42, 24, SKIN) + p('M48 18 Q52 12 56 18', 'none', 3) +

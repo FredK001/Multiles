@@ -5,7 +5,8 @@ import { speak, type SayPart } from '../audio';
 import { useIsleTheme } from '../app/theme';
 import { useApp, useBack, usePlayer } from '../app/context';
 import { stepCfg } from '../app/sessions';
-import { BackChip, BtnSay } from '../app/ui';
+import { BackChip, BtnSay, Svg } from '../app/ui';
+import { sceneArt } from '../art';
 import { themeExamples, type Example } from '../content/english';
 import { lookOf } from '../content/isles';
 import { SERIES, type SeriesId } from '../content/series';
@@ -40,10 +41,8 @@ export function DiscoverEng({ s }: { s: SeriesId }) {
         <div class="imagier">
           {t.words.map((w, i) => (
             <button
-              key={w.en}
-              class="img-card"
-              aria-pressed={on === i}
-              aria-label={`${w.en}, ${w.fr}`}
+              key={i}
+              class={`img-card${on === i ? ' on' : ''}`}
               onClick={() => {
                 setOn(i);
                 speak([{ text: w.en, lang: 'en' }]);
@@ -60,6 +59,7 @@ export function DiscoverEng({ s }: { s: SeriesId }) {
             <h2>Les phrases</h2>
             {examples.map((x, k) => (
               <div key={k} class="phr">
+                {x.scene && <span class="phr-pic" aria-hidden="true"><Svg html={sceneArt(x.scene, 46)} /></span>}
                 {x.word !== undefined && (
                   <span class="phr-pic" aria-hidden="true">
                     {Array.from({ length: x.count ?? 1 }, (_, j) => <WordPic key={j} theme={t.id} i={x.word!} size={x.count ? 30 : 46} />)}

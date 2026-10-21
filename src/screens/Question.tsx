@@ -232,7 +232,8 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
         }),
       );
       const combo = out.comboMilestone ? session.combo : null;
-      const delay = cfg.timed ? OK_FEEDBACK_MS.timed : OK_FEEDBACK_MS.classic;
+      // Anglais hors chrono : la bonne réponse est lue, on lui laisse le temps de finir (phrases longues).
+      const delay = cfg.timed ? OK_FEEDBACK_MS.timed : eng ? Math.min(4000, Math.max(OK_FEEDBACK_MS.classic, 500 + 85 * engRight(q).length)) : OK_FEEDBACK_MS.classic;
       const sub = cfg.endless
         ? cfg.target ? `${session.good} sur ${cfg.target}` : goodAnswers(session.good)
         : session.done < session.total ? `Encore ${session.remaining} question${session.remaining > 1 ? 's' : ''}` : 'Dernière réponse !';

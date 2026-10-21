@@ -1,9 +1,10 @@
 /* Dessins des mots d'anglais (viewBox 0 0 100 100, trait d'encre comme le reste de l'app).
    Un mot sans dessin ici est montré par son mot français (voir WordPic). Dessins par thème dans words-ce1.ts et words-ce2.ts. */
-import type { ThemeId } from '../content/english';
+import type { SceneId, ThemeId } from '../content/english';
 import { INK } from './shapes';
 import { ACTIONS, ANIMALS, BODY, FAMILY, FOOD, HOME, SCHOOL, TOYS } from './words-ce1';
-import { ACTIVITIES, CLASSROOM, CLOTHES, FARM, MEALS, PETS, ROOMS, TOWN, TRANSPORT } from './words-ce2';
+import { ACTIVITIES, CAT_ASLEEP, CLASSROOM, CLOTHES, FARM, MEALS, PETS, ROOMS, TOWN, TRANSPORT } from './words-ce2';
+import { p, place } from './words-kit';
 
 const svg = (body: string, s: number): string => `<svg width="${s}" height="${s}" viewBox="0 0 100 100" aria-hidden="true">${body}</svg>`;
 
@@ -68,3 +69,12 @@ export function cueArt(cue: 'like' | 'dislike' | 'can' | 'cant', size = 56): str
     ? svg(`<circle cx="50" cy="50" r="42" fill="#157F45" stroke="${INK}" stroke-width="5"/><path d="M30 52 L45 66 L72 36" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>`, size)
     : svg(`<circle cx="50" cy="50" r="42" fill="#C8371D" stroke="${INK}" stroke-width="5"/><path d="M34 34 L66 66 M66 34 L34 66" stroke="#fff" stroke-width="10" stroke-linecap="round"/>`, size);
 }
+
+/** Scènes des questions-réponses : le canard nage, le chat dort, la vache est dans son pré. */
+const SCENE_ART: Record<SceneId, string> = {
+  'duck-swim': FARM.duck!,
+  'cat-sleep': CAT_ASLEEP,
+  'cow-field': p('M0 70 Q25 64 50 70 T100 70 L100 100 L0 100Z', '#7BC96F') + place(6, 2, 0.88, FARM.cow!),
+};
+
+export const sceneArt = (id: SceneId, size = 100): string => svg(SCENE_ART[id], size);

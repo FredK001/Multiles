@@ -1,9 +1,9 @@
 /* Question d'anglais : la carte (dessin, mot montré, phrase) et les réponses (mots, dessins, phrases).
    Le déroulé (session, chrono, pièces, feedback) reste celui de QuestionScreen. */
-import { cueArt, icoFalse, icoSay, icoTrue, wordArt } from '../art';
+import { cueArt, icoFalse, icoSay, icoTrue, sceneArt, wordArt } from '../art';
 import { speak, type SayPart } from '../audio';
-import { Svg } from '../app/ui';
-import { themeOf, type ThemeId } from '../content/english';
+import { Svg, useCanSpeak } from '../app/ui';
+import { SCENES, themeOf, type ThemeId } from '../content/english';
 import { DRILL_BASE } from '../content/series';
 import { engAnswer } from '../engine/english';
 import type { Question } from '../engine/questions';
@@ -30,6 +30,7 @@ export const engRight = (q: Question): string => engAnswer(q);
 /** Description du dessin pour les lecteurs d'écran (sans donner la réponse au format écoute). */
 function picLabel(q: Question): string {
   const e = q.eng!;
+  if (e.scene) return SCENES[e.scene];
   if (e.pic === null) return 'Écoute le mot.';
   const w = themeOf(e.theme).words[e.pic]!;
   const what = e.count ? `${e.count} dessins` : 'un dessin';
@@ -38,7 +39,9 @@ function picLabel(q: Question): string {
 }
 
 export function EngCard({ q, revealed }: { q: Question; revealed: boolean }) {
-  const e = q.eng!, phrase = q.b > DRILL_BASE;
+  const e = q.eng!, phrase = q.b > DRILL_BASE, voice = useCanSpeak('en');
+  // La voix anglaise a disparu pendant la question (casque débranché…) : le mot s'affiche, l'enfant peut répondre.
+  if (q.fmt === 'ecoute' && !voice) return <div class="eng-card"><span class="eng-shown" lang="en">{e.say}</span></div>;
   if (q.fmt === 'ecoute') {
     return (
       <button class="eng-listen" aria-label="Réécouter le mot" onClick={() => speak([{ text: e.say, lang: 'en' }])}>
@@ -47,7 +50,7 @@ export function EngCard({ q, revealed }: { q: Question; revealed: boolean }) {
       </button>
     );
   }
-  const pic = e.pic === null ? null : e.count ? (
+  const pic = e.pic === null ? (e.scene ? <span class="eng-pic"><Svg html={sceneArt(e.scene, 96)} /></span> : null) : e.count ? (
     <span class="eng-count">{Array.from({ length: e.count }, (_, k) => <WordPic key={k} theme={e.theme} i={e.pic!} size={56} />)}</span>
   ) : (
     <WordPic theme={e.theme} i={e.pic} size={phrase ? 96 : 130} />

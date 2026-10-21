@@ -23,6 +23,9 @@ export const MIGRATIONS: Record<number, (d: Raw) => Raw> = {
   // toute leur progression va dans prog.mul, sans perte.
   // Un profil déjà au format v3 (sauvegarde mal étiquetée) n'est pas migré une seconde fois.
   2: (d) => ({ ...d, profiles: Array.isArray(d.profiles) ? d.profiles.map((p) => (isObj(p) && !isObj(p.prog) ? profileToV3(p) : p)) : d.profiles }),
+  // Version 4 : l'anglais (prog.eng) au CM1. Rien à convertir ; le numéro empêche une ancienne app,
+  // qui ne connaît pas l'anglais, de réécrire ces données (sauvegarde, transfert) en le perdant.
+  3: (d) => d,
 };
 
 /** Profil v2 (tout à plat, tables 1 à 10) → profil v3 (classe CM1, progression dans prog.mul). */

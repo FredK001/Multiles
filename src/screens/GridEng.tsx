@@ -1,6 +1,6 @@
 /* Ma grille en anglais : les mots de chaque thème, en couleur une fois réussis, et les mots ou phrases pièges. */
 import type { ComponentChildren } from 'preact';
-import { useState } from 'preact/hooks';
+import { useMemo, useState } from 'preact/hooks';
 import { mascot } from '../art';
 import { useIsleTheme, useProfileTheme } from '../app/theme';
 import { useApp, useBack, usePlayer } from '../app/context';
@@ -11,7 +11,7 @@ import { lookOf } from '../content/isles';
 import { DRILL_BASE, ENG_ZONE, seriesOf } from '../content/series';
 import { nb } from '../content/text';
 import { engFactLabel } from '../engine/english';
-import { factKey, hasKey, parseFact } from '../engine/keys';
+import { factKey, parseFact } from '../engine/keys';
 import { stageFor } from '../engine/level';
 import { seriesPct } from '../engine/mastery';
 import { opProg } from '../engine/progress';
@@ -29,8 +29,10 @@ export function GridEng({ tabs }: { tabs?: ComponentChildren }) {
   useProfileTheme(p.color);
   useIsleTheme(ENG_ZONE.fort, ENG_ZONE.clair);
   const o = opProg(p, 'eng'), stage = stageFor(p.level), series = seriesOf('eng');
-  const known = (x: Pick) => hasKey(o.mastered, factKey('eng', x.a, x.b));
-  const trap = (x: Pick) => hasKey(o.traps, factKey('eng', x.a, x.b));
+  // Clés exactes : en anglais, « 4e12 » ne se confond avec aucune autre (pas de commutativité).
+  const done = useMemo(() => new Set<string>(o.mastered), [o.mastered]), hard = useMemo(() => new Set<string>(o.traps), [o.traps]);
+  const known = (x: Pick) => done.has(factKey('eng', x.a, x.b));
+  const trap = (x: Pick) => hard.has(factKey('eng', x.a, x.b));
 
   const total = THEMES.reduce((n, t) => n + t.words.length, 0);
   const count = THEMES.reduce((n, t, k) => n + t.words.filter((_, i) => known({ a: k + 1, b: i + 1 }) && !trap({ a: k + 1, b: i + 1 })).length, 0);
@@ -78,13 +80,9 @@ export function GridEng({ tabs }: { tabs?: ComponentChildren }) {
                 {t.words.map((w, i) => {
                   const x = { a: k + 1, b: i + 1 }, m = known(x), tr = trap(x);
                   return (
-                    <button
-                      key={w.en}
-                      class={`eg-w ${tr ? 't' : m ? 'm' : ''}`}
-                      aria-label={`${w.en}, ${w.fr}${tr ? ', piège' : m ? ', réussi' : ', à découvrir'}`}
-                      onClick={() => setSel(x)}
-                    >
+                    <button key={i} class={`eg-w ${tr ? 't' : m ? 'm' : ''}`} onClick={() => setSel(x)}>
                       <WordPic theme={t.id} i={i} size={40} />
+                      <span class="sr"><span lang="en">{w.en}</span>, {w.fr}{tr ? ', piège' : m ? ', réussi' : ', à découvrir'}</span>
                     </button>
                   );
                 })}

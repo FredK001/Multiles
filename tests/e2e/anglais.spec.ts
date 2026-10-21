@@ -105,8 +105,8 @@ test('imagier de l’île, puis grille : onglets × / Anglais et fiche d’un mo
   await expect(page.locator('[data-screen="discover"] .ttl')).toHaveText('School');
   await expect(page.locator('.img-card')).toHaveCount(10);
   await expect(page.locator('.img-card svg')).toHaveCount(10);
-  await page.getByRole('button', { name: 'pencil case, trousse' }).click();
-  await expect(page.getByRole('button', { name: 'pencil case, trousse' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: /^pencil case/ }).click();
+  await expect(page.locator('.img-card.on')).toContainText('pencil case');
   await expect(page.locator('.phr')).toHaveCount(2);
   await expect(page.locator('.phr').first()).toContainText("It's a board.");
   await page.screenshot({ path: 'test-results/eng-imagier.png', fullPage: true });
@@ -121,7 +121,7 @@ test('imagier de l’île, puis grille : onglets × / Anglais et fiche d’un mo
   await expect(page.locator('.g-big')).toContainText('mots sur 198');
   await expect(page.locator('.eg-theme')).toHaveCount(18);
   await page.screenshot({ path: 'test-results/eng-grille.png' });
-  await page.locator('.eg-w[aria-label^="giraffe,"]').click();
+  await page.getByRole('button', { name: /^giraffe,/ }).click();
   await expect(page.locator('.cell-sheet')).toContainText('giraffe');
   await expect(page.locator('.cell-sheet')).toContainText("Tu le découvriras sur l'île Animals.");
   await page.getByRole('button', { name: 'Fermer' }).click();

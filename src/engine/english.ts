@@ -1,6 +1,6 @@
 /* Questions d'anglais : un mot (dessin → mot, écoute → dessin, vrai/faux) ou une phrase du thème (étape 3).
    Le moteur ne fait que choisir et ranger : l'affichage (dessin, mot français, voix) revient à l'écran. */
-import { drillWords, fillDrill, THEMES, themeOf, type Drill, type ThemeId, type Word } from '../content/english';
+import { drillWords, fillDrill, THEMES, themeOf, type Drill, type SceneId, type ThemeId, type Word } from '../content/english';
 import { DRILL_BASE, type SeriesDef } from '../content/series';
 import { pick, shuffle, type Rng } from './random';
 import { isDrill, type Fact } from './series';
@@ -21,6 +21,8 @@ export interface EngQ {
   pic: number | null;
   /** Nombre d'objets dessinés (« How many pens can you see? »). */
   count?: number;
+  /** Scène dessinée d'une question-réponse (« Is the cat sleeping? »). */
+  scene?: SceneId;
   cue?: EngCue;
   /** Phrase de la consigne (question anglaise, ou situation en français si `textFr`). */
   text?: string;
@@ -69,8 +71,9 @@ function wordDraft(theme: ThemeId, words: readonly Word[], i: number, fmt: 'qcm'
 /** Réponses des autres paires question-réponse : du thème d'abord, puis des autres thèmes si besoin. */
 function qaDistractors(theme: ThemeId, d: Extract<Drill, { kind: 'qa' }>, rng: Rng): string[] {
   const answers = (ts: typeof THEMES) => ts.flatMap((t) => t.drills.flatMap((y) => (y.kind === 'qa' && y.a !== d.a ? [y.a] : [])));
-  const own = shuffle(answers(THEMES.filter((t) => t.id === theme)), rng);
-  const rest = shuffle(answers(THEMES.filter((t) => t.id !== theme)), rng).filter((a) => !own.includes(a));
+  // Sans doublon : deux paires peuvent avoir la même réponse (« Yes, it is. »).
+  const own = shuffle([...new Set(answers(THEMES.filter((t) => t.id === theme)))], rng);
+  const rest = shuffle([...new Set(answers(THEMES.filter((t) => t.id !== theme)))], rng).filter((a) => !own.includes(a));
   return [...own, ...rest].slice(0, 2);
 }
 
@@ -79,7 +82,7 @@ function drillDraft(theme: ThemeId, d: Drill, rng: Rng): EngDraft {
   const t = themeOf(theme);
   if (d.kind === 'qa') {
     const opts = shuffle([d.a, ...qaDistractors(theme, d, rng)], rng);
-    return { fmt: 'qcm', p: opts.indexOf(d.a), eng: { theme, pic: null, text: d.q, textFr: d.fr, options: opts.map((text) => ({ text })), say: d.fr ? d.a : d.q } };
+    return { fmt: 'qcm', p: opts.indexOf(d.a), eng: { theme, pic: null, ...(d.scene ? { scene: d.scene } : {}), text: d.q, textFr: d.fr, options: opts.map((text) => ({ text })), say: d.fr ? d.a : d.q } };
   }
   const ws = drillWords(t, d), x = pick(ws, rng), i = t.words.indexOf(x);
   if (d.kind === 'pick') {
@@ -91,7 +94,8 @@ function drillDraft(theme: ThemeId, d: Drill, rng: Rng): EngDraft {
     return { fmt: 'qcm', p: ns.indexOf(n), eng: { theme, pic: i, count: n, text: fillDrill(d.q, x), options: ns.map((k) => ({ text: fillDrill(d.a, x, k) })), say: fillDrill(d.q, x) } };
   }
   // Oui/non : la réponse attendue vient du dessin.
-  const truth = rng() < 0.5;
+  // « match » avec un seul mot possible : pas d'autre mot à demander, la réponse est oui.
+  const truth = (d.cue === 'match' && ws.length < 2) || rng() < 0.5;
   const asked = d.cue === 'match' && !truth ? pick(others(ws, x, ws.length, rng), rng) : x;
   const cue: EngCue | undefined = d.cue === 'like' ? (truth ? 'like' : 'dislike') : d.cue === 'can' ? (truth ? 'can' : 'cant') : undefined;
   const text = fillDrill(d.q, asked);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fillDrill, NUMBERS, THEMES, themeOf } from '../content/english';
+import { drillWords, fillDrill, NUMBERS, THEMES, themeOf } from '../content/english';
 import { CURRICULUM, DRILL_BASE, SERIES, seriesOf, type SeriesId } from '../content/series';
 import { engAnswer } from './english';
 import { canonKey, factKey, parseFact, sameFact } from './keys';
@@ -222,5 +222,16 @@ describe('consignes et aides de l’anglais', () => {
         const q = generateQuestion({ series: 'eng-food', fact: { a: 7, b }, fmt: 'qcm', rng: seeded(s) });
         expect(tipOf(q)).not.toContain(engAnswer(q));
       }
+  });
+});
+
+describe('contenu des phrases', () => {
+  it('une question-réponse en oui/non a un dessin qui donne la réponse', () => {
+    const blind = THEMES.flatMap((t) => t.drills.filter((d) => d.kind === 'qa' && !d.fr && /^(Yes|No),/.test(d.a) && !d.scene).map((d) => `${t.id}: ${d.kind === 'qa' ? d.q : ''}`));
+    expect(blind).toEqual([]);
+  });
+
+  it('un oui/non « match » a au moins deux mots possibles', () => {
+    for (const t of THEMES) for (const d of t.drills) if (d.kind === 'yesno' && d.cue === 'match') expect(drillWords(t, d).length, t.id).toBeGreaterThanOrEqual(2);
   });
 });

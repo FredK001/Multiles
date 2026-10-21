@@ -606,7 +606,7 @@
 .img-card{background:#fff;border:3px solid var(--ink);border-radius:18px;padding:6px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:118px}
 .img-card b{font-family:var(--titre);font-weight:600;font-size:17px;line-height:1.1;text-align:center}
 .img-card small{font-size:13px;color:var(--ink-2);text-align:center;line-height:1.15}
-.img-card[aria-pressed="true"]{background:var(--ile-clair);box-shadow:0 0 0 3px var(--ile)}
+.img-card.on{background:var(--ile-clair);box-shadow:0 0 0 3px var(--ile)}
 .img-card .eng-pic.fr{font-size:14px;padding:4px 6px;border-width:2px}
 .phrases{background:#fff;border:3px solid var(--ink);border-radius:22px;padding:12px;display:grid;gap:12px}
 .phrases h2{font-family:var(--titre);font-weight:600;font-size:21px;line-height:1.1}
