@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fillBlank, QUIZZES } from '../content/french';
+import { ALL_QUIZZES, fillBlank, QUIZZES } from '../content/french';
 import { spoken, tipOf } from '../content/messages';
 import { SERIES, seriesOf } from '../content/series';
 import { frAnswer, frFactLabel } from './french';
@@ -11,8 +11,8 @@ import { factsOf } from './series';
 
 describe('français : les homophones', () => {
   it('4 îles, a/à et et/est ouvertes au départ', () => {
-    expect(seriesOf('fr').map((s) => s.id)).toEqual(['fr-a', 'fr-et', 'fr-son', 'fr-on']);
-    expect(seriesOf('fr').map((s) => s.need)).toEqual([0, 0, 1, 2]);
+    expect(seriesOf('fr').slice(0, 4).map((s) => s.id)).toEqual(['fr-a', 'fr-et', 'fr-son', 'fr-on']);
+    expect(seriesOf('fr').slice(0, 4).map((s) => s.need)).toEqual([0, 0, 1, 2]);
   });
 
   it('contenu : chaque phrase a un trou et sa réponse fait partie de la paire, les deux mots sont bien représentés', () => {
@@ -58,5 +58,40 @@ describe('français : les homophones', () => {
       expect(seriesBossPlan(s.id, rng)).toHaveLength(10);
     }
     expect(SERIES['fr-son'].title).toBe('son ou sont');
+  });
+});
+
+describe('français : la conjugaison', () => {
+  it('4 îles de plus après les homophones, le présent ouvert au départ', () => {
+    expect(seriesOf('fr').map((s) => s.id)).toEqual(['fr-a', 'fr-et', 'fr-son', 'fr-on', 'fr-pres', 'fr-fut', 'fr-imp', 'fr-pc']);
+    expect(seriesOf('fr').slice(4).map((s) => s.need)).toEqual([0, 1, 2, 3]);
+  });
+
+  it('chaque phrase propose 3 formes distinctes du même verbe, dont la bonne', () => {
+    for (const q of ALL_QUIZZES.filter((x) => x.tense)) for (const it of q.items) {
+      expect(it.opts, it.s).toHaveLength(3);
+      expect(new Set(it.opts).size).toBe(3);
+      expect(it.opts).toContain(it.a);
+      expect(q.tense!.tables[it.verb!]![it.who!]).toBe(it.a);
+    }
+  });
+
+  it('« je » s’élide devant une voyelle', () => {
+    expect(fillBlank('Hier, je ___ une chanson.', 'ai chanté')).toBe("Hier, j'ai chanté une chanson.");
+    expect(fillBlank('Autrefois, je ___ en CM1.', 'étais')).toBe("Autrefois, j'étais en CM1.");
+    expect(fillBlank("Aujourd'hui, je ___ une chanson.", 'chante')).toBe("Aujourd'hui, je chante une chanson.");
+  });
+
+  it('question : 3 boutons mélangés, le verbe, l’astuce du temps', () => {
+    const rng = seeded(4);
+    for (const s of ['fr-pres', 'fr-fut', 'fr-imp', 'fr-pc'] as const) for (const f of factsOf(s)) {
+      const q = generateQuestion({ series: s, fact: f, fmt: 'qcm', rng });
+      expect(q.fr!.options).toHaveLength(3);
+      expect(q.fr!.verb).toBeTruthy();
+    }
+    const q = generateQuestion({ series: 'fr-fut', fact: { a: 6, b: 4 }, fmt: 'qcm', rng });
+    expect(frAnswer(q)).toBe('Demain, nous finirons nos devoirs.');
+    expect(tipOf(q)).toContain('Ici : nous finirons (finir).');
+    expect(spoken(q)).toBe('Demain, nous … nos devoirs. Verbe finir.');
   });
 });

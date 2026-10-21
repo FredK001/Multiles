@@ -4,6 +4,7 @@ import { useApp, useBack, usePlayer } from '../app/context';
 import { stepCfg } from '../app/sessions';
 import { BackChip, BtnSay } from '../app/ui';
 import { fillBlank } from '../content/french';
+import { ConjTable } from './FrQuestion';
 import { lookOf } from '../content/isles';
 import { SERIES, type SeriesId } from '../content/series';
 import { quizOfSeries } from '../engine/french';
@@ -19,7 +20,7 @@ export function DiscoverFr({ s }: { s: SeriesId }) {
   useIsleTheme(I.fort, I.clair);
   // Trois exemples par mot, pris dans l'ordre des phrases.
   const examples = (w: string) => quiz.items.filter((x) => x.a === w).slice(0, 3).map((x) => fillBlank(x.s, w));
-  const say = () => quiz.choices.map((w) => `${quiz.rule[w]} ${examples(w).join(' ')}`).join(' ');
+  const say = () => (quiz.tense ? quiz.tense.rule : quiz.choices.map((w) => `${quiz.rule[w]} ${examples(w).join(' ')}`).join(' '));
 
   return (
     <section class="screen" data-screen="discover" aria-label="Revoir la règle" style={{ background: 'var(--ile-clair)' }}>
@@ -31,6 +32,14 @@ export function DiscoverFr({ s }: { s: SeriesId }) {
         </div>
       </div>
       <div class="dsc-body dsc-eng">
+        {quiz.tense && (
+          <>
+            <p class="fr-rule ok">{quiz.tense.rule}</p>
+            <div class="conj-grid">
+              {Object.entries(quiz.tense.tables).map(([v, forms]) => <ConjTable key={v} verb={v} forms={forms} title={v} />)}
+            </div>
+          </>
+        )}
         {quiz.choices.map((w) => (
           <div key={w} class="fr-card">
             <h2><b>{w}</b></h2>

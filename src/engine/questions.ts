@@ -90,7 +90,7 @@ export function generateQuestion({ series, fmt, fact, step = null, rng = default
     return q;
   }
   if (s.op === 'fr') {
-    const d = frDraft(s, f);
+    const d = frDraft(s, f, rng);
     const q: Question = { op: 'fr', series: s.id, a: f.a, b: f.b, fmt: 'qcm', p: d.p, fr: d.fr, choices: d.fr.options.map((_, i) => i) };
     assertValid(q);
     return q;
@@ -133,7 +133,8 @@ export function assertValid(q: Question): void {
     return;
   }
   if (q.op === 'fr') {
-    if (!q.fr || q.fmt !== 'qcm' || q.fr.options.length !== 2 || q.p < 0 || q.p > 1 || !q.fr.text.includes('___')) fail('français');
+    const o = q.fr?.options ?? [];
+    if (!q.fr || q.fmt !== 'qcm' || o.length < 2 || o.length > 3 || new Set(o).size !== o.length || q.p < 0 || q.p >= o.length || !q.fr.text.includes('___')) fail('français');
     return;
   }
   if (q.p !== resultOf(q.op, q.a, q.b)) fail('résultat');

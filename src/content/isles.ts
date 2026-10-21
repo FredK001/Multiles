@@ -127,6 +127,11 @@ const FR_ISLES: Record<FrQuizId, Omit<IsleLook, 'fort' | 'clair'>> = {
   et: { name: 'Brume', decor: 'nuages', motif: 9, boss: 'Brumo', sticker: 'Lanterne', of: 'de la Brume' },
   son: { name: 'Récif', decor: 'glace', motif: 5, boss: 'Récifa', sticker: 'Corail', of: 'du Récif' },
   on: { name: 'Falaise', decor: 'collines', motif: 8, boss: 'Falzor', sticker: 'Mouette', of: 'de la Falaise' },
+  // Conjugaison : un lieu par temps.
+  pres: { name: 'Cascade', decor: 'jungle', motif: 2, boss: 'Verbix', sticker: 'Plume magique', of: 'de la Cascade' },
+  fut: { name: 'Phare', decor: 'espace', motif: 10, boss: 'Futuro', sticker: 'Longue-vue', of: 'du Phare' },
+  imp: { name: 'Ruines', decor: 'desert', motif: 4, boss: 'Jadis', sticker: 'Vieux parchemin', of: 'des Ruines' },
+  pc: { name: 'Grotte', decor: 'volcan', motif: 7, boss: 'Hiéro', sticker: 'Sablier', of: 'de la Grotte' },
 };
 
 /** Pastille d'une île : numéro de la table, signe de l'opération au CP, numéro du thème en anglais. */

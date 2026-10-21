@@ -6,7 +6,7 @@ import { useIsleTheme, useProfileTheme } from '../app/theme';
 import { useApp, useBack, usePlayer } from '../app/context';
 import { trapsCfg } from '../app/sessions';
 import { BtnSay, Svg, TabBar } from '../app/ui';
-import { fillBlank, QUIZZES } from '../content/french';
+import { ALL_QUIZZES, fillBlank, ruleOf } from '../content/french';
 import { lookOf } from '../content/isles';
 import { FR_ZONE, seriesOf } from '../content/series';
 import { nb } from '../content/text';
@@ -27,7 +27,7 @@ export function GridFr({ tabs }: { tabs?: ComponentChildren }) {
   const o = opProg(p, 'fr'), stage = stageFor(p.level), list = seriesOf('fr');
   const traps = o.traps.flatMap((k) => { const f = parseFact(k); return f && f.op === 'fr' ? [{ a: f.a, b: f.b }] : []; });
   const done = seriesDone(o.mastered, 'fr');
-  const itemOf = (x: Item) => ({ quiz: QUIZZES[x.a - 1]!, item: QUIZZES[x.a - 1]!.items[x.b - 1]! });
+  const itemOf = (x: Item) => ({ quiz: ALL_QUIZZES[x.a - 1]!, item: ALL_QUIZZES[x.a - 1]!.items[x.b - 1]! });
 
   let sheet = null;
   if (sel) {
@@ -39,9 +39,9 @@ export function GridFr({ tabs }: { tabs?: ComponentChildren }) {
             <span class="cs-badge" style={{ background: 'var(--miel)' }}>{nb("Piège : on s'entraîne")}</span>
             <p class="fr-sent" style={{ textAlign: 'left', marginTop: '8px' }}>{full}</p>
           </div>
-          <BtnSay wrap style={{ background: 'var(--lagon)' }} text={`${full} ${quiz.rule[item.a]}`} />
+          <BtnSay wrap style={{ background: 'var(--lagon)' }} text={`${full} ${ruleOf(quiz, item)}`} />
         </div>
-        <p class="fr-rule ok"><b>{item.a}</b> {quiz.rule[item.a]}</p>
+        <p class="fr-rule ok">{ruleOf(quiz, item)}</p>
         <button class="btn-primary" onClick={() => setSel(null)}>Fermer</button>
       </div>
     );
@@ -52,13 +52,13 @@ export function GridFr({ tabs }: { tabs?: ComponentChildren }) {
       <div class="topbar tri">
         <span></span>
         <div class="ttl" style={{ fontSize: '26px' }}>Ma grille</div>
-        <BtnSay style={{ justifySelf: 'end', background: '#fff' }} text={`${done} paires maîtrisées sur ${list.length}.`} />
+        <BtnSay style={{ justifySelf: 'end', background: '#fff' }} text={`${done} îles de français maîtrisées sur ${list.length}.`} />
       </div>
       <div class="grid-scroll">
         {tabs}
-        <div class="g-head"><p class="g-big">{done} <small>paires sur {list.length}</small></p></div>
+        <div class="g-head"><p class="g-big">{done} <small>îles sur {list.length}</small></p></div>
         <div class="pcard2">
-          <h2>Homophones <small>réussis du premier coup</small></h2>
+          <h2>Français <small>phrases réussies du premier coup</small></h2>
           <div class="tbl">
             {list.map((d) => {
               const v = seriesPct(o.mastered, d.id);

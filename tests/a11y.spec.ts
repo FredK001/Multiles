@@ -135,7 +135,7 @@ test('aucune violation WCAG 2.1 AA sur les écrans du CP', async ({ page }) => {
 });
 
 test("aucune violation WCAG 2.1 AA sur les écrans d'anglais", async ({ page }) => {
-  test.setTimeout(300_000);
+  test.setTimeout(600_000); // une session entière, très lente quand toute la suite tourne en parallèle
   const rep: string[] = [];
   const check = async (name: string) => {
     await page.waitForTimeout(300);

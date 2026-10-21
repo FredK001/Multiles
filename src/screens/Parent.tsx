@@ -406,7 +406,7 @@ export function Parent() {
               <h2>Cette semaine <small>{split ? `${what}, du lundi à aujourd'hui` : "du lundi à aujourd'hui"}</small></h2>
               <div class="kpis">
                 <div class="kpi"><b>{tot} min</b><small>de jeu</small></div>
-                <div class="kpi"><b>{seriesDone(o.mastered, op)}/{seriesOf(op).length}</b><small>{mul || op === 'div' ? 'tables maîtrisées' : eng ? 'thèmes maîtrisés' : op === 'fr' ? 'paires maîtrisées' : 'séries maîtrisées'}</small></div>
+                <div class="kpi"><b>{seriesDone(o.mastered, op)}/{seriesOf(op).length}</b><small>{mul || op === 'div' ? 'tables maîtrisées' : eng ? 'thèmes maîtrisés' : op === 'fr' ? 'îles maîtrisées' : 'séries maîtrisées'}</small></div>
                 <div class="kpi"><b>{streak}</b><small>jour{streak > 1 ? 's' : ''} de suite</small></div>
               </div>
               <div class="week-bars" role="img" aria-label={`Minutes par jour : ${['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map((d, i) => `${d} ${mins[i]}`).join(', ')}`}>
@@ -421,7 +421,7 @@ export function Parent() {
               <p style={{ fontSize: '14px', color: 'var(--ink-2)' }}>{plural(totalSessions(p.days, split ? op : undefined), 'session')} depuis le début. Une session dure 3 à 5 minutes.</p>
             </div>
             <div class="pcard2">
-              <h2>{mul || op === 'div' ? 'Tables' : eng ? 'Thèmes' : op === 'fr' ? 'Homophones' : 'Séries'} <small>{eng ? 'part des mots et phrases réussis' : op === 'fr' ? 'part des phrases réussies' : `part des ${what} réussies`}</small></h2>
+              <h2>{mul || op === 'div' ? 'Tables' : eng ? 'Thèmes' : op === 'fr' ? 'Homophones et conjugaison' : 'Séries'} <small>{eng ? 'part des mots et phrases réussis' : op === 'fr' ? 'part des phrases réussies' : `part des ${what} réussies`}</small></h2>
               <div class="tbl">
                 {seriesOf(op).map((s) => {
                   const v = seriesPct(o.mastered, s.id), b = seriesBadge(s);

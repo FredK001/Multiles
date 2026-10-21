@@ -16,8 +16,8 @@ test('CM1 : homophones, règle, session complète, grille Français', async ({ p
   await seedProd(page, [kid()]);
   await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
   await openMap(page, 'Français');
-  await expect(page.locator('.isle')).toHaveCount(4);
-  await expect(page.locator('.isle:not(.locked)')).toHaveCount(2);
+  await expect(page.locator('.isle')).toHaveCount(8);
+  await expect(page.locator('.isle:not(.locked)')).toHaveCount(3);
   await page.locator('.isle').first().click();
   await expect(page.locator('[data-screen="isle"] h1')).toHaveText('Écho');
   await page.getByRole('button', { name: /Découvrir/ }).click();
@@ -52,4 +52,25 @@ test('CM1 : homophones, règle, session complète, grille Français', async ({ p
   await expect(page.locator('.tchip.fr').first()).toBeVisible();
   await page.locator('.tchip.fr').first().click();
   await expect(page.locator('.cell-sheet .fr-rule.ok')).toBeVisible();
+});
+
+test('CM1 : conjugaison au présent, tableaux et trois formes du verbe', async ({ page }) => {
+  await seedProd(page, [kid()]);
+  await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
+  await openMap(page, 'Français');
+  await page.locator('.isle[aria-label^="Île Cascade"]').click();
+  await expect(page.locator('[data-screen="isle"] h1')).toHaveText('Cascade');
+  await page.getByRole('button', { name: /Découvrir/ }).click();
+  await expect(page.locator('.conj')).toHaveCount(6);
+  await page.screenshot({ path: 'test-results/conj-disc.png', fullPage: true });
+  await page.getByRole('button', { name: "Je m'entraîne" }).click();
+  await expect(page.locator('.fr-verb')).toBeVisible();
+  await expect(page.locator('.fr-choices.three .choice')).toHaveCount(3);
+  await page.screenshot({ path: 'test-results/conj-q.png' });
+  await page.locator('.fr-choices .choice').first().click();
+  await page.locator('.fb-sheet').waitFor();
+  if (await page.locator('.fb-sheet.help').count()) {
+    await expect(page.locator('.aid .conj li.on')).toHaveCount(1);
+    await page.screenshot({ path: 'test-results/conj-help.png' });
+  }
 });

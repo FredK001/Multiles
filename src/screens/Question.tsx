@@ -9,7 +9,7 @@ import { planFor } from '../app/sessions';
 import { AUTO_SAY_DELAY, BtnSay, Svg } from '../app/ui';
 import { lookOf } from '../content/isles';
 import { SERIES } from '../content/series';
-import { engPrompt, equation, fill, FR_PROMPTS, goodAnswers, HELP_TITLES, MSG, MSG_CP, OK_TITLES, spoken, tipOf } from '../content/messages';
+import { CONJ_PROMPTS, engPrompt, equation, fill, FR_PROMPTS, goodAnswers, HELP_TITLES, MSG, MSG_CP, OK_TITLES, spoken, tipOf } from '../content/messages';
 import { OP_SIGN, OP_SPOKEN } from '../content/series';
 import type { Format } from '../engine/questions';
 import { nb } from '../content/text';
@@ -73,7 +73,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
   // En anglais : dessins, mots et phrases à la place des nombres (EngQuestion).
   const op = opOf(cfg), cp = op === 'add' || op === 'sub', eng = op === 'eng', fr = op === 'fr', msgs = cp ? MSG_CP : MSG;
   /** Consigne d'une question, selon l'opération. */
-  const promptOf = (x: Q): readonly string[] => (x.op === 'eng' ? engPrompt(x) : x.op === 'fr' ? FR_PROMPTS : msgs[x.fmt as keyof typeof msgs]);
+  const promptOf = (x: Q): readonly string[] => (x.op === 'eng' ? engPrompt(x) : x.op === 'fr' ? (x.fr?.verb ? CONJ_PROMPTS : FR_PROMPTS) : msgs[x.fmt as keyof typeof msgs]);
   /** Lecture automatique (réglage du profil) ; jamais quand le chrono tourne, la lecture mangerait le temps. */
   const autoSay = (text: Speakable) => {
     if (p.autoSpeech && !cfg.timed) later(() => speak(text), AUTO_SAY_DELAY);

@@ -3,7 +3,7 @@
    et à compléter CURRICULUM. L'anglais (« eng ») est rangé comme une opération : une série par thème.
    La division (« div ») reprend les tables à l'envers : la table de 7 donne 7 ÷ 7 à 70 ÷ 7. */
 import { THEMES, type ThemeId } from './english';
-import { QUIZZES, type FrQuizId } from './french';
+import { ALL_QUIZZES, type FrQuizId } from './french';
 
 export type Op = 'mul' | 'div' | 'add' | 'sub' | 'fr' | 'eng';
 
@@ -60,7 +60,7 @@ export type SeriesSpec =
   | { kind: 'range'; min: number; max: number; zero: boolean; termMax: number }
   /** Liste fixe de calculs (CP : les amis de 10, les doubles). */
   | { kind: 'list'; facts: readonly { a: number; b: number }[] }
-  /** Homophones n° `n` (1 à 4) : a = n, b = n° de la phrase. */
+  /** Français n° `n` (1 à 8 : homophones puis temps) : a = n, b = n° de la phrase. */
   | { kind: 'quiz'; quiz: FrQuizId; n: number }
   /** Thème d'anglais n° `n` (1 à 18) : a = n, b = n° du mot (1 à 50) ou 50 + n° de la phrase. */
   | { kind: 'theme'; theme: ThemeId; n: number };
@@ -186,15 +186,18 @@ const theme = (id: ThemeId, i: number): SeriesDef => ({
   need: Math.max(0, i - 2),
 });
 
-/** Homophones : a/à et et/est ouverts au départ, puis un trophée par île. */
+/** Trophées de français nécessaires : a/à, et/est et le présent ouverts au départ, puis un par île. */
+const FR_NEED: Record<FrQuizId, number> = { a: 0, et: 0, son: 1, on: 2, pres: 0, fut: 1, imp: 2, pc: 3 };
+
+/** Une île de français : une paire d'homophones ou un temps de conjugaison. */
 const quiz = (id: FrQuizId, i: number): SeriesDef => ({
   id: `fr-${id}`,
   op: 'fr',
   spec: { kind: 'quiz', quiz: id, n: i + 1 },
   steps: [{ half: 0 }, { half: 1 }, null],
-  title: QUIZZES[i]!.title,
+  title: ALL_QUIZZES[i]!.title,
   stepLabels: ['Phrases (1)', 'Phrases (2)', 'Toutes'],
-  need: Math.max(0, i - 1),
+  need: FR_NEED[id],
 });
 
 export const SERIES: Record<SeriesId, SeriesDef> = {
@@ -203,7 +206,7 @@ export const SERIES: Record<SeriesId, SeriesDef> = {
   ...(Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => [`div-${n}`, divTable(n)])) as Record<DivId, SeriesDef>),
   'add-10': upTo10('add'), 'add-c10': friends10, 'add-dbl': doubles, 'add-20': upTo20('add'),
   'sub-10': upTo10('sub'), 'sub-20': upTo20('sub'),
-  ...(Object.fromEntries(QUIZZES.map((q, i) => [`fr-${q.id}`, quiz(q.id, i)])) as Record<FrId, SeriesDef>),
+  ...(Object.fromEntries(ALL_QUIZZES.map((q, i) => [`fr-${q.id}`, quiz(q.id, i)])) as Record<FrId, SeriesDef>),
   ...(Object.fromEntries(THEMES.map((t, i) => [`eng-${t.id}`, theme(t.id, i)])) as Record<EngId, SeriesDef>),
 };
 

@@ -43,7 +43,7 @@ test('CM1 : anglais choisi, carte des 18 îles, session complète, retour aux ta
   await seedProd(page, [kid()]);
   await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
   await expect(page.locator('.btn-play small')).toHaveText('× ou ÷ ou Aa ou EN ?');
-  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 42 conquises');
+  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 46 conquises');
 
   // Carte d'anglais : Hello, School, Toys ouvertes ; Family demande 1 trophée.
   await openMap(page, 'Anglais');

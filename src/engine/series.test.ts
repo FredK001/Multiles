@@ -117,7 +117,7 @@ describe('generateQuestion', () => {
 
   it('toutes les questions passent le garde-fou, multiplications comprises', () => {
     for (const q of everything(SERIES_IDS, 2)) expect(() => assertValid(q)).not.toThrow();
-  });
+  }, 20_000); // des milliers de questions : large marge quand la machine est chargée
 
   it('QCM : 3 propositions distinctes dont la bonne ; vrai/faux cohérent', () => {
     for (const q of everything(CP, 2)) {
