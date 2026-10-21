@@ -16,18 +16,28 @@ import { seriesPct } from '../engine/mastery';
 import { opProg, opsOf } from '../engine/progress';
 import { resultOf, seriesForFact } from '../engine/series';
 import { AidTokens } from './Aid';
+import { GridRead } from './GridRead';
 
 type Cell = { op: 'add' | 'sub'; a: number; b: number };
 
 export function GridCP() {
   const p = usePlayer();
   const { go } = useApp();
-  const ops = opsOf(p).filter((x): x is 'add' | 'sub' => x !== 'mul');
-  const [op, setOp] = useState<'add' | 'sub'>(p.op === 'sub' ? 'sub' : 'add');
+  const ops = opsOf(p).filter((x): x is 'add' | 'sub' | 'lec' => x === 'add' || x === 'sub' || x === 'lec');
+  const [op, setOp] = useState<'add' | 'sub' | 'lec'>(p.op === 'sub' || p.op === 'lec' ? p.op : 'add');
   const [sel, setSel] = useState<Cell | null>(null);
   useBack(() => (sel ? setSel(null) : go({ name: 'home' })));
   useProfileTheme(p.color);
   useIsleTheme(CP_ZONE.fort, CP_ZONE.clair);
+  const tabs = ops.length > 1 && (
+    <div class="opts op-tabs" role="group" aria-label="Opération">
+      {ops.map((x: Op) => (
+        <button key={x} aria-pressed={x === op} onClick={() => { setOp(x as 'add' | 'sub' | 'lec'); setSel(null); }}><b aria-hidden="true">{OP_SIGN[x]}</b>{OP_NAME[x]}</button>
+      ))}
+    </div>
+  );
+  // Lecture : sa propre grille (les sons et les mots réussis), sous les mêmes onglets.
+  if (op === 'lec') return <GridRead key="lec" tabs={tabs} />;
   const o = opProg(p, op), stage = stageFor(p.level);
   const known = (c: Cell) => hasKey(o.mastered, factKey(c.op, c.a, c.b));
   const trap = (c: Cell) => hasKey(o.traps, factKey(c.op, c.a, c.b));
@@ -97,13 +107,7 @@ export function GridCP() {
         <BtnSay style={{ justifySelf: 'end', background: '#fff' }} text={head} />
       </div>
       <div class="grid-scroll">
-        {ops.length > 1 && (
-          <div class="opts op-tabs" role="group" aria-label="Opération">
-            {ops.map((x: Op) => (
-              <button key={x} aria-pressed={x === op} onClick={() => { setOp(x as 'add' | 'sub'); setSel(null); }}><b aria-hidden="true">{OP_SIGN[x]}</b>{OP_NAME[x]}</button>
-            ))}
-          </div>
-        )}
+        {tabs}
         {op === 'add' ? (
           <>
             <div class="g-head"><p class="g-big">{count} <small>cases sur 121</small></p></div>

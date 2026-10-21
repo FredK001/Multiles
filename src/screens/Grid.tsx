@@ -24,7 +24,7 @@ import { GridFr } from './GridFr';
 
 export function Grid() {
   const p = usePlayer();
-  return p.op === 'add' || p.op === 'sub' ? <GridCP /> : <GridCM1 />;
+  return p.grade === 'CP' ? <GridCP /> : <GridCM1 />;
 }
 
 /** CM1 : onglets Multiplications / Anglais quand l'enfant a les deux. */

@@ -4,23 +4,27 @@
    La division (« div ») reprend les tables à l'envers : la table de 7 donne 7 ÷ 7 à 70 ÷ 7. */
 import { THEMES, type ThemeId } from './english';
 import { ALL_QUIZZES, type FrQuizId } from './french';
+import { READ_SETS, type ReadId } from './reading';
 
-export type Op = 'mul' | 'div' | 'add' | 'sub' | 'fr' | 'eng';
+export type Op = 'mul' | 'div' | 'add' | 'sub' | 'lec' | 'fr' | 'eng';
 
 /** Toutes les opérations, dans l'ordre d'affichage (album, espace parent, sauvegarde). */
-export const OPS: readonly Op[] = ['mul', 'div', 'add', 'sub', 'fr', 'eng'];
+export const OPS: readonly Op[] = ['mul', 'div', 'add', 'sub', 'lec', 'fr', 'eng'];
 export type Grade = 'CP' | 'CM1';
 
 export const GRADES: readonly Grade[] = ['CP', 'CM1'];
 
 /** Opérations proposées à chaque niveau, dans l'ordre d'affichage. */
-export const CURRICULUM: Record<Grade, readonly Op[]> = { CP: ['add', 'sub'], CM1: ['mul', 'div', 'fr', 'eng'] };
+export const CURRICULUM: Record<Grade, readonly Op[]> = { CP: ['add', 'sub', 'lec'], CM1: ['mul', 'div', 'fr', 'eng'] };
 
 /** Couleur de zone de l'anglais (îles, questions, carte) : bleu marine, 9,6:1 avec le blanc. */
 export const ENG_ZONE = { fort: '#23408E', clair: '#DCE3F5' } as const;
 
 /** Couleur d'une opération (pastilles, cartes de choix) ; les tables gardent la couleur de profil. */
-export const zoneOf = (op: Op): string => (op === 'eng' ? ENG_ZONE.fort : op === 'mul' ? 'var(--ballon)' : op === 'div' ? DIV_ZONE.fort : op === 'fr' ? FR_ZONE.fort : CP_ZONE.fort);
+export const zoneOf = (op: Op): string => (op === 'eng' ? ENG_ZONE.fort : op === 'mul' ? 'var(--ballon)' : op === 'div' ? DIV_ZONE.fort : op === 'fr' ? FR_ZONE.fort : op === 'lec' ? LEC_ZONE.fort : CP_ZONE.fort);
+
+/** Couleur de zone de la lecture (CP) : bleu roi, 6,4:1 avec le blanc. */
+export const LEC_ZONE = { fort: '#1D5FA8', clair: '#DCE8F7' } as const;
 
 /** Couleur de zone du français : vert sapin, 6,9:1 avec le blanc. */
 export const FR_ZONE = { fort: '#0E6B4F', clair: '#D6EFE6' } as const;
@@ -32,25 +36,25 @@ export const DIV_ZONE = { fort: '#6B2E8F', clair: '#EBDDF3' } as const;
 export const CP_ZONE = { fort: '#B04A00', clair: '#FBE4D3' } as const;
 
 /** Noms au pluriel (espace parent, choix de l'opération). */
-export const OP_NAME: Record<Op, string> = { mul: 'Multiplications', div: 'Divisions', fr: 'Français', add: 'Additions', sub: 'Soustractions', eng: 'Anglais' };
+export const OP_NAME: Record<Op, string> = { mul: 'Multiplications', div: 'Divisions', fr: 'Français', lec: 'Lecture', add: 'Additions', sub: 'Soustractions', eng: 'Anglais' };
 
 /** Nom d'une opération. */
-export const OP_SINGULAR: Record<Op, string> = { mul: 'Multiplication', div: 'Division', fr: 'Français', add: 'Addition', sub: 'Soustraction', eng: 'Anglais' };
+export const OP_SINGULAR: Record<Op, string> = { mul: 'Multiplication', div: 'Division', fr: 'Français', lec: 'Lecture', add: 'Addition', sub: 'Soustraction', eng: 'Anglais' };
 
 /** Mot court lu et affiché pour un enfant qui lit peu. */
-export const OP_WORD: Record<Op, string> = { mul: 'Fois', div: 'Divisé', fr: 'Français', add: 'Plus', sub: 'Moins', eng: 'Anglais' };
+export const OP_WORD: Record<Op, string> = { mul: 'Fois', div: 'Divisé', fr: 'Français', lec: 'Lire', add: 'Plus', sub: 'Moins', eng: 'Anglais' };
 
 /** Mot lu à voix haute entre les deux nombres. */
-export const OP_SPOKEN: Record<Op, string> = { mul: 'fois', div: 'divisé par', fr: '', add: 'plus', sub: 'moins', eng: '' };
+export const OP_SPOKEN: Record<Op, string> = { mul: 'fois', div: 'divisé par', fr: '', lec: '', add: 'plus', sub: 'moins', eng: '' };
 
 /** Ce que propose chaque classe (création de profil, espace parent). */
-export const GRADE_DESC: Record<Grade, string> = { CP: 'Additions et soustractions', CM1: 'Tables de multiplication, divisions, français et anglais' };
+export const GRADE_DESC: Record<Grade, string> = { CP: 'Additions, soustractions et lecture', CM1: 'Tables de multiplication, divisions, français et anglais' };
 
 /** Signe affiché (vrai signe moins, pas le tiret). */
-export const OP_SIGN: Record<Op, string> = { mul: '×', div: '÷', fr: 'Aa', add: '+', sub: '−', eng: 'EN' };
+export const OP_SIGN: Record<Op, string> = { mul: '×', div: '÷', fr: 'Aa', lec: 'ab', add: '+', sub: '−', eng: 'EN' };
 
 /** Lettre utilisée dans les clés de calcul : « 7x8 », « 56d7 », « 3+4 », « 9-2 », « 4e12 » (thème 4, mot 12). */
-export const OP_KEY: Record<Op, 'x' | 'd' | '+' | '-' | 'f' | 'e'> = { mul: 'x', div: 'd', add: '+', sub: '-', fr: 'f', eng: 'e' };
+export const OP_KEY: Record<Op, 'x' | 'd' | '+' | '-' | 'l' | 'f' | 'e'> = { mul: 'x', div: 'd', add: '+', sub: '-', lec: 'l', fr: 'f', eng: 'e' };
 
 export type SeriesSpec =
   /** Table de n : n × 1 à n × 10 ; en division, n × 1 ÷ n à n × 10 ÷ n (a = dividende, b = n). */
@@ -60,6 +64,8 @@ export type SeriesSpec =
   | { kind: 'range'; min: number; max: number; zero: boolean; termMax: number }
   /** Liste fixe de calculs (CP : les amis de 10, les doubles). */
   | { kind: 'list'; facts: readonly { a: number; b: number }[] }
+  /** Lecture n° `n` (1 à 5) : a = n, b = n° du son, de la syllabe ou du mot. */
+  | { kind: 'read'; set: ReadId; n: number }
   /** Français n° `n` (1 à 8 : homophones puis temps) : a = n, b = n° de la phrase. */
   | { kind: 'quiz'; quiz: FrQuizId; n: number }
   /** Thème d'anglais n° `n` (1 à 18) : a = n, b = n° du mot (1 à 50) ou 50 + n° de la phrase. */
@@ -83,7 +89,8 @@ export type TableId = `mul-${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10}`;
 export type DivId = `div-${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10}`;
 export type EngId = `eng-${ThemeId}`;
 export type FrId = `fr-${FrQuizId}`;
-export type SeriesId = TableId | DivId | 'add-10' | 'add-c10' | 'add-dbl' | 'add-20' | 'sub-10' | 'sub-20' | FrId | EngId;
+export type LecId = `lec-${ReadId}`;
+export type SeriesId = TableId | DivId | 'add-10' | 'add-c10' | 'add-dbl' | 'add-20' | 'sub-10' | 'sub-20' | LecId | FrId | EngId;
 
 export interface SeriesDef {
   id: SeriesId;
@@ -186,6 +193,18 @@ const theme = (id: ThemeId, i: number): SeriesDef => ({
   need: Math.max(0, i - 2),
 });
 
+/** Lecture : les voyelles et les premières syllabes ouvertes au départ, puis un trophée par île. */
+const LEC_NEED: Record<ReadId, number> = { voy: 0, syl1: 0, syl2: 1, sons: 2, mots: 3 };
+const readSet = (id: ReadId, i: number): SeriesDef => ({
+  id: `lec-${id}`,
+  op: 'lec',
+  spec: { kind: 'read', set: id, n: i + 1 },
+  steps: [{ half: 0 }, { half: 1 }, null],
+  title: READ_SETS[i]!.title,
+  stepLabels: ['Partie 1', 'Partie 2', 'Tout'],
+  need: LEC_NEED[id],
+});
+
 /** Trophées de français nécessaires : a/à, et/est et le présent ouverts au départ, puis un par île. */
 const FR_NEED: Record<FrQuizId, number> = { a: 0, et: 0, son: 1, on: 2, pres: 0, fut: 1, imp: 2, pc: 3 };
 
@@ -206,6 +225,7 @@ export const SERIES: Record<SeriesId, SeriesDef> = {
   ...(Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => [`div-${n}`, divTable(n)])) as Record<DivId, SeriesDef>),
   'add-10': upTo10('add'), 'add-c10': friends10, 'add-dbl': doubles, 'add-20': upTo20('add'),
   'sub-10': upTo10('sub'), 'sub-20': upTo20('sub'),
+  ...(Object.fromEntries(READ_SETS.map((r, i) => [`lec-${r.id}`, readSet(r.id, i)])) as Record<LecId, SeriesDef>),
   ...(Object.fromEntries(ALL_QUIZZES.map((q, i) => [`fr-${q.id}`, quiz(q.id, i)])) as Record<FrId, SeriesDef>),
   ...(Object.fromEntries(THEMES.map((t, i) => [`eng-${t.id}`, theme(t.id, i)])) as Record<EngId, SeriesDef>),
 };

@@ -228,3 +228,43 @@ test("aucune violation WCAG 2.1 AA sur les écrans de français", async ({ page 
   console.log(rep.length ? rep.join('\n') : '  aucune violation (français)');
   expect(rep).toEqual([]);
 });
+
+test("aucune violation WCAG 2.1 AA sur les écrans de lecture (CP)", async ({ page }) => {
+  test.setTimeout(300_000);
+  const rep: string[] = [];
+  const check = async (name: string) => {
+    await page.waitForTimeout(300);
+    const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+    for (const v of r.violations) rep.push(`${name} : [${v.impact}] ${v.id} — ${v.help} (${v.nodes.length}) ${v.nodes.slice(0, 2).map((n) => n.target.join(' ')).join(' | ')}`);
+  };
+  await page.addInitScript(() => {
+    const v = { lang: 'fr-FR', localService: true, name: 'Test', voiceURI: 'test', default: true };
+    if ('speechSynthesis' in window) { speechSynthesis.getVoices = () => [v as unknown as SpeechSynthesisVoice]; speechSynthesis.speak = () => {}; }
+  });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.locator('#btnAdd').click();
+  await page.getByLabel('Ton prénom').fill('Max');
+  await page.getByRole('button', { name: 'Suivant' }).click();
+  await page.getByRole('group', { name: 'Classe' }).getByRole('button', { name: /^CP / }).click();
+  await page.getByRole('button', { name: 'Suivant' }).click();
+  await page.getByRole('button', { name: 'Suivant' }).click();
+  await page.locator('.pep-card').first().click();
+  await page.getByRole('button', { name: /C'est parti/ }).click();
+  await page.getByRole('button', { name: 'Jouer avec le profil de Max' }).click();
+  await page.locator('.isles-strip').click();
+  await page.locator('.op-card', { hasText: 'Lire' }).click();
+  await check('Carte de la lecture');
+  await page.locator('.isle').first().click();
+  await page.locator('.modes2 .discover').first().click();
+  await check('Découvrir les sons');
+  await page.getByRole('button', { name: "Je m'entraîne" }).click();
+  await check('Question de lecture');
+  await page.screenshot({ path: 'test-results/lec-q.png' });
+  await page.locator('.read-choices .choice').first().click();
+  await page.locator('.fb-sheet').waitFor();
+  await check(await page.locator('.fb-sheet.help').count() ? 'Aide de lecture' : 'Bravo (lecture)');
+  await page.screenshot({ path: 'test-results/lec-fb.png' });
+  console.log(rep.length ? rep.join('\n') : '  aucune violation (lecture)');
+  expect(rep).toEqual([]);
+});

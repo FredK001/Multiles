@@ -4,6 +4,7 @@ import { factKey } from './keys';
 import { defaultRng, pick, shuffle, type Rng } from './random';
 import { engDraft, type EngQ } from './english';
 import { frDraft, type FrQ } from './french';
+import { readDraft, type ReadQ } from './reading';
 import { displayBounds, drawFact, factsOf, inSeries, resultOf, weightOf, type Fact } from './series';
 
 /** Les 4 formats : pavé numérique, QCM à 3 choix, facteur manquant, vrai/faux ;
@@ -19,11 +20,14 @@ export const ENG_ORDER: readonly Format[] = ['qcm', 'ecoute', 'vf', 'ecoute'];
 export const ENG_CHRONO_ORDER: readonly Format[] = ['qcm', 'ecoute', 'vf', 'qcm', 'ecoute'];
 
 /** Rotation des formats d'une opération (session classique, ou chrono). */
+/** Lecture : la voix dit, l'enfant touche l'écriture (qcm : trouver la même, sans voix). */
+export const LEC_ORDER: readonly Format[] = ['ecoute'];
+
 /** Français : toujours un choix entre les deux mots de la paire. */
 export const FR_ORDER: readonly Format[] = ['qcm'];
 
 export const formatsOf = (op: Op, chrono = false): readonly Format[] =>
-  op === 'fr' ? FR_ORDER : op === 'eng' ? (chrono ? ENG_CHRONO_ORDER : ENG_ORDER) : chrono ? CHRONO_ORDER : FORMAT_ORDER;
+  op === 'fr' ? FR_ORDER : op === 'lec' ? LEC_ORDER : op === 'eng' ? (chrono ? ENG_CHRONO_ORDER : ENG_ORDER) : chrono ? CHRONO_ORDER : FORMAT_ORDER;
 
 export interface Question {
   op: Op;
@@ -47,6 +51,8 @@ export interface Question {
   eng?: EngQ;
   /** Français : la phrase à trou ; `p` est l'indice du bon mot. */
   fr?: FrQ;
+  /** Lecture : ce que dit la voix et les trois écritures ; `p` est l'indice de la bonne. */
+  read?: ReadQ;
 }
 
 export interface GenOptions {
@@ -86,6 +92,12 @@ export function generateQuestion({ series, fmt, fact, step = null, rng = default
     const q: Question = { op: 'eng', series: s.id, a: f.a, b: f.b, fmt: d.fmt, p: d.p, eng: d.eng };
     if (d.fmt === 'qcm' || d.fmt === 'ecoute') q.choices = d.eng.options.map((_, i) => i);
     if (d.truth !== undefined) q.truth = d.truth;
+    assertValid(q);
+    return q;
+  }
+  if (s.op === 'lec') {
+    const d = readDraft(s, f, rng);
+    const q: Question = { op: 'lec', series: s.id, a: f.a, b: f.b, fmt: fmt === 'qcm' ? 'qcm' : 'ecoute', p: d.p, read: d.read, choices: [0, 1, 2] };
     assertValid(q);
     return q;
   }
@@ -130,6 +142,11 @@ export function assertValid(q: Question): void {
       if (o.length !== 1 || q.truth === undefined) fail('vrai/faux');
     } else if (o.length < 2 || o.length > 3 || q.p < 0 || q.p >= o.length || q.choices?.length !== o.length) fail('propositions');
     if (q.fmt === 'ecoute' && o.some((x) => x.word === undefined)) fail('écoute sans dessins');
+    return;
+  }
+  if (q.op === 'lec') {
+    const o = q.read?.options ?? [];
+    if (!q.read || (q.fmt !== 'qcm' && q.fmt !== 'ecoute') || o.length !== 3 || new Set(o).size !== 3 || o[q.p] !== q.read.target) fail('lecture');
     return;
   }
   if (q.op === 'fr') {

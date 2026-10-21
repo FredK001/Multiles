@@ -24,6 +24,9 @@ export const MSG_CP = {
 
 /** Consignes du français. */
 export const FR_PROMPTS = ['Choisis le bon mot.', 'Quel mot va dans le trou, {name} ?', 'Lequel des deux, {name} ?'];
+/** Consignes de la lecture (CP) : très courtes, lues par la voix. */
+export const LEC_PROMPTS = { ecoute: ['Écoute et touche ce que tu entends.'], qcm: ['Trouve le même mot.'] } as const;
+
 /** Consignes de la conjugaison (trois formes du verbe). */
 export const CONJ_PROMPTS = ['Choisis la bonne forme du verbe.', 'Conjugue le verbe, {name} !', 'Quelle forme va dans le trou ?'];
 
@@ -37,6 +40,7 @@ export const fill = (t: string, q: Pick<Question, 'a' | 'b' | 'op'>, name: strin
 /** Énoncé lu à voix haute et donné aux lecteurs d'écran. */
 export function spoken(q: Question): string {
   // Français : le trou est lu comme un silence (a et à se prononcent pareil, mais pas toujours et/est).
+  if (q.op === 'lec' && q.read) return q.fmt === 'qcm' ? `Trouve : ${q.read.target}.` : 'Écoute bien.';
   if (q.op === 'fr' && q.fr) return q.fr.text.replace(/___/g, '…') + (q.fr.verb ? ` Verbe ${q.fr.verb}.` : '');
   const w = OP_SPOKEN[q.op];
   if (q.fmt === 'manquant') return q.op === 'div' ? `${q.a} ${w} combien égale ${q.p} ?` : `${q.a} ${w} combien font ${q.p} ?`;
@@ -121,7 +125,7 @@ export function engPrompt(q: Question): readonly string[] {
 }
 
 /** Aide après une erreur en anglais : le sens du mot, ou la phrase à retenir. */
-type TipQ = Pick<Question, 'op' | 'a' | 'b'> & Partial<Pick<Question, 'eng' | 'fr' | 'p'>>;
+type TipQ = Pick<Question, 'op' | 'a' | 'b'> & Partial<Pick<Question, 'eng' | 'fr' | 'read' | 'p'>>;
 
 function engTip(q: TipQ): string {
   const e = q.eng, t = e && themeOf(e.theme);
@@ -151,9 +155,20 @@ function frTip(q: TipQ): string {
   return `${quiz.rule[right]} « ${cite(test ?? other)} », ça ne va pas.`;
 }
 
+/** Astuce de lecture : les lettres qui se ressemblent, ou l'ordre des lettres. */
+function lecTip(q: TipQ): string {
+  const r = q.read;
+  if (!r) return '';
+  const w = r.target, letters = w.split('').join(' puis ');
+  if (/[bd]/.test(w) && r.options.some((o) => /[bd]/.test(o) && o !== w)) return `Attention au b et au d : le ventre du b est à droite, celui du d à gauche. Ici : ${w}.`;
+  if (/[pq]/.test(w) && r.options.some((o) => /[pq]/.test(o) && o !== w)) return `Attention au p et au q : la boucle du p est à droite. Ici : ${w}.`;
+  if (w.length === 2 && r.options.includes(w[1]! + w[0]!)) return `On lit de gauche à droite : ${letters}. Ça fait « ${r.say} ».`;
+  return `On entend « ${r.say} » : ça s'écrit ${letters}.`;
+}
+
 /** Astuce adaptée au calcul, quelle que soit l'opération. */
 export function tipOf(q: TipQ): string {
-  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'div' ? divTip(q.a, q.b) : q.op === 'fr' ? frTip(q) : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
+  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'div' ? divTip(q.a, q.b) : q.op === 'fr' ? frTip(q) : q.op === 'lec' ? lecTip(q) : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
 }
 
 /** Bulle d'accueil. */

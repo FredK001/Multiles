@@ -657,3 +657,14 @@
 .conj li.on{font-weight:800;background:var(--ile-clair);border-radius:8px;padding:0 6px;margin:0 -6px}
 .conj-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .aid .conj{border-width:2px}
+
+/* Lecture (CP) : trois écritures en grand, en script */
+.read-choices{grid-template-columns:1fr}
+.read-choices .choice{font-family:var(--ui);font-weight:800;font-size:46px;height:76px;letter-spacing:1px}
+.read-target{font-family:var(--ui);font-weight:800;font-size:64px;text-align:center;color:var(--ile)}
+.read-listen{margin:0 auto}
+.read-aid{display:flex;align-items:center;justify-content:center;gap:16px}
+.read-aid b{font-family:var(--ui);font-weight:800;font-size:54px;color:var(--feuille)}
+.img-card.read b{font-family:var(--ui);font-weight:800;font-size:30px}
+.eg-w.read{width:auto;min-width:52px;padding:0 10px;font-family:var(--ui);font-weight:800;font-size:22px;color:var(--ink-2)}
+.eg-w.read.m,.eg-w.read.t{color:var(--ink)}
