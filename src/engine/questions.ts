@@ -6,6 +6,7 @@ import { engDraft, type EngQ } from './english';
 import { frDraft, type FrQ } from './french';
 import { readDraft, type ReadQ } from './reading';
 import { numAnswer, numChoices, numQ, numSetOfSeries, type NumQ } from './numbers';
+import { fracDraft, fracSetOfSeries, type FracQ } from './fractions';
 import { displayBounds, drawFact, factsOf, inSeries, resultOf, weightOf, type Fact } from './series';
 
 /** Les 4 formats : pavé numérique, QCM à 3 choix, facteur manquant, vrai/faux ;
@@ -56,6 +57,8 @@ export interface Question {
   read?: ReadQ;
   /** Nombres jusqu'à 100 : l'île (dizaines et unités, avant/après, comparer, droite graduée). */
   num?: NumQ;
+  /** Fractions et décimaux : l'énoncé et les trois réponses ; `p` est l'indice de la bonne. */
+  frac?: FracQ;
 }
 
 export interface GenOptions {
@@ -95,6 +98,12 @@ export function generateQuestion({ series, fmt, fact, step = null, rng = default
     const q: Question = { op: 'eng', series: s.id, a: f.a, b: f.b, fmt: d.fmt, p: d.p, eng: d.eng };
     if (d.fmt === 'qcm' || d.fmt === 'ecoute') q.choices = d.eng.options.map((_, i) => i);
     if (d.truth !== undefined) q.truth = d.truth;
+    assertValid(q);
+    return q;
+  }
+  if (s.op === 'frac') {
+    const d = fracDraft(fracSetOfSeries(s), f.b, rng);
+    const q: Question = { op: 'frac', series: s.id, a: f.a, b: f.b, fmt: 'qcm', p: d.p, frac: d.frac, choices: [0, 1, 2] };
     assertValid(q);
     return q;
   }
@@ -152,6 +161,11 @@ export function assertValid(q: Question): void {
       if (o.length !== 1 || q.truth === undefined) fail('vrai/faux');
     } else if (o.length < 2 || o.length > 3 || q.p < 0 || q.p >= o.length || q.choices?.length !== o.length) fail('propositions');
     if (q.fmt === 'ecoute' && o.some((x) => x.word === undefined)) fail('écoute sans dessins');
+    return;
+  }
+  if (q.op === 'frac') {
+    const o = q.frac?.options ?? [];
+    if (!q.frac || q.fmt !== 'qcm' || o.length !== 3 || new Set(o).size !== 3 || q.p < 0 || q.p > 2) fail('fractions');
     return;
   }
   if (q.op === 'num') {

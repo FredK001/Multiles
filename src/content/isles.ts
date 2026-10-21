@@ -1,8 +1,9 @@
 import { THEMES, type ThemeId } from './english';
 import type { FrQuizId } from './french';
+import type { FracId } from './fractions';
 import type { NumId } from './numbers';
 import type { ReadId } from './reading';
-import { CP_ZONE, DIV_ZONE, ENG_ZONE, FR_ZONE, LEC_ZONE, NUM_ZONE, OP_SIGN, SERIES, type SeriesId } from './series';
+import { CP_ZONE, DIV_ZONE, ENG_ZONE, FR_ZONE, FRAC_ZONE, LEC_ZONE, NUM_ZONE, OP_SIGN, SERIES, type SeriesId } from './series';
 
 export type IsleId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type DecorKind =
@@ -125,6 +126,14 @@ const DIV_ISLES: Record<IsleId, { name: string; boss: string; sticker: string; o
   10: { name: 'Comète', boss: 'Cométo', sticker: 'Comète filante', of: 'de la Comète' },
 };
 
+/* Fractions et décimaux (CM1). */
+const FRAC_ISLES: Record<FracId, Omit<IsleLook, 'fort' | 'clair'>> = {
+  lire: { name: 'Pâtisserie', decor: 'bonbon', motif: 6, boss: 'Tartelette', sticker: 'Part de tarte', of: 'de la Pâtisserie' },
+  unite: { name: 'Verger rond', decor: 'verger', motif: 3, boss: 'Demi-Lune', sticker: 'Orange coupée', of: 'du Verger rond' },
+  dix: { name: 'Virgule', decor: 'glace', motif: 5, boss: 'Dixio', sticker: 'Règle graduée', of: 'de la Virgule' },
+  comp: { name: 'Podium', decor: 'volcan', motif: 7, boss: 'Centimo', sticker: 'Médaille', of: 'du Podium' },
+};
+
 /* Nombres jusqu'à 100 (CP). */
 const NUM_ISLES: Record<NumId, Omit<IsleLook, 'fort' | 'clair'>> = {
   du: { name: 'Carrière', decor: 'desert', motif: 4, boss: 'Dizainor', sticker: 'Pile de cubes', of: 'de la Carrière' },
@@ -160,7 +169,7 @@ export function seriesBadge(id: SeriesId): string {
   const sp = SERIES[id].spec;
   // Division : « ÷7 », pour ne pas confondre avec la table de 7.
   if (sp.kind === 'table' && SERIES[id].op === 'div') return `÷${sp.n}`;
-  return sp.kind === 'table' || sp.kind === 'theme' || sp.kind === 'quiz' || sp.kind === 'read' || sp.kind === 'num' ? String(sp.n) : OP_SIGN[SERIES[id].op];
+  return sp.kind === 'table' || sp.kind === 'theme' || sp.kind === 'quiz' || sp.kind === 'read' || sp.kind === 'num' || sp.kind === 'frac' ? String(sp.n) : OP_SIGN[SERIES[id].op];
 }
 
 /** Habillage de l'île d'une série. */
@@ -174,6 +183,7 @@ export function lookOf(id: SeriesId): IsleLook {
     return { ...d, fort: DIV_ZONE.fort, clair: DIV_ZONE.clair, decor: ISLES[n].decor, motif: n };
   }
   const spec = SERIES[id].spec;
+  if (spec.kind === 'frac') return { ...FRAC_ISLES[spec.set], fort: FRAC_ZONE.fort, clair: FRAC_ZONE.clair };
   if (spec.kind === 'num') return { ...NUM_ISLES[spec.set], fort: NUM_ZONE.fort, clair: NUM_ZONE.clair };
   if (spec.kind === 'read') return { ...LEC_ISLES[spec.set], fort: LEC_ZONE.fort, clair: LEC_ZONE.clair };
   if (spec.kind === 'quiz') return { ...FR_ISLES[spec.quiz], fort: FR_ZONE.fort, clair: FR_ZONE.clair };

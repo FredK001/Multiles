@@ -36,7 +36,7 @@ test('CM1 : division, carte, découvrir, session sans faute, grille ÷', async (
   await page.waitForTimeout(2600);
   while (await page.locator('.overlay').count()) await page.locator('.overlay .btn-isle').click();
   await page.locator('.end-grid').click();
-  await expect(page.locator('.op-tabs button')).toHaveCount(4);
+  await expect(page.locator('.op-tabs button')).toHaveCount(5);
   await expect(page.locator('.op-tabs button[aria-pressed="true"]')).toContainText('Divisions');
   await expect(page.locator('.tbl .tr').first()).toContainText('50%');
 

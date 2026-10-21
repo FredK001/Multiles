@@ -28,7 +28,7 @@ function* everything(seeds = 6): Generator<Question> {
 describe('séries d’anglais', () => {
   it('une série par thème, dans l’ordre des fiches ; proposée au CM1 après les tables', () => {
     expect(ENG).toEqual(THEMES.map((t) => `eng-${t.id}`));
-    expect(CURRICULUM.CM1).toEqual(['mul', 'div', 'fr', 'eng']);
+    expect(CURRICULUM.CM1).toEqual(['mul', 'div', 'frac', 'fr', 'eng']);
   });
   it('mots puis phrases : étapes 1-2 = les deux moitiés des mots, étape 3 et gardien = mots + phrases', () => {
     for (const id of ENG) {

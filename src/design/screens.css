@@ -686,3 +686,13 @@
 .hundred button{aspect-ratio:1;border:2px solid var(--ink);border-radius:8px;background:#fff;font-family:var(--ui);font-weight:800;font-size:14px;padding:0;min-width:0}
 .hundred button.ten{background:var(--ile-clair)}
 .hundred button.on{background:var(--ile);color:#fff}
+
+/* Fractions et décimaux (CM1) */
+.frac-card{display:flex;flex-direction:column;align-items:center;gap:10px}
+.frac-q{font-family:var(--titre);font-weight:600;font-size:28px;line-height:1.25;text-align:center}
+.frac-choices{grid-template-columns:1fr}
+.frac-choices .choice{font-size:34px;height:66px}
+.frac-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.frac-ex{justify-items:center;text-align:center;padding:8px}
+.frac-ex b{font-family:var(--titre);font-size:26px;color:var(--ile)}
+.frac-ex small{font-size:14px;color:var(--ink-2)}

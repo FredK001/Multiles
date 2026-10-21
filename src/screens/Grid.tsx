@@ -2,13 +2,13 @@
 import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { mascot } from '../art';
-import { useProfileTheme } from '../app/theme';
+import { useIsleTheme, useProfileTheme } from '../app/theme';
 import { useApp, useBack, usePlayer } from '../app/context';
 import { trapsCfg } from '../app/sessions';
 import { BtnSay, Svg, TabBar } from '../app/ui';
 import { ISLES, ofIsle, type IsleId } from '../content/isles';
 import { tipFor } from '../content/messages';
-import { OP_NAME, OP_SIGN } from '../content/series';
+import { FRAC_ZONE, OP_NAME, OP_SIGN } from '../content/series';
 import { nb } from '../content/text';
 import { applyIsleTheme } from '../design/theme';
 import { parseKey } from '../engine/keys';
@@ -21,6 +21,13 @@ import { GridCP } from './GridCP';
 import { GridDiv } from './GridDiv';
 import { GridEng } from './GridEng';
 import { GridFr } from './GridFr';
+import { GridNum } from './GridNum';
+
+/** Fractions : même grille par îles que les nombres du CP, à sa couleur. */
+function GridFrac({ tabs }: { tabs?: ComponentChildren }) {
+  useIsleTheme(FRAC_ZONE.fort, FRAC_ZONE.clair);
+  return <GridNum tabs={tabs} op="frac" />;
+}
 
 export function Grid() {
   const p = usePlayer();
@@ -30,9 +37,9 @@ export function Grid() {
 /** CM1 : onglets Multiplications / Anglais quand l'enfant a les deux. */
 function GridCM1() {
   const p = usePlayer();
-  type CmOp = 'mul' | 'div' | 'fr' | 'eng';
-  const ops = opsOf(p).filter((x): x is CmOp => x === 'mul' || x === 'div' || x === 'fr' || x === 'eng');
-  const [op, setOp] = useState<CmOp>(p.op === 'eng' || p.op === 'div' || p.op === 'fr' ? p.op : 'mul');
+  type CmOp = 'mul' | 'div' | 'frac' | 'fr' | 'eng';
+  const ops = opsOf(p).filter((x): x is CmOp => x === 'mul' || x === 'div' || x === 'frac' || x === 'fr' || x === 'eng');
+  const [op, setOp] = useState<CmOp>(p.op === 'eng' || p.op === 'div' || p.op === 'fr' || p.op === 'frac' ? p.op : 'mul');
   const tabs = ops.length > 1 && (
     <div class="opts op-tabs" role="group" aria-label="Opération">
       {ops.map((x) => (
@@ -40,7 +47,7 @@ function GridCM1() {
       ))}
     </div>
   );
-  return op === 'eng' ? <GridEng key="eng" tabs={tabs} /> : op === 'div' ? <GridDiv key="div" tabs={tabs} /> : op === 'fr' ? <GridFr key="fr" tabs={tabs} /> : <GridTable key="mul" tabs={tabs} />;
+  return op === 'eng' ? <GridEng key="eng" tabs={tabs} /> : op === 'div' ? <GridDiv key="div" tabs={tabs} /> : op === 'fr' ? <GridFr key="fr" tabs={tabs} /> : op === 'frac' ? <GridFrac key="frac" tabs={tabs} /> : <GridTable key="mul" tabs={tabs} />;
 }
 
 function GridTable({ tabs }: { tabs?: ComponentChildren }) {

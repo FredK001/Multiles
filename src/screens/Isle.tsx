@@ -52,7 +52,7 @@ export function IsleScreen({ s }: { s: SeriesId }) {
         <div class="modes2">
           <button class="discover" onClick={() => go({ name: 'discover', s, m: def.spec.kind === 'range' ? Math.max(1, def.spec.min) : 1 })}>
             <span class="ic"><Svg html={icoDiscover} /></span>
-            <span><b>Découvrir</b><small>{mul ? 'Voir la table avant de jouer' : def.op === 'div' ? 'Voir la table à l\'envers' : eng ? 'Voir et écouter les mots' : def.op === 'fr' ? 'Revoir la règle' : def.op === 'lec' ? 'Écouter les sons' : def.op === 'num' ? 'Le tableau des nombres' : 'Voir les nombres avant de jouer'}</small></span>
+            <span><b>Découvrir</b><small>{mul ? 'Voir la table avant de jouer' : def.op === 'div' ? 'Voir la table à l\'envers' : eng ? 'Voir et écouter les mots' : def.op === 'fr' ? 'Revoir la règle' : def.op === 'lec' ? 'Écouter les sons' : def.op === 'num' ? 'Le tableau des nombres' : def.op === 'frac' ? 'Revoir la leçon' : 'Voir les nombres avant de jouer'}</small></span>
           </button>
           <button
             class={`discover${chrOpen ? '' : ' lock'}`}

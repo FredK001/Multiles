@@ -11,3 +11,4 @@ export * from './sticker';
 export * from './shopItem';
 export * from './words';
 export { Art, svgHtml } from './Art';
+export * from './fraction';
