@@ -8,6 +8,7 @@ import { BackChip, BtnSay, useAutoSay } from '../app/ui';
 import { lookOf } from '../content/isles';
 import { OP_SIGN, OP_SPOKEN, SERIES, type SeriesId } from '../content/series';
 import { opProg } from '../engine/progress';
+import { factsOf } from '../engine/series';
 import { isleOf } from '../engine/unlock';
 
 export function DiscoverCP({ s, m }: { s: SeriesId; m: number }) {
@@ -23,12 +24,17 @@ export function DiscoverCP({ s, m }: { s: SeriesId; m: number }) {
   const chips = Array.from({ length: 10 }, (_, i) => Math.max(1, sp.min) + i);
   const n = chips.includes(m) ? m : chips[0]!;
   // Lignes : a + b = n (termes de 0 à 10), ou n − b (b de 0 ou 1 à 10).
-  const rows = add
+  // Liste (amis de 10, doubles) : tous ses calculs d'un coup, sans choix du nombre.
+  const list = def.spec.kind === 'list';
+  const rows = list
+    ? factsOf(def).map((f) => ({ a: f.a, b: f.b, r: f.a + f.b }))
+    : add
     ? Array.from({ length: 11 }, (_, a) => a).filter((a) => n - a >= 0 && n - a <= 10).map((a) => ({ a, b: n - a, r: n }))
     : Array.from({ length: 11 }, (_, b) => b).filter((b) => b <= n && (n <= 10 || b >= 1)).map((b) => ({ a: n, b, r: n - b }));
-  const d = Math.max(8, Math.min(18, Math.floor(Math.min(220 / n, 300 / rows.length)) - 3));
+  const widest = Math.max(n, ...rows.map((x) => x.a + (add ? x.b : 0)));
+  const d = Math.max(8, Math.min(18, Math.floor(Math.min(220 / widest, 300 / rows.length)) - 3));
   const w = OP_SPOKEN[def.op];
-  const intro = add ? `Toutes les façons de faire ${n}.` : `On part de ${n} et on enlève.`;
+  const intro = s === 'add-c10' ? 'Les amis de 10 : deux nombres qui font 10.' : s === 'add-dbl' ? 'Les doubles : un nombre plus lui-même.' : add ? `Toutes les façons de faire ${n}.` : `On part de ${n} et on enlève.`;
   const say = () => `${intro} ${rows.map((x) => `${x.a} ${w} ${x.b} égale ${x.r}`).join('. ')}.`;
   useAutoSay(intro, n);
 
@@ -43,7 +49,7 @@ export function DiscoverCP({ s, m }: { s: SeriesId; m: number }) {
       </div>
       <div class="dsc-body">
         <div class="dsc-eq">
-          <b>{n}</b>
+          <b>{list ? (s === 'add-c10' ? '10' : '5 + 5') : n}</b>
           <span>{intro}</span>
         </div>
         <ul class="sr">{rows.map((x, i) => <li key={i}>{x.a} {w} {x.b} égale {x.r}</li>)}</ul>
@@ -57,7 +63,7 @@ export function DiscoverCP({ s, m }: { s: SeriesId; m: number }) {
             </div>
           ))}
         </div>
-        <div class="mchips">
+        {!list && <div class="mchips">
           {chips.map((k) => (
             <button
               key={k}
@@ -72,7 +78,7 @@ export function DiscoverCP({ s, m }: { s: SeriesId; m: number }) {
               {k}
             </button>
           ))}
-        </div>
+        </div>}
         <button
           class="btn-isle"
           style={{ marginTop: 0 }}

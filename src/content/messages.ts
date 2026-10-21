@@ -31,7 +31,7 @@ export const fill = (t: string, q: Pick<Question, 'a' | 'b' | 'op'>, name: strin
 /** Énoncé lu à voix haute et donné aux lecteurs d'écran. */
 export function spoken(q: Question): string {
   const w = OP_SPOKEN[q.op];
-  if (q.fmt === 'manquant') return `${q.a} ${w} combien font ${q.p} ?`;
+  if (q.fmt === 'manquant') return q.op === 'div' ? `${q.a} ${w} combien égale ${q.p} ?` : `${q.a} ${w} combien font ${q.p} ?`;
   if (q.fmt === 'vf') return `${q.a} ${w} ${q.b} égale ${q.shown}. Vrai ou faux ?`;
   return `Combien font ${q.a} ${w} ${q.b} ?`;
 }
@@ -52,6 +52,16 @@ export function tipFor(a: number, b: number): string {
   if (a === 3 || b === 3) return `Fois 3 : le double, plus une fois. ${o(3) * 2} + ${o(3)} = ${p}.`;
   const big = Math.max(a, b), sm = Math.min(a, b);
   return `Coupe en deux : ${sm} × 5 = ${sm * 5}, plus ${sm} × ${big - 5} = ${sm * (big - 5)}. Total : ${p}.`;
+}
+
+/** Astuce pour une division a ÷ b : on remonte à la table de b. */
+function divTip(a: number, b: number): string {
+  const p = a / b;
+  if (b === 1) return `Divisé par 1, le nombre ne change pas : ${a} reste ${a}.`;
+  if (a === b) return `Un nombre divisé par lui-même, ça fait 1 : il y a ${b} une seule fois dans ${a}.`;
+  if (b === 10) return `Divisé par 10, on enlève le zéro : ${a} devient ${p}.`;
+  if (b === 2) return `Divisé par 2, c'est la moitié : ${p} + ${p} = ${a}.`;
+  return `Pense à la table de ${b} : ${b} × ${p} = ${a}. Donc ${a} ÷ ${b} = ${p}.`;
 }
 
 /** Astuce du CP pour une addition (calcul réfléchi : doubles, amis de 10, passage par 10). */
@@ -123,7 +133,7 @@ function engTip(q: TipQ): string {
 
 /** Astuce adaptée au calcul, quelle que soit l'opération. */
 export function tipOf(q: TipQ): string {
-  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
+  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'div' ? divTip(q.a, q.b) : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
 }
 
 /** Bulle d'accueil. */

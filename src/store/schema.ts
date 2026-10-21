@@ -7,7 +7,7 @@ import type { PepWear } from '../art/mascot';
 import type { DayKey } from '../engine/dates';
 import type { FactKey } from '../engine/keys';
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 /** Progression sur une île (une série). Le prototype stockait [étapes, trophée, total] ; on garde les étoiles par étape. */
 export interface IsleProgress {

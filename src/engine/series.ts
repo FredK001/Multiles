@@ -10,16 +10,16 @@ export interface Fact {
   b: number;
 }
 
-/** Résultat d'un calcul ; sans objet en anglais (0). */
+/** Résultat d'un calcul (quotient pour ÷) ; sans objet en anglais (0). */
 export function resultOf(op: Op, a: number, b: number): number {
-  return op === 'mul' ? a * b : op === 'add' ? a + b : op === 'sub' ? a - b : 0;
+  return op === 'mul' ? a * b : op === 'div' ? a / b : op === 'add' ? a + b : op === 'sub' ? a - b : 0;
 }
 
 /** Anglais : le calcul est-il une phrase (et non un mot) ? */
 export const isDrill = (f: Fact): boolean => f.b > DRILL_BASE;
 
-/** Plus grand nombre du calcul : la somme (+), le nombre de départ (−), le produit (×). */
-const topOf = (op: Op, f: Fact): number => (op === 'sub' ? f.a : resultOf(op, f.a, f.b));
+/** Plus grand nombre du calcul : la somme (+), le nombre de départ (−), le produit (×), le dividende (÷). */
+const topOf = (op: Op, f: Fact): number => (op === 'sub' || op === 'div' ? f.a : resultOf(op, f.a, f.b));
 
 /** Passage de la dizaine : les unités débordent (8 + 5) ou il faut casser une dizaine (13 − 5). */
 export function crossesTen(op: Op, f: Fact): boolean {
@@ -32,7 +32,8 @@ function allFacts(s: SeriesDef): Fact[] {
   const out: Fact[] = [];
   const sp = s.spec;
   if (sp.kind === 'table') {
-    for (let b = 1; b <= 10; b++) out.push({ a: sp.n, b });
+    // Division : n × m ÷ n, le quotient m allant de 1 à 10.
+    for (let m = 1; m <= 10; m++) out.push(s.op === 'div' ? { a: sp.n * m, b: sp.n } : { a: sp.n, b: m });
     return out;
   }
   if (sp.kind === 'theme') {
@@ -41,6 +42,7 @@ function allFacts(s: SeriesDef): Fact[] {
     t.drills.forEach((_, i) => out.push({ a: sp.n, b: DRILL_BASE + i + 1 }));
     return out;
   }
+  if (sp.kind === 'list') return sp.facts.map((f) => ({ ...f }));
   const lo = sp.zero ? 0 : 1;
   if (s.op === 'add') {
     for (let a = lo; a <= sp.termMax; a++)
@@ -59,7 +61,8 @@ function matches(s: SeriesDef, f: Fact, flt: StepFilter): boolean {
     const half = Math.ceil(themeOf(s.spec.theme).words.length / 2);
     if (isDrill(f) || (flt.half === 0) !== f.b <= half) return false;
   }
-  if (flt.mult && !flt.mult.includes(f.b)) return false;
+  if (flt.bs && !flt.bs.includes(f.b)) return false;
+  if (flt.mult && !flt.mult.includes(op === 'div' ? f.a / f.b : f.b)) return false;
   if (flt.top) {
     const t = topOf(op, f);
     if (t < flt.top[0] || t > flt.top[1]) return false;
@@ -93,7 +96,7 @@ export function seriesForFact(op: Op, f: Fact): SeriesDef | null {
 
 /** Bornes des nombres affichés (résultat, propositions du QCM, résultat du vrai/faux). */
 export function displayBounds(s: SeriesDef): { lo: number; hi: number } {
-  return s.spec.kind === 'range' ? { lo: 0, hi: s.spec.max } : { lo: 1, hi: Number.POSITIVE_INFINITY };
+  return s.spec.kind === 'range' ? { lo: 0, hi: s.spec.max } : s.spec.kind === 'list' ? { lo: 0, hi: 20 } : { lo: 1, hi: Number.POSITIVE_INFINITY };
 }
 
 /** Poids d'un calcul au tirage : ceux avec un 0 (« 4 + 0 », « 7 − 0 ») sont 4 fois plus rares. */

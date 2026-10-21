@@ -1,15 +1,16 @@
 import { OP_KEY, type Op } from '../content/series';
 
-/** Clé d'un calcul, dans l'ordre où il a été posé : « 7x8 », « 3+4 », « 9-2 » ; en anglais « 4e12 » (thème 4, mot 12). */
-export type FactKey = `${number}${'x' | '+' | '-' | 'e'}${number}`;
+/** Clé d'un calcul, dans l'ordre où il a été posé : « 7x8 », « 56d7 » (56 ÷ 7), « 3+4 », « 9-2 » ; en anglais « 4e12 » (thème 4, mot 12). */
+export type FactKey = `${number}${'x' | 'd' | '+' | '-' | 'e'}${number}`;
 /** Clé d'une multiplication : « 7x8 ». */
 export type MulKey = `${number}x${number}`;
 
 export const factKey = (op: Op, a: number, b: number): FactKey => `${a}${OP_KEY[op]}${b}`;
 export const mulKey = (a: number, b: number): MulKey => `${a}x${b}`;
 
-const FACT_RE = /^(\d{1,2})([x+e-])(\d{1,2})$/;
-const OP_OF: Record<string, Op> = { x: 'mul', '+': 'add', '-': 'sub', e: 'eng' };
+// Le dividende va jusqu'à 100 (10 × 10 ÷ 10).
+const FACT_RE = /^(\d{1,3})([x+ed-])(\d{1,2})$/;
+const OP_OF: Record<string, Op> = { x: 'mul', d: 'div', '+': 'add', '-': 'sub', e: 'eng' };
 
 /** Lit une clé de calcul ; null si elle est mal formée. */
 export function parseFact(k: string): { op: Op; a: number; b: number } | null {
@@ -23,7 +24,7 @@ export function parseKey(k: string): [number, number] {
   return f ? [f.a, f.b] : [NaN, NaN];
 }
 
-/** Seules × et + sont commutatives : 9-2 et 2-9, ou deux mots d'anglais, ne se confondent pas. */
+/** Seules × et + sont commutatives : 9-2 et 2-9, 56÷7 et 7÷56, ou deux mots d'anglais, ne se confondent pas. */
 const commutes = (op: Op): boolean => op === 'mul' || op === 'add';
 
 /** Même calcul : 7x8 et 8x7, 3+4 et 4+3 sont confondus, mais pas 9-2 et 2-9. */

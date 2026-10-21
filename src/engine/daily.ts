@@ -4,7 +4,7 @@ import type { DayKey } from './dates';
 
 export const DEFI_BONUS = 20;
 /** Tables trop faciles pour un bonus plein : le défi n'y rapporte que 5 pièces. */
-export const EASY_SERIES: readonly SeriesId[] = ['mul-1', 'mul-10'];
+export const EASY_SERIES: readonly SeriesId[] = ['mul-1', 'mul-10', 'div-1', 'div-10'];
 export const DEFI_BONUS_EASY = 5;
 
 /** Bonus du défi du jour réussi selon la série. */

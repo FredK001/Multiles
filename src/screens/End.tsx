@@ -46,7 +46,7 @@ export function End({ end: E, cfg, back }: { end: EndSummary; cfg: SessionConfig
   const def = SERIES[E.series], mul = def.op === 'mul', I = lookOf(E.series);
   const minutes = timedRules(def.op).seconds / 60;
   /** « table de 7 », « additions jusqu'à 10 ». */
-  const what = mul ? `table de ${tableNum(E.series)}` : def.op === 'eng' ? `île ${I.name}` : `${OP_SINGULAR[def.op].toLowerCase()}s ${def.title.toLowerCase()}`;
+  const what = mul ? `table de ${tableNum(E.series)}` : def.op === 'div' ? `table de ${tableNum(E.series)} à l'envers` : def.op === 'eng' ? `île ${I.name}` : `${OP_SINGULAR[def.op].toLowerCase()}s ${def.title.toLowerCase()}`;
   const starsRef = useRef<HTMLDivElement>(null);
   const [xpW, setXpW] = useState(E.levelUp ? 0 : Math.round(E.xp0 * 100));
   const [title] = useState(() => {

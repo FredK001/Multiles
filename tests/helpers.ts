@@ -1,19 +1,19 @@
 import type { Page } from '@playwright/test';
 
-const OPS: Record<string, (a: number, b: number) => number> = { fois: (a, b) => a * b, plus: (a, b) => a + b, moins: (a, b) => a - b };
-const W = '(fois|plus|moins)';
+const OPS: Record<string, (a: number, b: number) => number> = { fois: (a, b) => a * b, 'divisé par': (a, b) => a / b, plus: (a, b) => a + b, moins: (a, b) => a - b };
+const W = '(fois|divisé par|plus|moins)';
 
-/** Répond à la question affichée en lisant son énoncé (aria-label de l'expression) : ×, + ou −. */
+/** Répond à la question affichée en lisant son énoncé (aria-label de l'expression) : ×, ÷, + ou −. */
 export async function answer(page: Page, right = true) {
   await page.locator('.expr[aria-label]').waitFor();
   const label = (await page.locator('.expr').getAttribute('aria-label'))!;
   if (await page.locator('.pad').count()) {
     // Nombre manquant : « a op combien font r ? » → b tel que a op b = r.
-    const m = label.match(new RegExp(`^(\\d+) ${W} combien font (\\d+)`));
+    const m = label.match(new RegExp(`^(\\d+) ${W} combien (?:font|égale) (\\d+)`));
     let v: number;
     if (m) {
       const a = Number(m[1]), r = Number(m[3]);
-      v = m[2] === 'fois' ? r / a : m[2] === 'plus' ? r - a : a - r;
+      v = m[2] === 'fois' ? r / a : m[2] === 'divisé par' ? a / r : m[2] === 'plus' ? r - a : a - r;
     } else {
       const [, a, w, b] = label.match(new RegExp(`(\\d+) ${W} (\\d+)`))!;
       v = OPS[w!]!(Number(a), Number(b));

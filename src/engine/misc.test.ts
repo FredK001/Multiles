@@ -86,7 +86,8 @@ describe('Espace parent', () => {
     for (let r = 1; r <= 10; r++) expect(seriesPct(m, `mul-${r}` as 'mul-1')).toBe(rowPct(m, r));
     const all = factsOf('add-10').map((f) => factKey('add', f.a, f.b));
     expect(seriesPct(all, 'add-10')).toBe(100);
-    expect(seriesDone(all, 'add')).toBe(1);
+    // Les amis de 10 sont tous des additions jusqu'à 10 : ils sont maîtrisés avec.
+    expect(seriesDone(all, 'add')).toBe(2);
     // 66 calculs : 3+4 compte aussi pour 4+3
     expect(seriesPct(['3+4'], 'add-10')).toBe(Math.round((2 * 100) / 66));
     expect(seriesPct(['9-2'], 'sub-10')).toBe(Math.round(100 / 66));

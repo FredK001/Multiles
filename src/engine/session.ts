@@ -27,9 +27,9 @@ export interface SessionConfig {
 export const TIMED_SECONDS = 60;
 export const DEFI_TARGET = 8;
 
-/** Modes chronométrés : 1 minute et 8 réponses en multiplication ; plus doux au CP et en anglais (2 minutes, 6 réponses). */
+/** Modes chronométrés : 1 minute et 8 réponses en multiplication et en division ; plus doux au CP et en anglais (2 minutes, 6 réponses). */
 export function timedRules(op: Op): { seconds: number; target: number } {
-  return op === 'mul' ? { seconds: TIMED_SECONDS, target: DEFI_TARGET } : { seconds: 120, target: 6 };
+  return op === 'mul' || op === 'div' ? { seconds: TIMED_SECONDS, target: DEFI_TARGET } : { seconds: 120, target: 6 };
 }
 
 /** Opération d'une session. */

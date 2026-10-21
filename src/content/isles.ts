@@ -1,5 +1,5 @@
 import { THEMES, type ThemeId } from './english';
-import { CP_ZONE, ENG_ZONE, OP_SIGN, SERIES, type SeriesId } from './series';
+import { CP_ZONE, DIV_ZONE, ENG_ZONE, OP_SIGN, SERIES, type SeriesId } from './series';
 
 export type IsleId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type DecorKind =
@@ -72,10 +72,12 @@ export interface IsleLook {
   word?: readonly [ThemeId, string];
 }
 
-type CpSeries = 'add-10' | 'add-20' | 'sub-10' | 'sub-20';
+type CpSeries = 'add-10' | 'add-c10' | 'add-dbl' | 'add-20' | 'sub-10' | 'sub-20';
 
 const CP_ISLES: Record<CpSeries, Omit<IsleLook, 'fort' | 'clair'>> = {
   'add-10': { name: 'Lagon', decor: 'plage', motif: 1, boss: 'Plouf', sticker: 'Palmier dansant', of: 'du Lagon' },
+  'add-c10': { name: 'Atoll', decor: 'jungle', motif: 2, boss: 'Dizou', sticker: 'Étoile de mer', of: "de l'Atoll" },
+  'add-dbl': { name: 'Lac miroir', decor: 'desert', motif: 4, boss: 'Jumeau', sticker: 'Jumelles', of: 'du Lac miroir' },
   'add-20': { name: 'Jardin', decor: 'verger', motif: 3, boss: 'Radix', sticker: 'Arbre à pommes', of: 'du Jardin' },
   'sub-10': { name: 'Banquise', decor: 'glace', motif: 5, boss: 'Frimas', sticker: 'Iceberg malin', of: 'de la Banquise' },
   'sub-20': { name: 'Ciel', decor: 'nuages', motif: 9, boss: 'Zéphyr', sticker: 'Ballon volant', of: 'du Ciel' },
@@ -104,9 +106,25 @@ const ENG_ISLES: Record<ThemeId, { motif: IsleId; boss: string; sticker: string;
   classroom: { motif: 4, boss: 'Miss Bell', sticker: 'Tableau', word: ['school', 'board'] },
 };
 
+/* Division : chaque table à l'envers a son île, le dessin de la table de même numéro, en violet. */
+const DIV_ISLES: Record<IsleId, { name: string; boss: string; sticker: string; of: string }> = {
+  1: { name: 'Lagune', boss: 'Crabou', sticker: 'Crabe partageur', of: 'de la Lagune' },
+  2: { name: 'Mangrove', boss: 'Caïmo', sticker: 'Caïman rieur', of: 'de la Mangrove' },
+  3: { name: 'Potager', boss: 'Radisse', sticker: 'Radis géant', of: 'du Potager' },
+  4: { name: 'Oasis', boss: 'Dromo', sticker: 'Dromadaire', of: "de l'Oasis" },
+  5: { name: 'Iceberg', boss: 'Phoquo', sticker: 'Phoque farceur', of: "de l'Iceberg" },
+  6: { name: 'Caramel', boss: 'Nougate', sticker: 'Nougat doré', of: 'du Caramel' },
+  7: { name: 'Geyser', boss: 'Fumerol', sticker: 'Geyser chantant', of: 'du Geyser' },
+  8: { name: 'Prairie', boss: 'Brizo', sticker: 'Coquelicot', of: 'de la Prairie' },
+  9: { name: 'Orage', boss: 'Tonnerro', sticker: 'Éclair malin', of: "de l'Orage" },
+  10: { name: 'Comète', boss: 'Cométo', sticker: 'Comète filante', of: 'de la Comète' },
+};
+
 /** Pastille d'une île : numéro de la table, signe de l'opération au CP, numéro du thème en anglais. */
 export function seriesBadge(id: SeriesId): string {
   const sp = SERIES[id].spec;
+  // Division : « ÷7 », pour ne pas confondre avec la table de 7.
+  if (sp.kind === 'table' && SERIES[id].op === 'div') return `÷${sp.n}`;
   return sp.kind === 'table' ? String(sp.n) : sp.kind === 'theme' ? String(sp.n) : OP_SIGN[SERIES[id].op];
 }
 
@@ -115,6 +133,10 @@ export function lookOf(id: SeriesId): IsleLook {
   if (id.startsWith('mul-')) {
     const n = Number(id.slice(4)) as IsleId, I = ISLES[n];
     return { name: I.name, fort: I.fort, clair: I.clair, decor: I.decor, motif: n, boss: BOSS[n], sticker: STICKER_NAMES[n], of: ofIsle(n) };
+  }
+  if (id.startsWith('div-')) {
+    const n = Number(id.slice(4)) as IsleId, d = DIV_ISLES[n];
+    return { ...d, fort: DIV_ZONE.fort, clair: DIV_ZONE.clair, decor: ISLES[n].decor, motif: n };
   }
   const spec = SERIES[id].spec;
   if (spec.kind === 'theme') {

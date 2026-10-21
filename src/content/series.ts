@@ -1,61 +1,67 @@
 /* Catalogue des séries. Une série = { opération, table ou plage } : c'est l'unité de progression
    (une île, 3 étapes, un gardien). Ajouter un niveau (CE1…) revient à ajouter ses séries ici
-   et à compléter CURRICULUM. L'anglais (« eng ») est rangé comme une opération : une série par thème. */
+   et à compléter CURRICULUM. L'anglais (« eng ») est rangé comme une opération : une série par thème.
+   La division (« div ») reprend les tables à l'envers : la table de 7 donne 7 ÷ 7 à 70 ÷ 7. */
 import { THEMES, type ThemeId } from './english';
 
-export type Op = 'mul' | 'add' | 'sub' | 'eng';
+export type Op = 'mul' | 'div' | 'add' | 'sub' | 'eng';
 
 /** Toutes les opérations, dans l'ordre d'affichage (album, espace parent, sauvegarde). */
-export const OPS: readonly Op[] = ['mul', 'add', 'sub', 'eng'];
+export const OPS: readonly Op[] = ['mul', 'div', 'add', 'sub', 'eng'];
 export type Grade = 'CP' | 'CM1';
 
 export const GRADES: readonly Grade[] = ['CP', 'CM1'];
 
 /** Opérations proposées à chaque niveau, dans l'ordre d'affichage. */
-export const CURRICULUM: Record<Grade, readonly Op[]> = { CP: ['add', 'sub'], CM1: ['mul', 'eng'] };
+export const CURRICULUM: Record<Grade, readonly Op[]> = { CP: ['add', 'sub'], CM1: ['mul', 'div', 'eng'] };
 
 /** Couleur de zone de l'anglais (îles, questions, carte) : bleu marine, 9,6:1 avec le blanc. */
 export const ENG_ZONE = { fort: '#23408E', clair: '#DCE3F5' } as const;
 
 /** Couleur d'une opération (pastilles, cartes de choix) ; les tables gardent la couleur de profil. */
-export const zoneOf = (op: Op): string => (op === 'eng' ? ENG_ZONE.fort : op === 'mul' ? 'var(--ballon)' : CP_ZONE.fort);
+export const zoneOf = (op: Op): string => (op === 'eng' ? ENG_ZONE.fort : op === 'mul' ? 'var(--ballon)' : op === 'div' ? DIV_ZONE.fort : CP_ZONE.fort);
+
+/** Couleur de zone de la division : violet, 9,4:1 avec le blanc. */
+export const DIV_ZONE = { fort: '#6B2E8F', clair: '#EBDDF3' } as const;
 
 /** Couleur de zone du CP (îles et questions d'addition et de soustraction) : Mandarine, 5,5:1 avec le blanc. */
 export const CP_ZONE = { fort: '#B04A00', clair: '#FBE4D3' } as const;
 
 /** Noms au pluriel (espace parent, choix de l'opération). */
-export const OP_NAME: Record<Op, string> = { mul: 'Multiplications', add: 'Additions', sub: 'Soustractions', eng: 'Anglais' };
+export const OP_NAME: Record<Op, string> = { mul: 'Multiplications', div: 'Divisions', add: 'Additions', sub: 'Soustractions', eng: 'Anglais' };
 
 /** Nom d'une opération. */
-export const OP_SINGULAR: Record<Op, string> = { mul: 'Multiplication', add: 'Addition', sub: 'Soustraction', eng: 'Anglais' };
+export const OP_SINGULAR: Record<Op, string> = { mul: 'Multiplication', div: 'Division', add: 'Addition', sub: 'Soustraction', eng: 'Anglais' };
 
 /** Mot court lu et affiché pour un enfant qui lit peu. */
-export const OP_WORD: Record<Op, string> = { mul: 'Fois', add: 'Plus', sub: 'Moins', eng: 'Anglais' };
+export const OP_WORD: Record<Op, string> = { mul: 'Fois', div: 'Divisé', add: 'Plus', sub: 'Moins', eng: 'Anglais' };
 
 /** Mot lu à voix haute entre les deux nombres. */
-export const OP_SPOKEN: Record<Op, string> = { mul: 'fois', add: 'plus', sub: 'moins', eng: '' };
+export const OP_SPOKEN: Record<Op, string> = { mul: 'fois', div: 'divisé par', add: 'plus', sub: 'moins', eng: '' };
 
 /** Ce que propose chaque classe (création de profil, espace parent). */
-export const GRADE_DESC: Record<Grade, string> = { CP: 'Additions et soustractions', CM1: 'Tables de multiplication et anglais' };
+export const GRADE_DESC: Record<Grade, string> = { CP: 'Additions et soustractions', CM1: 'Tables de multiplication, divisions et anglais' };
 
 /** Signe affiché (vrai signe moins, pas le tiret). */
-export const OP_SIGN: Record<Op, string> = { mul: '×', add: '+', sub: '−', eng: 'EN' };
+export const OP_SIGN: Record<Op, string> = { mul: '×', div: '÷', add: '+', sub: '−', eng: 'EN' };
 
-/** Lettre utilisée dans les clés de calcul : « 7x8 », « 3+4 », « 9-2 », « 4e12 » (thème 4, mot 12). */
-export const OP_KEY: Record<Op, 'x' | '+' | '-' | 'e'> = { mul: 'x', add: '+', sub: '-', eng: 'e' };
+/** Lettre utilisée dans les clés de calcul : « 7x8 », « 56d7 », « 3+4 », « 9-2 », « 4e12 » (thème 4, mot 12). */
+export const OP_KEY: Record<Op, 'x' | 'd' | '+' | '-' | 'e'> = { mul: 'x', div: 'd', add: '+', sub: '-', eng: 'e' };
 
 export type SeriesSpec =
-  /** Table de n : n × 1 à n × 10. */
+  /** Table de n : n × 1 à n × 10 ; en division, n × 1 ÷ n à n × 10 ÷ n (a = dividende, b = n). */
   | { kind: 'table'; n: number }
   /** Plage : le plus grand nombre du calcul (somme, ou nombre de départ) va de `min` à `max`.
       Chaque terme va de 0 (ou 1 si `zero` est faux) à `termMax`. */
   | { kind: 'range'; min: number; max: number; zero: boolean; termMax: number }
+  /** Liste fixe de calculs (CP : les amis de 10, les doubles). */
+  | { kind: 'list'; facts: readonly { a: number; b: number }[] }
   /** Thème d'anglais n° `n` (1 à 18) : a = n, b = n° du mot (1 à 50) ou 50 + n° de la phrase. */
   | { kind: 'theme'; theme: ThemeId; n: number };
 
 /** Filtre d'une étape ; null = toute la série. */
 export interface StepFilter {
-  /** Multiplicateurs retenus (tables). */
+  /** Multiplicateurs retenus (tables) ; en division, le quotient. */
   mult?: readonly number[];
   /** Plus grand nombre du calcul (somme pour +, nombre de départ pour −), bornes incluses. */
   top?: readonly [number, number];
@@ -63,11 +69,14 @@ export interface StepFilter {
   crossTen?: boolean;
   /** Anglais : première (0) ou seconde (1) moitié des mots, sans les phrases. */
   half?: 0 | 1;
+  /** Liste : seconds termes retenus. */
+  bs?: readonly number[];
 }
 
 export type TableId = `mul-${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10}`;
+export type DivId = `div-${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10}`;
 export type EngId = `eng-${ThemeId}`;
-export type SeriesId = TableId | 'add-10' | 'add-20' | 'sub-10' | 'sub-20' | EngId;
+export type SeriesId = TableId | DivId | 'add-10' | 'add-c10' | 'add-dbl' | 'add-20' | 'sub-10' | 'sub-20' | EngId;
 
 export interface SeriesDef {
   id: SeriesId;
@@ -81,6 +90,8 @@ export interface SeriesDef {
   stepLabels: readonly [string, string, string];
   /** Trophées de la même opération nécessaires pour ouvrir l'île (0 = ouverte au départ). */
   need: number;
+  /** Rotation des formats propre à la série (sinon celle de l'opération). */
+  formats?: readonly ('pave' | 'qcm' | 'manquant' | 'vf')[];
 }
 
 /** Trophées nécessaires pour ouvrir les tables (les îles 1, 2, 5 et 10 sont ouvertes au départ). */
@@ -93,6 +104,17 @@ const table = (n: number): SeriesDef => ({
   steps: [{ mult: [1, 2, 3, 4, 5] }, { mult: [6, 7, 8, 9, 10] }, null],
   title: `La table de ${n}`,
   stepLabels: ['×1 à ×5', '×6 à ×10', 'Toute la table'],
+  need: TABLE_NEED[n] ?? 0,
+});
+
+/** Table de n à l'envers : mêmes étapes et mêmes ouvertures que la table de n. */
+const divTable = (n: number): SeriesDef => ({
+  id: `div-${n}` as DivId,
+  op: 'div',
+  spec: { kind: 'table', n },
+  steps: [{ mult: [1, 2, 3, 4, 5] }, { mult: [6, 7, 8, 9, 10] }, null],
+  title: `La table de ${n} à l'envers`,
+  stepLabels: [`${n} à ${n * 5}`, `${n * 6} à ${n * 10}`, 'Toute la table'],
   need: TABLE_NEED[n] ?? 0,
 });
 
@@ -120,6 +142,29 @@ const upTo20 = (op: 'add' | 'sub'): SeriesDef => ({
   need: 1,
 });
 
+/** Les amis de 10 : deux nombres qui font 10 (« 3 + ? = 10 », le nombre manquant d'abord). */
+const friends10: SeriesDef = {
+  id: 'add-c10',
+  op: 'add',
+  spec: { kind: 'list', facts: Array.from({ length: 11 }, (_, a) => ({ a, b: 10 - a })) },
+  steps: [{ bs: [0, 1, 2, 3, 4, 5] }, { bs: [6, 7, 8, 9, 10] }, null],
+  title: 'Les amis de 10',
+  stepLabels: ['10 + 0 à 5 + 5', '4 + 6 à 0 + 10', 'Tous'],
+  need: 1,
+  formats: ['manquant', 'qcm', 'manquant', 'vf'],
+};
+
+/** Les doubles : 1 + 1 à 10 + 10. */
+const doubles: SeriesDef = {
+  id: 'add-dbl',
+  op: 'add',
+  spec: { kind: 'list', facts: Array.from({ length: 10 }, (_, i) => ({ a: i + 1, b: i + 1 })) },
+  steps: [{ bs: [1, 2, 3, 4, 5] }, { bs: [6, 7, 8, 9, 10] }, null],
+  title: 'Les doubles',
+  stepLabels: ['1 + 1 à 5 + 5', '6 + 6 à 10 + 10', 'Tous'],
+  need: 1,
+};
+
 /** Les mots et les phrases d'un thème sont numérotés à partir de là : 51 = première phrase. */
 export const DRILL_BASE = 50;
 
@@ -137,7 +182,8 @@ const theme = (id: ThemeId, i: number): SeriesDef => ({
 export const SERIES: Record<SeriesId, SeriesDef> = {
   'mul-1': table(1), 'mul-2': table(2), 'mul-3': table(3), 'mul-4': table(4), 'mul-5': table(5),
   'mul-6': table(6), 'mul-7': table(7), 'mul-8': table(8), 'mul-9': table(9), 'mul-10': table(10),
-  'add-10': upTo10('add'), 'add-20': upTo20('add'),
+  ...(Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => [`div-${n}`, divTable(n)])) as Record<DivId, SeriesDef>),
+  'add-10': upTo10('add'), 'add-c10': friends10, 'add-dbl': doubles, 'add-20': upTo20('add'),
   'sub-10': upTo10('sub'), 'sub-20': upTo20('sub'),
   ...(Object.fromEntries(THEMES.map((t, i) => [`eng-${t.id}`, theme(t.id, i)])) as Record<EngId, SeriesDef>),
 };

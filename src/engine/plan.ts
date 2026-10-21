@@ -153,7 +153,7 @@ export interface SeriesPlanInput extends Omit<StepPlanInput, 'table'> {
 /** Session d'étape d'une série : les tables gardent leur composition historique, les plages (CP) tirent dans l'étape. */
 export function seriesStepPlan(input: SeriesPlanInput): Question[] {
   const s = SERIES[input.series];
-  if (s.spec.kind === 'table') return buildStepPlan({ ...input, table: s.spec.n });
+  if (s.spec.kind === 'table' && s.op === 'mul') return buildStepPlan({ ...input, table: s.spec.n });
   return buildRangeStepPlan(input);
 }
 
@@ -169,8 +169,8 @@ function drawSession(s: SeriesDef, pool: readonly Fact[], rng: Rng, same: (f: Fa
 /** Gardien d'une série : toute la série, 10 questions. */
 export function seriesBossPlan(series: SeriesId, rng: Rng = defaultRng): Question[] {
   const s = SERIES[series];
-  if (s.spec.kind === 'table') return buildBossPlan(s.spec.n, rng);
-  const fmts = formatsOf(s.op);
+  if (s.spec.kind === 'table' && s.op === 'mul') return buildBossPlan(s.spec.n, rng);
+  const fmts = s.formats ?? formatsOf(s.op);
   return drawSession(s, factsOf(s), rng, (f) => canonKey(factKey(s.op, f.a, f.b))).map((fact, i) => generateQuestion({ series: s, fact, fmt: fmts[i % fmts.length]!, rng }));
 }
 
@@ -179,7 +179,7 @@ export function seriesBossPlan(series: SeriesId, rng: Rng = defaultRng): Questio
 export function buildRangeStepPlan({ series, stepIdx, traps, trapLog, mastered, today, rng = defaultRng }: SeriesPlanInput): Question[] {
   const s = SERIES[series], key = (f: Fact) => factKey(s.op, f.a, f.b), isTrap = (f: Fact) => hasKey(traps, key(f));
   const canon = (f: Fact) => canonKey(key(f));
-  const pool = factsOf(s, stepIdx), fmts = formatsOf(s.op);
+  const pool = factsOf(s, stepIdx), fmts = s.formats ?? formatsOf(s.op);
   const chosen = drawSession(s, pool, rng, canon);
   // Pièges de l'étape, une seule fois chacun (8+5 et 5+8 sont le même piège).
   const trapPool = pool.filter((f, i) => isTrap(f) && pool.findIndex((g) => canon(g) === canon(f)) === i);

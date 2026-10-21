@@ -70,6 +70,19 @@ test('CP : la série jusqu\'à 20 s\'ouvre avec le trophée de la série jusqu\'
   await page.locator('.isles-strip').click();
   await page.getByRole('button', { name: /^Plus/ }).click();
   await expect(page.locator('.isle.locked')).toHaveCount(0);
+  await expect(page.locator('.isle')).toHaveCount(4);
+  // Les amis de 10 : découvrir les 11 façons de faire 10, puis le nombre manquant d'abord.
+  await page.locator('.isle[aria-label^="Île Atoll"]').click();
+  await expect(page.locator('[data-screen="isle"] h1')).toHaveText('Atoll');
+  await page.locator('.modes2 .discover').first().click();
+  await expect(page.locator('.vrow')).toHaveCount(11);
+  await page.getByRole('button', { name: "Je m'entraîne" }).click();
+  await expect(page.locator('.expr .slot')).toBeVisible();
+  await page.locator('#btnQuit').click();
+  await page.goto(page.url().replace(/#.*$/, ''));
+  await page.getByRole('button', { name: 'Jouer avec le profil de Tom' }).click();
+  await page.locator('.isles-strip').click();
+  await page.getByRole('button', { name: /^Plus/ }).click();
   await page.locator('#mapBack').click();
   await page.locator('.isles-strip').click();
   await page.getByRole('button', { name: /^Moins/ }).click();
@@ -85,7 +98,7 @@ test('CP et CM1 sur le même appareil ; changer de classe garde la progression',
 
   // Nina (CM1) : Jouer passe par le choix « × ou anglais », puis la multiplication de son île.
   await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
-  await expect(page.locator('.btn-play small')).toHaveText('× ou EN ?');
+  await expect(page.locator('.btn-play small')).toHaveText('× ou ÷ ou EN ?');
   await playOp(page, 'Fois');
   await expect(page.locator('.expr .op').first()).toHaveText('×');
   await page.locator('#btnQuit').click();
@@ -93,7 +106,7 @@ test('CP et CM1 sur le même appareil ; changer de classe garde la progression',
 
   // Tom (CP) : choix de l'opération, îles du CP.
   await page.getByRole('button', { name: 'Jouer avec le profil de Tom' }).click();
-  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 4 conquises');
+  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 6 conquises');
   await page.locator('#btnSwitch').click();
 
   // Nina passe en CP puis revient en CM1 : sa progression en multiplication est intacte.

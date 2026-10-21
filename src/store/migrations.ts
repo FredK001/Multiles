@@ -26,6 +26,8 @@ export const MIGRATIONS: Record<number, (d: Raw) => Raw> = {
   // Version 4 : l'anglais (prog.eng) au CM1. Rien à convertir ; le numéro empêche une ancienne app,
   // qui ne connaît pas l'anglais, de réécrire ces données (sauvegarde, transfert) en le perdant.
   3: (d) => d,
+  // Version 5 : la division (prog.div) au CM1. Même raison : une ancienne app ne doit pas la perdre en réécrivant.
+  4: (d) => d,
 };
 
 /** Profil v2 (tout à plat, tables 1 à 10) → profil v3 (classe CM1, progression dans prog.mul). */

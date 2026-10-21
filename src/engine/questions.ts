@@ -56,6 +56,8 @@ export interface GenOptions {
 /** Erreurs plausibles proposées au QCM. */
 function qcmCandidates(op: Op, a: number, b: number, r: number): number[] {
   if (op === 'mul') return [a * (b + 1), a * (b - 1), (a + 1) * b, (a - 1) * b, r + 10, r - 10, r + 1, r - 1];
+  // ÷ : un ou deux d'écart, ou le diviseur à la place du quotient.
+  if (op === 'div') return [r + 1, r - 1, r + 2, r - 2, b];
   // + et − : un d'écart, deux d'écart, une dizaine d'écart, ou l'autre opération.
   return [r + 1, r - 1, r + 2, r - 2, r + 10, r - 10, op === 'sub' ? a + b : Math.abs(a - b)];
 }
@@ -63,6 +65,7 @@ function qcmCandidates(op: Op, a: number, b: number, r: number): number[] {
 /** Résultats faux proposés au vrai/faux. */
 function vfCandidates(op: Op, a: number, b: number, r: number): number[] {
   if (op === 'mul') return [a * (b + 1), a * (b - 1), r + 1, r + 2, r - 1];
+  if (op === 'div') return [r + 1, r - 1, r + 2, b];
   return [r + 1, r + 2, r - 1, r - 2];
 }
 

@@ -13,7 +13,7 @@ test('gardien battu : trophée, sticker, île suivante débloquée', async ({ pa
   // 1 trophée déjà gagné (Jungle) ; le Verger (île 3) demande 2 trophées.
   await seedProd(page, [kid({ isl: { 1: { steps: 3, trophy: false, stepStars: [3, 3, 2] }, 2: won } })]);
   await openKid(page);
-  await expect(page.locator('.isles-strip small')).toHaveText('1 sur 28 conquises');
+  await expect(page.locator('.isles-strip small')).toHaveText('1 sur 38 conquises');
   await openMap(page);
   await page.locator('.isle[aria-label^="Île 3,"]').click();
   await expect(page.locator('.toast')).toHaveText("Encore 1 trophée pour ouvrir l'île du Verger !");
@@ -38,7 +38,7 @@ test('gardien battu : trophée, sticker, île suivante débloquée', async ({ pa
   await page.locator('.tabbtn', { hasText: 'Trésors' }).click();
   await page.getByRole('button', { name: 'Album' }).click();
   await expect(page.getByRole('button', { name: 'Sticker Coquillo le gardien' })).toBeVisible();
-  await expect(page.locator('.alb-h span').first()).toHaveText('2 sur 28');
+  await expect(page.locator('.alb-h span').first()).toHaveText('2 sur 38');
 });
 
 test('gardien raté (7 du premier coup) : pas de trophée, revanche possible', async ({ page }) => {

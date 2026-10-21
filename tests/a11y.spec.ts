@@ -62,6 +62,8 @@ test('aucune violation WCAG 2.1 AA sur les écrans', async ({ page }) => {
   await page.locator('.tchip').first().click();
   await audit(page, 'Grille : feuille de détail');
   await page.getByRole('button', { name: 'Fermer' }).click();
+  await page.locator('.op-tabs button', { hasText: 'Divisions' }).click();
+  await audit(page, 'Grille : divisions');
   await page.locator('.tabbtn', { hasText: 'Trésors' }).click();
   await audit(page, 'Boutique');
   await page.getByRole('button', { name: 'Album' }).click();

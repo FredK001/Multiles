@@ -405,7 +405,7 @@ export function Parent() {
               <h2>Cette semaine <small>{split ? `${what}, du lundi à aujourd'hui` : "du lundi à aujourd'hui"}</small></h2>
               <div class="kpis">
                 <div class="kpi"><b>{tot} min</b><small>de jeu</small></div>
-                <div class="kpi"><b>{seriesDone(o.mastered, op)}/{seriesOf(op).length}</b><small>{mul ? 'tables maîtrisées' : eng ? 'thèmes maîtrisés' : 'séries maîtrisées'}</small></div>
+                <div class="kpi"><b>{seriesDone(o.mastered, op)}/{seriesOf(op).length}</b><small>{mul || op === 'div' ? 'tables maîtrisées' : eng ? 'thèmes maîtrisés' : 'séries maîtrisées'}</small></div>
                 <div class="kpi"><b>{streak}</b><small>jour{streak > 1 ? 's' : ''} de suite</small></div>
               </div>
               <div class="week-bars" role="img" aria-label={`Minutes par jour : ${['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map((d, i) => `${d} ${mins[i]}`).join(', ')}`}>
@@ -420,14 +420,14 @@ export function Parent() {
               <p style={{ fontSize: '14px', color: 'var(--ink-2)' }}>{plural(totalSessions(p.days, split ? op : undefined), 'session')} depuis le début. Une session dure 3 à 5 minutes.</p>
             </div>
             <div class="pcard2">
-              <h2>{mul ? 'Tables' : eng ? 'Thèmes' : 'Séries'} <small>{eng ? 'part des mots et phrases réussis' : `part des ${what} réussies`}</small></h2>
+              <h2>{mul || op === 'div' ? 'Tables' : eng ? 'Thèmes' : 'Séries'} <small>{eng ? 'part des mots et phrases réussis' : `part des ${what} réussies`}</small></h2>
               <div class="tbl">
                 {seriesOf(op).map((s) => {
                   const v = seriesPct(o.mastered, s.id), b = seriesBadge(s);
                   const state = v === 100 ? 'Maîtrisée' : v ? 'En cours' : 'Pas commencée';
                   return (
                     <div key={s.id} class="tr">
-                      <span class="n" style={{ background: b.color }} aria-hidden={!mul}>{b.text}</span>
+                      <span class="n" style={{ background: b.color }} aria-hidden={!mul && op !== 'div'}>{b.text}</span>
                       <span>
                         <span class="lb"><span>{mul ? state : eng ? <><span lang="en">{lookOf(s.id).name}</span> · {s.title}</> : s.title}</span><span>{v}%</span></span>
                         <span class="bar"><i style={{ width: `${v}%`, background: b.color }}></i></span>

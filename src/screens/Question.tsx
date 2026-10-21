@@ -393,6 +393,11 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
               <div class="aid-top"><span>{fq.a} rangées de {fq.b}</span><span>{fq.p} en tout</span></div>
               <AidGrid rows={fq.a} cols={fq.b} />
             </>
+          ) : fq.op === 'div' ? (
+            <>
+              <div class="aid-top"><span>{fq.a} en {fq.b} rangée{fq.b > 1 ? 's' : ''}</span><span>{fq.p} par rangée</span></div>
+              <AidGrid rows={fq.b} cols={fq.p} />
+            </>
           ) : fq.op === 'add' || fq.op === 'sub' ? (
             <>
               <div class="aid-top">
