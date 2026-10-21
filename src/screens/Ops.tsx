@@ -9,6 +9,9 @@ import { OP_SIGN, OP_SINGULAR, OP_WORD, zoneOf, type Op } from '../content/serie
 import { opProg, opsOf } from '../engine/progress';
 import { totalStars } from '../engine/unlock';
 
+/** Sous-titre des cartes quand le nom de la matière ne dit pas tout. */
+const OP_HINT: Partial<Record<Op, string>> = { frac: 'Fractions et décimaux', fr: 'Homophones et conjugaison', num: "Jusqu'à 100", lec: 'Sons et syllabes' };
+
 export function OpsScreen({ then }: { then: 'play' | 'map' }) {
   const p = usePlayer();
   const { go, updatePlayer } = useApp();
@@ -32,7 +35,7 @@ export function OpsScreen({ then }: { then: 'play' | 'map' }) {
         <BtnSay text={say} style={{ justifySelf: 'end' }} />
       </div>
       <div class="pane">
-        <div class="ops-cards" role="group" aria-label="Opération">
+        <div class={`ops-cards${ops.length > 2 ? ' many' : ''}`} role="group" aria-label="Opération">
           {ops.map((op) => {
             const last = op === p.op, stars = totalStars(opProg(p, op).series);
             return (
@@ -41,7 +44,7 @@ export function OpsScreen({ then }: { then: 'play' | 'map' }) {
                 <span class={`op-sign${op === 'eng' || op === 'fr' || op === 'lec' || op === 'num' ? ' txt' : ''}`} aria-hidden="true" style={{ background: zoneOf(op) }}>{OP_SIGN[op]}</span>
                 <span aria-hidden="true">
                   <b>{OP_WORD[op]}</b>
-                  <small lang={op === 'eng' ? 'en' : undefined}>{op === 'eng' ? 'English' : OP_SINGULAR[op]}</small>
+                  <small lang={op === 'eng' ? 'en' : undefined}>{op === 'eng' ? 'English' : (OP_HINT[op] ?? OP_SINGULAR[op])}</small>
                   <span class="op-stars"><Svg html={starIcon(26)} />{stars}</span>
                 </span>
               </button>
