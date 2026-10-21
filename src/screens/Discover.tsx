@@ -7,11 +7,13 @@ import { BackChip, BtnSay } from '../app/ui';
 import { ISLES } from '../content/isles';
 import { SERIES, type SeriesId } from '../content/series';
 import { DiscoverCP } from './DiscoverCP';
+import { DiscoverEng } from './DiscoverEng';
 import { opProg } from '../engine/progress';
 import { isleOf, tableNum } from '../engine/unlock';
 
 export function Discover({ s, m }: { s: SeriesId; m: number }) {
-  return SERIES[s].op === 'mul' ? <DiscoverTable s={s} m={m} /> : <DiscoverCP s={s} m={m} />;
+  const op = SERIES[s].op;
+  return op === 'mul' ? <DiscoverTable s={s} m={m} /> : op === 'eng' ? <DiscoverEng s={s} /> : <DiscoverCP s={s} m={m} />;
 }
 
 function DiscoverTable({ s, m }: { s: SeriesId; m: number }) {

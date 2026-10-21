@@ -49,12 +49,11 @@ export function IsleScreen({ s }: { s: SeriesId }) {
         </div>
       </div>
       <div class="isd-body">
-        <div class={eng ? 'modes2 one' : 'modes2'}>
-          {/* Découvrir en anglais (imagier) : à venir. */}
-          {!eng && <button class="discover" onClick={() => go({ name: 'discover', s, m: def.spec.kind === 'range' ? Math.max(1, def.spec.min) : 1 })}>
+        <div class="modes2">
+          <button class="discover" onClick={() => go({ name: 'discover', s, m: def.spec.kind === 'range' ? Math.max(1, def.spec.min) : 1 })}>
             <span class="ic"><Svg html={icoDiscover} /></span>
-            <span><b>Découvrir</b><small>{mul ? 'Voir la table avant de jouer' : 'Voir les nombres avant de jouer'}</small></span>
-          </button>}
+            <span><b>Découvrir</b><small>{mul ? 'Voir la table avant de jouer' : eng ? 'Voir et écouter les mots' : 'Voir les nombres avant de jouer'}</small></span>
+          </button>
           <button
             class={`discover${chrOpen ? '' : ' lock'}`}
             onClick={() => {

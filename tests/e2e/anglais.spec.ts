@@ -1,7 +1,7 @@
 /* Anglais au CM1 sur le build de production : choix « × ou anglais », carte des 18 îles,
    une session complète (mots, écoute, vrai/faux), sans erreur JavaScript, et retour à la multiplication. */
 import { expect, test, type Page } from '@playwright/test';
-import { kid, openMap, playOp, seedProd } from '../helpers';
+import { kid, openMap, playOp, PROD, seedProd } from '../helpers';
 
 /** Voix française et anglaise installées (la synthèse elle-même ne parle pas pendant le test). */
 async function voices(page: Page) {
@@ -93,4 +93,38 @@ test('sans voix anglaise : pas de question d’écoute', async ({ page }) => {
     if (await page.locator('.fb-sheet.help').count()) await page.getByRole('button', { name: "J'ai compris" }).click();
     else await page.locator('.fb-sheet').waitFor({ state: 'detached' });
   }
+});
+
+test('imagier de l’île, puis grille : onglets × / Anglais et fiche d’un mot', async ({ page }) => {
+  await voices(page);
+  await seedProd(page, [kid()]);
+  await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
+  await openMap(page, 'Anglais');
+  await page.locator('.isle[aria-label^="Île School,"]').click();
+  await page.getByRole('button', { name: /Découvrir/ }).click();
+  await expect(page.locator('[data-screen="discover"] .ttl')).toHaveText('School');
+  await expect(page.locator('.img-card')).toHaveCount(10);
+  await expect(page.locator('.img-card svg')).toHaveCount(10);
+  await page.getByRole('button', { name: 'pencil case, trousse' }).click();
+  await expect(page.getByRole('button', { name: 'pencil case, trousse' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.phr')).toHaveCount(2);
+  await expect(page.locator('.phr').first()).toContainText("It's a board.");
+  await page.screenshot({ path: 'test-results/eng-imagier.png', fullPage: true });
+  await page.getByRole('button', { name: "Je m'entraîne" }).click();
+  await expect(page.locator('.scr-q.eng')).toBeVisible();
+
+  await page.goto(PROD + '/');
+  await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
+  await page.getByRole('button', { name: 'Ma grille' }).click();
+  await expect(page.locator('.op-tabs button')).toHaveCount(2);
+  await expect(page.locator('.op-tabs button[aria-pressed="true"]')).toContainText('Anglais'); // dernier choix : l'anglais
+  await expect(page.locator('.g-big')).toContainText('mots sur 198');
+  await expect(page.locator('.eg-theme')).toHaveCount(18);
+  await page.screenshot({ path: 'test-results/eng-grille.png' });
+  await page.locator('.eg-w[aria-label^="giraffe,"]').click();
+  await expect(page.locator('.cell-sheet')).toContainText('giraffe');
+  await expect(page.locator('.cell-sheet')).toContainText("Tu le découvriras sur l'île Animals.");
+  await page.getByRole('button', { name: 'Fermer' }).click();
+  await page.locator('.op-tabs button', { hasText: 'Multiplications' }).click();
+  await expect(page.locator('.pyth')).toBeVisible();
 });

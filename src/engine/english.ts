@@ -42,7 +42,8 @@ export interface EngDraft {
   fmt: 'qcm' | 'ecoute' | 'vf';
 }
 
-const themeOfSeries = (s: SeriesDef) => {
+/** Thème d'une série d'anglais. */
+export const themeOfSeries = (s: SeriesDef) => {
   if (s.spec.kind !== 'theme') throw new RangeError(`${s.id} n'est pas un thème d'anglais`);
   return themeOf(s.spec.theme);
 };

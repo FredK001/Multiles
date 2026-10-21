@@ -1,4 +1,5 @@
 /* Écran 10 : grille de Pythagore et pièges. */
+import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { mascot } from '../art';
 import { useProfileTheme } from '../app/theme';
@@ -7,23 +8,39 @@ import { trapsCfg } from '../app/sessions';
 import { BtnSay, Svg, TabBar } from '../app/ui';
 import { ISLES, ofIsle, type IsleId } from '../content/isles';
 import { tipFor } from '../content/messages';
+import { OP_NAME, OP_SIGN } from '../content/series';
 import { nb } from '../content/text';
 import { applyIsleTheme } from '../design/theme';
 import { parseKey } from '../engine/keys';
 import { stageFor } from '../engine/level';
 import { gridCount, isMastered, isTrap } from '../engine/mastery';
-import { opProg } from '../engine/progress';
+import { opProg, opsOf } from '../engine/progress';
 import { isOpen, tableId } from '../engine/unlock';
 import { AidGrid } from './Aid';
 import { GridCP } from './GridCP';
+import { GridEng } from './GridEng';
 
 export function Grid() {
   const p = usePlayer();
-  // Anglais : sa propre grille arrive au bloc 7 ; d'ici là, le CM1 garde la grille de Pythagore.
-  return p.op === 'add' || p.op === 'sub' ? <GridCP /> : <GridTable />;
+  return p.op === 'add' || p.op === 'sub' ? <GridCP /> : <GridCM1 />;
 }
 
-function GridTable() {
+/** CM1 : onglets Multiplications / Anglais quand l'enfant a les deux. */
+function GridCM1() {
+  const p = usePlayer();
+  const ops = opsOf(p).filter((x): x is 'mul' | 'eng' => x === 'mul' || x === 'eng');
+  const [op, setOp] = useState<'mul' | 'eng'>(p.op === 'eng' ? 'eng' : 'mul');
+  const tabs = ops.length > 1 && (
+    <div class="opts op-tabs" role="group" aria-label="Opération">
+      {ops.map((x) => (
+        <button key={x} aria-pressed={x === op} onClick={() => setOp(x)}><b aria-hidden="true">{OP_SIGN[x]}</b>{OP_NAME[x]}</button>
+      ))}
+    </div>
+  );
+  return op === 'eng' ? <GridEng key="eng" tabs={tabs} /> : <GridTable key="mul" tabs={tabs} />;
+}
+
+function GridTable({ tabs }: { tabs?: ComponentChildren }) {
   const p = usePlayer();
   const { go } = useApp();
   const [sel, setSel] = useState<[number, number] | null>(null);
@@ -102,6 +119,7 @@ function GridTable() {
         <BtnSay style={{ justifySelf: 'end', background: '#fff' }} text={`${count}  cases sur 100. Touche une case pour voir sa multiplication.`} />
       </div>
       <div class="grid-scroll">
+        {tabs}
         <div class="g-head"><p class="g-big">{count} <small>cases sur 100</small></p></div>
         <div class="g-bar" aria-hidden="true">
           {Object.keys(tally).map(Number).sort((a, b) => a - b).map((r) => <i key={r} style={{ width: `${tally[r]}%`, background: ISLES[r as IsleId].fort }}></i>)}

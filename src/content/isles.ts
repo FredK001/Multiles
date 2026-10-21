@@ -68,6 +68,8 @@ export interface IsleLook {
   sticker: string;
   /** « de la Plage », « du Lagon »… */
   of: string;
+  /** Anglais : mot dont le dessin sert de sticker Lieu (thème, mot). */
+  word?: readonly [ThemeId, string];
 }
 
 type CpSeries = 'add-10' | 'add-20' | 'sub-10' | 'sub-20';
@@ -81,25 +83,25 @@ const CP_ISLES: Record<CpSeries, Omit<IsleLook, 'fort' | 'clair'>> = {
 
 /* Anglais : l'île porte le titre de la fiche (« Animals »), son gardien un nom anglais ;
    le dessin reprend un motif du CM1 proche du thème, en bleu marine. Le sticker Lieu porte un mot du thème. */
-const ENG_ISLES: Record<ThemeId, { motif: IsleId; boss: string; sticker: string }> = {
-  hello: { motif: 1, boss: 'Mister Hi', sticker: 'Palette de couleurs' },
-  school: { motif: 5, boss: 'Professor Chalk', sticker: 'Trousse' },
-  toys: { motif: 6, boss: 'Teddy', sticker: 'Ours en peluche' },
-  family: { motif: 3, boss: 'Granny Bee', sticker: 'Papi et mamie' },
-  home: { motif: 8, boss: 'Mr Key', sticker: 'Petite maison' },
-  body: { motif: 9, boss: 'Bony', sticker: 'Grand sourire' },
-  food: { motif: 3, boss: 'Chef Yummy', sticker: 'Banane' },
-  actions: { motif: 4, boss: 'Jumpy', sticker: 'Grand saut' },
-  animals: { motif: 2, boss: 'King Leo', sticker: 'Girafe' },
-  transport: { motif: 10, boss: 'Captain Wheels', sticker: 'Bus à étage' },
-  pets: { motif: 2, boss: 'Whiskers', sticker: 'Chaton' },
-  clothes: { motif: 5, boss: 'Lady Sock', sticker: 'Chaussettes' },
-  rooms: { motif: 6, boss: 'Sir Sofa', sticker: 'Lampe' },
-  meals: { motif: 7, boss: 'Mrs Pancake', sticker: 'Saucisses' },
-  activities: { motif: 8, boss: 'Coach Kite', sticker: 'Cerf-volant' },
-  town: { motif: 10, boss: 'Mayor Map', sticker: 'Supermarché' },
-  farm: { motif: 8, boss: 'Farmer Moo', sticker: 'Mouton' },
-  classroom: { motif: 4, boss: 'Miss Bell', sticker: 'Tableau' },
+const ENG_ISLES: Record<ThemeId, { motif: IsleId; boss: string; sticker: string; word: readonly [ThemeId, string] }> = {
+  hello: { motif: 1, boss: 'Mister Hi', sticker: 'Palette de couleurs', word: ['toys', 'art set'] },
+  school: { motif: 5, boss: 'Professor Chalk', sticker: 'Trousse', word: ['school', 'pencil case'] },
+  toys: { motif: 6, boss: 'Teddy', sticker: 'Ours en peluche', word: ['toys', 'teddy bear'] },
+  family: { motif: 3, boss: 'Granny Bee', sticker: 'Mamie', word: ['family', 'grandma'] },
+  home: { motif: 8, boss: 'Mr Key', sticker: 'Petite maison', word: ['home', 'house'] },
+  body: { motif: 9, boss: 'Bony', sticker: 'Grand sourire', word: ['body', 'head'] },
+  food: { motif: 3, boss: 'Chef Yummy', sticker: 'Banane', word: ['food', 'banana'] },
+  actions: { motif: 4, boss: 'Jumpy', sticker: 'Grand saut', word: ['actions', 'jump'] },
+  animals: { motif: 2, boss: 'King Leo', sticker: 'Girafe', word: ['animals', 'giraffe'] },
+  transport: { motif: 10, boss: 'Captain Wheels', sticker: 'Bus jaune', word: ['transport', 'bus'] },
+  pets: { motif: 2, boss: 'Whiskers', sticker: 'Chaton', word: ['pets', 'cat'] },
+  clothes: { motif: 5, boss: 'Lady Sock', sticker: 'Chaussettes', word: ['clothes', 'socks'] },
+  rooms: { motif: 6, boss: 'Sir Sofa', sticker: 'Lampe', word: ['rooms', 'lamp'] },
+  meals: { motif: 7, boss: 'Mrs Pancake', sticker: 'Saucisses', word: ['meals', 'sausages'] },
+  activities: { motif: 8, boss: 'Coach Kite', sticker: 'Cerf-volant', word: ['toys', 'kite'] },
+  town: { motif: 10, boss: 'Mayor Map', sticker: 'Supermarché', word: ['town', 'supermarket'] },
+  farm: { motif: 8, boss: 'Farmer Moo', sticker: 'Mouton', word: ['farm', 'sheep'] },
+  classroom: { motif: 4, boss: 'Miss Bell', sticker: 'Tableau', word: ['school', 'board'] },
 };
 
 /** Pastille d'une île : numéro de la table, signe de l'opération au CP, numéro du thème en anglais. */
@@ -117,7 +119,7 @@ export function lookOf(id: SeriesId): IsleLook {
   const spec = SERIES[id].spec;
   if (spec.kind === 'theme') {
     const t = THEMES[spec.n - 1]!, e = ENG_ISLES[t.id];
-    return { name: t.en, fort: ENG_ZONE.fort, clair: ENG_ZONE.clair, decor: ISLES[e.motif].decor, motif: e.motif, boss: e.boss, sticker: e.sticker, of: t.en };
+    return { name: t.en, fort: ENG_ZONE.fort, clair: ENG_ZONE.clair, decor: ISLES[e.motif].decor, motif: e.motif, boss: e.boss, sticker: e.sticker, of: t.en, word: e.word };
   }
   return { ...CP_ISLES[id as CpSeries], fort: CP_ZONE.fort, clair: CP_ZONE.clair };
 }

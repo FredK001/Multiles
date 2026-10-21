@@ -333,3 +333,24 @@ export function fillDrill(tpl: string, x: Word, n = 0): string {
 /** Mots concernés par une phrase (tous, ou ceux de `only`). */
 export const drillWords = (t: Theme, d: Drill): readonly Word[] =>
   d.kind === 'qa' ? [] : d.only ? t.words.filter((x) => d.only!.includes(x.en)) : t.words;
+
+/** Exemple d'une phrase du thème pour l'imagier : la question (ou la situation en français) et sa réponse. */
+export interface Example {
+  q: string;
+  a: string;
+  /** Vrai : `q` est une situation en français. */
+  fr: boolean;
+  /** Indice du mot illustré, s'il y en a un, et combien de fois le dessiner (« I can see three books »). */
+  word?: number;
+  count?: number;
+}
+
+/** Un exemple par modèle de phrase, avec le premier mot concerné (oui/non : réponse « oui »). */
+export function themeExamples(t: Theme): Example[] {
+  return t.drills.map((d) => {
+    if (d.kind === 'qa') return { q: d.q, a: d.a, fr: !!d.fr };
+    const x = drillWords(t, d)[0]!, word = t.words.indexOf(x);
+    if (d.kind === 'yesno') return { q: fillDrill(d.q, x), a: d.yes, fr: false, word };
+    return { q: fillDrill(d.q, x), a: fillDrill(d.a, x, 3), fr: false, word, ...(d.kind === 'count' ? { count: 3 } : {}) };
+  });
+}
