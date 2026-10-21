@@ -148,7 +148,7 @@ test('CP : petits problèmes, l\'histoire remplace le calcul', async ({ page }) 
   for (let i = 0; i < 10; i++) {
     const t = (await page.locator('.story').textContent())!;
     await expect(page.locator('.expr .op')).toHaveCount(0); // pas de calcul écrit
-    const [x, y] = [...t.matchAll(/\b(\d+|une?)\b/g)].map((m) => (/^\d+$/.test(m[1]!) ? Number(m[1]) : 1));
+    const [x, y] = [...t.matchAll(/\b(\d+|une?)\b/gi)].map((m) => (/^\d+$/.test(m[1]!) ? Number(m[1]) : 1));
     const r = x! + y!;
     if (await page.locator('.pad').count()) {
       for (const d of String(r)) await page.locator('.pad .key', { hasText: new RegExp(`^${d}$`) }).click();
