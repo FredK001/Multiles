@@ -4,7 +4,7 @@
    DELETE ?code= : efface la progression, une fois restaurée sur le nouveau téléphone (ou le code remplacé).
    Les codes expirés sont effacés à chaque appel.
    Logique pure, le stockage est injecté (Netlify Blobs en production, mémoire dans les tests). */
-import { BACKUP_MARK, isValidCode, newCode, normalizeCode, TRANSFER_MAX_BYTES, TRANSFER_TTL_MS } from '../../src/store/transfer-shared';
+import { BACKUP_MARK, isValidCode, newCode, normalizeCode, TRANSFER_MAX_BYTES, TRANSFER_TTL_MS } from '../../src/store/transfer-shared.js';
 
 export interface TransferStore {
   /** Écrit seulement si le code est libre ; faux sinon. */

@@ -1,6 +1,6 @@
 /* Stockage des transferts sur Redis (Upstash, via Vercel) : un code = une clé qui expire seule au bout de 24 h.
    Le client Redis est injecté (fetch REST en production, faux en mémoire dans les tests). */
-import type { TransferStore } from '../netlify/lib/transfer';
+import type { TransferStore } from '../netlify/lib/transfer.js';
 
 /** Ce dont on a besoin d'un client Redis (sous-ensemble de @upstash/redis). */
 export interface RedisLike {
