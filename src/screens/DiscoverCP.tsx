@@ -8,7 +8,7 @@ import { BackChip, BtnSay, useAutoSay } from '../app/ui';
 import { lookOf } from '../content/isles';
 import { OP_SIGN, OP_SPOKEN, SERIES, type SeriesId } from '../content/series';
 import { opProg } from '../engine/progress';
-import { storyOf } from '../content/stories';
+import { seriesStory } from '../content/stories';
 import { factsOf } from '../engine/series';
 import { isleOf } from '../engine/unlock';
 
@@ -39,8 +39,8 @@ export function DiscoverCP({ s, m }: { s: SeriesId; m: number }) {
   const widest = Math.max(n, ...rows.map((x) => x.a + (add ? x.b : 0)));
   const d = Math.max(8, Math.min(18, Math.floor(Math.min(220 / widest, 300 / rows.length)) - 3));
   const w = OP_SPOKEN[def.op];
-  const intro = story ? "Une histoire cache un calcul. Écoute, puis trouve-le." : s === 'add-c10' ? 'Les amis de 10 : deux nombres qui font 10.' : s === 'add-dbl' ? 'Les doubles : un nombre plus lui-même.' : add ? `Toutes les façons de faire ${n}.` : `On part de ${n} et on enlève.`;
-  const say = () => (story ? `${intro} ${rows.map((x) => `${storyOf(def.op as 'add' | 'sub', x.a, x.b)} ${x.a} ${w} ${x.b} égale ${x.r}.`).join(' ')}` : `${intro} ${rows.map((x) => `${x.a} ${w} ${x.b} égale ${x.r}`).join('. ')}.`);
+  const intro = s === 'sub-half' ? 'La moitié : on partage en deux parts égales.' : story ? "Une histoire cache un calcul. Écoute, puis trouve-le." : s === 'add-c10' ? 'Les amis de 10 : deux nombres qui font 10.' : s === 'add-dbl' ? 'Les doubles : un nombre plus lui-même.' : add ? `Toutes les façons de faire ${n}.` : `On part de ${n} et on enlève.`;
+  const say = () => (story ? `${intro} ${rows.map((x) => `${seriesStory(s, def.op as 'add' | 'sub', x.a, x.b)} ${x.a} ${w} ${x.b} égale ${x.r}.`).join(' ')}` : `${intro} ${rows.map((x) => `${x.a} ${w} ${x.b} égale ${x.r}`).join('. ')}.`);
   useAutoSay(intro, n);
 
   return (
@@ -62,7 +62,7 @@ export function DiscoverCP({ s, m }: { s: SeriesId; m: number }) {
           <div class="stories">
             {rows.map((x, i) => (
               <div key={i} class="story-ex">
-                <p class="story">{storyOf(def.op as 'add' | 'sub', x.a, x.b)}</p>
+                <p class="story">{seriesStory(s, def.op as 'add' | 'sub', x.a, x.b)}</p>
                 <b>{x.a} {OP_SIGN[def.op]} {x.b} = {x.r}</b>
               </div>
             ))}

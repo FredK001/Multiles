@@ -43,3 +43,16 @@ export function storyOf(op: 'add' | 'sub', a: number, b: number): string {
   const list = op === 'add' ? ADD : SUB;
   return list[(a * 7 + b * 3) % list.length]!(a, b);
 }
+
+/** Moitiés : partager a en deux parts égales (a = 2 × b). */
+const HALF: readonly Story[] = [
+  (a) => `Léo et Lina se partagent ${count(a, BILLE)}, autant chacun. Combien de billes a chacun ?`,
+  (a) => `Partage ${count(a, BONBON)} en deux parts égales. Combien de bonbons dans chaque part ?`,
+  (a) => `${Count(a, POMME)}, rangées dans deux paniers, autant dans chacun. Combien de pommes par panier ?`,
+  (a) => `Quelle est la moitié de ${a} ?`,
+];
+
+/** Histoire d'une série racontée : petits problèmes (+ et −) ou moitiés. */
+export function seriesStory(series: string, op: 'add' | 'sub', a: number, b: number): string {
+  return series === 'sub-half' ? HALF[(a / 2) % HALF.length]!(a, b) : storyOf(op, a, b);
+}

@@ -86,7 +86,7 @@ test('CP : la série jusqu\'à 20 s\'ouvre avec le trophée de la série jusqu\'
   await page.locator('#mapBack').click();
   await page.locator('.isles-strip').click();
   await page.getByRole('button', { name: /^Moins/ }).click();
-  await expect(page.locator('.isle.locked')).toHaveCount(2); // petits problèmes et jusqu'à 20
+  await expect(page.locator('.isle.locked')).toHaveCount(3); // petits problèmes, moitiés et jusqu'à 20
   await page.locator('.isle.locked').first().click();
   await expect(page.locator('.toast')).toContainText('Encore 1 trophée');
 });
@@ -106,7 +106,7 @@ test('CP et CM1 sur le même appareil ; changer de classe garde la progression',
 
   // Tom (CP) : choix de l'opération, îles du CP.
   await page.getByRole('button', { name: 'Jouer avec le profil de Tom' }).click();
-  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 17 conquises');
+  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 18 conquises');
   await page.locator('#btnSwitch').click();
 
   // Nina passe en CP puis revient en CM1 : sa progression en multiplication est intacte.

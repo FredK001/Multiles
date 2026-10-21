@@ -104,7 +104,7 @@ export type FrId = `fr-${FrQuizId}`;
 export type LecId = `lec-${ReadId}`;
 export type NumSeries = `num-${NumId}`;
 export type FracSeries = `frac-${FracId}`;
-export type SeriesId = TableId | DivId | 'add-10' | 'add-c10' | 'add-dbl' | 'add-pb' | 'add-20' | 'sub-pb' | 'sub-10' | 'sub-20' | NumSeries | LecId | FracSeries | FrId | EngId;
+export type SeriesId = TableId | DivId | 'add-10' | 'add-c10' | 'add-dbl' | 'add-pb' | 'add-20' | 'sub-pb' | 'sub-half' | 'sub-10' | 'sub-20' | NumSeries | LecId | FracSeries | FrId | EngId;
 
 export interface SeriesDef {
   id: SeriesId;
@@ -213,6 +213,19 @@ const problems = (op: 'add' | 'sub'): SeriesDef => {
   };
 };
 
+/** Les moitiés : partager 2 à 20 en deux parts égales (racontées comme les petits problèmes). */
+const halves: SeriesDef = {
+  id: 'sub-half',
+  op: 'sub',
+  spec: { kind: 'list', facts: Array.from({ length: 10 }, (_, i) => ({ a: 2 * (i + 1), b: i + 1 })) },
+  steps: [{ bs: [1, 2, 3, 4, 5] }, { bs: [6, 7, 8, 9, 10] }, null],
+  title: 'Les moitiés',
+  stepLabels: ['De 2 à 10', 'De 12 à 20', 'Tout'],
+  need: 1,
+  story: true,
+  formats: ['pave', 'qcm'],
+};
+
 /** Les mots et les phrases d'un thème sont numérotés à partir de là : 51 = première phrase. */
 export const DRILL_BASE = 50;
 
@@ -284,7 +297,7 @@ export const SERIES: Record<SeriesId, SeriesDef> = {
   'mul-6': table(6), 'mul-7': table(7), 'mul-8': table(8), 'mul-9': table(9), 'mul-10': table(10),
   ...(Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => [`div-${n}`, divTable(n)])) as Record<DivId, SeriesDef>),
   'add-10': upTo10('add'), 'add-c10': friends10, 'add-dbl': doubles, 'add-pb': problems('add'), 'add-20': upTo20('add'),
-  'sub-10': upTo10('sub'), 'sub-pb': problems('sub'), 'sub-20': upTo20('sub'),
+  'sub-10': upTo10('sub'), 'sub-pb': problems('sub'), 'sub-half': halves, 'sub-20': upTo20('sub'),
   ...(Object.fromEntries(FRAC_SETS.map((r, i) => [`frac-${r.id}`, fracSet(r.id, i)])) as Record<FracSeries, SeriesDef>),
   ...(Object.fromEntries(NUM_SETS.map((r, i) => [`num-${r.id}`, numSet(r.id, i)])) as Record<NumSeries, SeriesDef>),
   ...(Object.fromEntries(READ_SETS.map((r, i) => [`lec-${r.id}`, readSet(r.id, i)])) as Record<LecId, SeriesDef>),

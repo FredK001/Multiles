@@ -76,7 +76,7 @@ export interface IsleLook {
   word?: readonly [ThemeId, string];
 }
 
-type CpSeries = 'add-10' | 'add-c10' | 'add-dbl' | 'add-pb' | 'add-20' | 'sub-10' | 'sub-pb' | 'sub-20';
+type CpSeries = 'add-10' | 'add-c10' | 'add-dbl' | 'add-pb' | 'add-20' | 'sub-10' | 'sub-pb' | 'sub-half' | 'sub-20';
 
 const CP_ISLES: Record<CpSeries, Omit<IsleLook, 'fort' | 'clair'>> = {
   'add-10': { name: 'Lagon', decor: 'plage', motif: 1, boss: 'Plouf', sticker: 'Palmier dansant', of: 'du Lagon' },
@@ -84,6 +84,7 @@ const CP_ISLES: Record<CpSeries, Omit<IsleLook, 'fort' | 'clair'>> = {
   'add-dbl': { name: 'Lac miroir', decor: 'desert', motif: 4, boss: 'Jumeau', sticker: 'Jumelles', of: 'du Lac miroir' },
   'add-pb': { name: 'Marché', decor: 'bonbon', motif: 6, boss: 'Conto', sticker: 'Panier de fruits', of: 'du Marché' },
   'sub-pb': { name: 'Port', decor: 'plage', motif: 1, boss: 'Capitaine Moins', sticker: 'Petit bateau', of: 'du Port' },
+  'sub-half': { name: 'Partage', decor: 'verger', motif: 3, boss: 'Moitiou', sticker: 'Gâteau coupé en deux', of: 'du Partage' },
   'add-20': { name: 'Jardin', decor: 'verger', motif: 3, boss: 'Radix', sticker: 'Arbre à pommes', of: 'du Jardin' },
   'sub-10': { name: 'Banquise', decor: 'glace', motif: 5, boss: 'Frimas', sticker: 'Iceberg malin', of: 'de la Banquise' },
   'sub-20': { name: 'Ciel', decor: 'nuages', motif: 9, boss: 'Zéphyr', sticker: 'Ballon volant', of: 'du Ciel' },

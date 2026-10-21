@@ -30,3 +30,15 @@ describe('petits problèmes du CP', () => {
     expect(SERIES['sub-pb'].formats).toEqual(['pave', 'qcm']);
   });
 });
+
+describe('moitiés du CP', () => {
+  it('une île de partages, 2 à 20, racontée ; la réponse est la moitié', () => {
+    expect(factsOf('sub-half').map((f) => f.a)).toEqual([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
+    for (const f of factsOf('sub-half')) {
+      const q = generateQuestion({ series: 'sub-half', fact: f, fmt: 'pave' });
+      expect(q.p).toBe(f.a / 2);
+      expect(spoken(q)).toMatch(/moitié|partage|deux|chacun/i);
+      expect(spoken(q)).not.toMatch(/\b1 (billes|bonbons|pommes)\b/);
+    }
+  });
+});

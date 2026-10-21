@@ -3,7 +3,7 @@ import type { Question } from '../engine/questions';
 import { themeOf } from './english';
 import { fillBlank, quizOf, ruleOf } from './french';
 import { DRILL_BASE, OP_SIGN, OP_SPOKEN, SERIES } from './series';
-import { storyOf } from './stories';
+import { seriesStory } from './stories';
 import { nb } from './text';
 
 export const MSG = {
@@ -45,7 +45,7 @@ export const fill = (t: string, q: Pick<Question, 'a' | 'b' | 'op'>, name: strin
 export function spoken(q: Question): string {
   // Français : le trou est lu comme un silence (a et à se prononcent pareil, mais pas toujours et/est).
   // Petit problème : l'histoire elle-même (le calcul n'est pas donné).
-  if (SERIES[q.series]?.story && (q.op === 'add' || q.op === 'sub')) return storyOf(q.op, q.a, q.b);
+  if (SERIES[q.series]?.story && (q.op === 'add' || q.op === 'sub')) return seriesStory(q.series, q.op, q.a, q.b);
   if (q.op === 'frac' && q.frac) return q.frac.text.replace(/(\d+)\/(\d+)/g, (_, n, d) => `${n} sur ${d}`);
   if (q.op === 'num' && q.num) return numSpoken(q.num.set, q.num.x, q.num.y);
   if (q.op === 'lec' && q.read) return q.fmt === 'qcm' ? `Trouve : ${q.read.target}.` : 'Écoute bien.';
