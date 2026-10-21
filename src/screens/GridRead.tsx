@@ -2,12 +2,10 @@
 import type { ComponentChildren } from 'preact';
 import { mascot } from '../art';
 import { speak } from '../audio';
-import { useIsleTheme } from '../app/theme';
 import { useApp, usePlayer } from '../app/context';
 import { trapsCfg } from '../app/sessions';
 import { BtnSay, Svg, TabBar } from '../app/ui';
 import { READ_SETS, sayOf } from '../content/reading';
-import { LEC_ZONE } from '../content/series';
 import { nb } from '../content/text';
 import { factKey, parseFact } from '../engine/keys';
 import { stageFor } from '../engine/level';
@@ -17,7 +15,6 @@ import { readFactLabel } from '../engine/reading';
 export function GridRead({ tabs }: { tabs?: ComponentChildren }) {
   const p = usePlayer();
   const { go } = useApp();
-  useIsleTheme(LEC_ZONE.fort, LEC_ZONE.clair);
   const o = opProg(p, 'lec'), stage = stageFor(p.level), done = new Set<string>(o.mastered), hard = new Set<string>(o.traps);
   const total = READ_SETS.reduce((n, s) => n + s.items.length, 0);
   const count = READ_SETS.reduce((n, s, k) => n + s.items.filter((_, i) => done.has(factKey('lec', k + 1, i + 1))).length, 0);

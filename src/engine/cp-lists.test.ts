@@ -7,7 +7,7 @@ import { factsOf } from './series';
 
 describe('CP : les amis de 10 et les doubles', () => {
   it('deux îles d’addition de plus, ouvertes au premier trophée', () => {
-    expect(seriesOf('add').map((s) => s.id)).toEqual(['add-10', 'add-c10', 'add-dbl', 'add-20']);
+    expect(seriesOf('add').map((s) => s.id)).toEqual(['add-10', 'add-c10', 'add-dbl', 'add-pb', 'add-20']);
     expect(SERIES['add-c10'].need).toBe(1);
     expect(SERIES['add-dbl'].need).toBe(1);
   });

@@ -38,7 +38,7 @@ describe('Îles du CP', () => {
   });
   it('la série jusqu\'à 20 s\'ouvre avec le trophée de la série jusqu\'à 10, opération par opération', () => {
     const m: SeriesMap = { 'add-10': won() };
-    expect(openSeries(m, 'add')).toEqual(['add-10', 'add-c10', 'add-dbl', 'add-20']);
+    expect(openSeries(m, 'add')).toEqual(['add-10', 'add-c10', 'add-dbl', 'add-pb', 'add-20']);
     expect(openSeries(m, 'sub')).toEqual(['sub-10']);
     expect(missingTrophies({}, 'sub-20')).toBe(1);
   });

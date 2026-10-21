@@ -8,7 +8,7 @@ import { trapsCfg } from '../app/sessions';
 import { BtnSay, Svg, TabBar } from '../app/ui';
 import { lookOf } from '../content/isles';
 import { equation, tipOf } from '../content/messages';
-import { CP_ZONE, OP_NAME, OP_SIGN, OP_SPOKEN, SERIES, seriesOf, type Op } from '../content/series';
+import { CP_ZONE, LEC_ZONE, OP_NAME, OP_SIGN, OP_SPOKEN, SERIES, seriesOf, type Op } from '../content/series';
 import { nb } from '../content/text';
 import { factKey, hasKey, parseFact } from '../engine/keys';
 import { stageFor } from '../engine/level';
@@ -28,7 +28,8 @@ export function GridCP() {
   const [sel, setSel] = useState<Cell | null>(null);
   useBack(() => (sel ? setSel(null) : go({ name: 'home' })));
   useProfileTheme(p.color);
-  useIsleTheme(CP_ZONE.fort, CP_ZONE.clair);
+  // Une seule couleur à la fois : celle de l'onglet (la lecture a la sienne).
+  useIsleTheme(op === 'lec' ? LEC_ZONE.fort : CP_ZONE.fort, op === 'lec' ? LEC_ZONE.clair : CP_ZONE.clair);
   const tabs = ops.length > 1 && (
     <div class="opts op-tabs" role="group" aria-label="Opération">
       {ops.map((x: Op) => (

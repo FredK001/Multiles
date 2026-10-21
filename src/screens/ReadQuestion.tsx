@@ -9,7 +9,7 @@ export const sayRead = (q: Question): void => speak([{ text: q.read!.say, lang: 
 
 export function ReadCard({ q }: { q: Question }) {
   const r = q.read!;
-  if (q.fmt === 'qcm') return <p class="read-target" aria-label={`Trouve : ${r.target}`}>{r.target}</p>;
+  if (q.fmt === 'qcm') return <p class="read-target">{r.target}</p>;
   return (
     <button class="eng-listen read-listen" aria-label="Réécouter" onClick={() => sayRead(q)}>
       <Svg html={icoSay} />

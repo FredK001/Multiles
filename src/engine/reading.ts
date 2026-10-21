@@ -23,7 +23,9 @@ export const readOfSeries = (s: SeriesDef) => {
 
 /** Question sur l'élément `f.b` ; `p` = indice de la bonne écriture. */
 export function readDraft(s: SeriesDef, f: Fact, rng: Rng = defaultRng): { read: ReadQ; p: number } {
-  const set = readOfSeries(s), it = set.items[f.b - 1]!, options = shuffle([it.w, ...it.x], rng);
+  const set = readOfSeries(s), it = set.items[f.b - 1];
+  if (!it) throw new RangeError(`${s.id} : pas d'élément n° ${f.b}`);
+  const options = shuffle([it.w, ...it.x], rng);
   return { read: { set: set.id, say: sayOf(it), target: it.w, options }, p: options.indexOf(it.w) };
 }
 

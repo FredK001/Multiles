@@ -26,8 +26,8 @@ export const READ_SETS: readonly ReadSet[] = [
   {
     id: 'voy', title: 'Les voyelles',
     items: [
-      r('a', 'o', 'e'), r('i', 'l', 'u'), r('o', 'a', 'u'), r('u', 'n', 'o'), r('é', 'e', 'a', 'é'), r('e', 'é', 'a', 'eu'),
-      r('ou', 'on', 'u'), r('y', 'v', 'u', 'i grec'), r('au', 'ou', 'an', 'oh'),
+      r('a', 'o', 'e'), r('i', 'l', 'u'), r('o', 'a', 'u'), r('u', 'n', 'o'), r('é', 'e', 'a', 'é'), r('e', 'é', 'a', 'euh'),
+      r('ou', 'on', 'u'), r('y', 'v', 'u', 'i'), r('au', 'ou', 'an', 'oh'),
     ],
   },
   {
@@ -41,7 +41,7 @@ export const READ_SETS: readonly ReadSet[] = [
   {
     id: 'syl2', title: 'pa, to, di…',
     items: [
-      r('pa', 'qa', 'ba'), r('pi', 'bi', 'ip'), r('po', 'bo', 'op'), r('ta', 'at', 'da'), r('ti', 'it', 'di'), r('to', 'ot', 'do'),
+      r('pa', 'ga', 'ba'), r('pi', 'bi', 'ip'), r('po', 'bo', 'op'), r('ta', 'at', 'da'), r('ti', 'it', 'di'), r('to', 'ot', 'do'),
       r('da', 'ba', 'ad'), r('di', 'bi', 'id'), r('do', 'bo', 'od'), r('ba', 'da', 'pa'), r('bi', 'di', 'pi'), r('bo', 'do', 'po'),
       r('na', 'ma', 'an'), r('ni', 'mi', 'in'), r('fa', 'va', 'af'), r('vo', 'fo', 'ov'),
     ],
@@ -49,7 +49,7 @@ export const READ_SETS: readonly ReadSet[] = [
   {
     id: 'sons', title: 'ou, on, an, ch…',
     items: [
-      r('ou', 'on', 'au', 'ou'), r('on', 'ou', 'an', 'on'), r('an', 'on', 'in', 'an'), r('in', 'an', 'on', 'in'), r('oi', 'io', 'on', 'oi'),
+      r('ou', 'on', 'au', 'ou'), r('on', 'ou', 'an', 'on'), r('an', 'on', 'in', 'an'), r('in', 'an', 'on', 'hein'), r('oi', 'io', 'on', 'oi'),
       r('ch', 'c', 'j', 'che'), r('chat', 'chou', 'char', 'chat'), r('loup', 'lion', 'long', 'loup'), r('moi', 'mon', 'mou', 'moi'),
       r('lapin', 'lampe', 'lavant', 'lapin'), r('maman', 'manon', 'mamie', 'maman'), r('mouton', 'monton', 'moutan', 'mouton'),
     ],

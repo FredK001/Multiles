@@ -90,7 +90,7 @@ export type DivId = `div-${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10}`;
 export type EngId = `eng-${ThemeId}`;
 export type FrId = `fr-${FrQuizId}`;
 export type LecId = `lec-${ReadId}`;
-export type SeriesId = TableId | DivId | 'add-10' | 'add-c10' | 'add-dbl' | 'add-20' | 'sub-10' | 'sub-20' | LecId | FrId | EngId;
+export type SeriesId = TableId | DivId | 'add-10' | 'add-c10' | 'add-dbl' | 'add-pb' | 'add-20' | 'sub-pb' | 'sub-10' | 'sub-20' | LecId | FrId | EngId;
 
 export interface SeriesDef {
   id: SeriesId;
@@ -104,6 +104,8 @@ export interface SeriesDef {
   stepLabels: readonly [string, string, string];
   /** Trophées de la même opération nécessaires pour ouvrir l'île (0 = ouverte au départ). */
   need: number;
+  /** Petits problèmes : le calcul est raconté (content/stories.ts) au lieu d'être écrit. */
+  story?: boolean;
   /** Rotation des formats propre à la série (sinon celle de l'opération). */
   formats?: readonly ('pave' | 'qcm' | 'manquant' | 'vf')[];
 }
@@ -179,6 +181,24 @@ const doubles: SeriesDef = {
   need: 1,
 };
 
+/** Petits problèmes jusqu'à 10 : une histoire lue, la réponse au pavé ou au choix. Termes de 1 à 9. */
+const problems = (op: 'add' | 'sub'): SeriesDef => {
+  const facts: { a: number; b: number }[] = [];
+  if (op === 'add') for (let a = 1; a <= 9; a++) for (let b = 1; a + b <= 10; b++) facts.push({ a, b });
+  else for (let a = 2; a <= 10; a++) for (let b = 1; b < a; b++) facts.push({ a, b });
+  return {
+    id: `${op}-pb`,
+    op,
+    spec: { kind: 'list', facts },
+    steps: [{ top: [2, 6] }, { top: [7, 10] }, null],
+    title: 'Petits problèmes',
+    stepLabels: ["Jusqu'à 6", 'De 7 à 10', 'Tout'],
+    need: 1,
+    story: true,
+    formats: ['pave', 'qcm'],
+  };
+};
+
 /** Les mots et les phrases d'un thème sont numérotés à partir de là : 51 = première phrase. */
 export const DRILL_BASE = 50;
 
@@ -223,8 +243,8 @@ export const SERIES: Record<SeriesId, SeriesDef> = {
   'mul-1': table(1), 'mul-2': table(2), 'mul-3': table(3), 'mul-4': table(4), 'mul-5': table(5),
   'mul-6': table(6), 'mul-7': table(7), 'mul-8': table(8), 'mul-9': table(9), 'mul-10': table(10),
   ...(Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => [`div-${n}`, divTable(n)])) as Record<DivId, SeriesDef>),
-  'add-10': upTo10('add'), 'add-c10': friends10, 'add-dbl': doubles, 'add-20': upTo20('add'),
-  'sub-10': upTo10('sub'), 'sub-20': upTo20('sub'),
+  'add-10': upTo10('add'), 'add-c10': friends10, 'add-dbl': doubles, 'add-pb': problems('add'), 'add-20': upTo20('add'),
+  'sub-10': upTo10('sub'), 'sub-pb': problems('sub'), 'sub-20': upTo20('sub'),
   ...(Object.fromEntries(READ_SETS.map((r, i) => [`lec-${r.id}`, readSet(r.id, i)])) as Record<LecId, SeriesDef>),
   ...(Object.fromEntries(ALL_QUIZZES.map((q, i) => [`fr-${q.id}`, quiz(q.id, i)])) as Record<FrId, SeriesDef>),
   ...(Object.fromEntries(THEMES.map((t, i) => [`eng-${t.id}`, theme(t.id, i)])) as Record<EngId, SeriesDef>),

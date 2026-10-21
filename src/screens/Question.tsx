@@ -9,7 +9,7 @@ import { planFor } from '../app/sessions';
 import { AUTO_SAY_DELAY, BtnSay, Svg } from '../app/ui';
 import { lookOf } from '../content/isles';
 import { SERIES } from '../content/series';
-import { CONJ_PROMPTS, LEC_PROMPTS, engPrompt, equation, fill, FR_PROMPTS, goodAnswers, HELP_TITLES, MSG, MSG_CP, OK_TITLES, spoken, tipOf } from '../content/messages';
+import { CONJ_PROMPTS, LEC_PROMPTS, STORY_PROMPTS, engPrompt, equation, fill, FR_PROMPTS, goodAnswers, HELP_TITLES, MSG, MSG_CP, OK_TITLES, spoken, tipOf } from '../content/messages';
 import { OP_SIGN, OP_SPOKEN } from '../content/series';
 import type { Format } from '../engine/questions';
 import { nb } from '../content/text';
@@ -74,7 +74,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
   // En anglais : dessins, mots et phrases à la place des nombres (EngQuestion).
   const op = opOf(cfg), cp = op === 'add' || op === 'sub', eng = op === 'eng', fr = op === 'fr', lec = op === 'lec', msgs = cp ? MSG_CP : MSG;
   /** Consigne d'une question, selon l'opération. */
-  const promptOf = (x: Q): readonly string[] => (x.op === 'eng' ? engPrompt(x) : x.op === 'lec' ? LEC_PROMPTS[x.fmt === 'qcm' ? 'qcm' : 'ecoute'] : x.op === 'fr' ? (x.fr?.verb ? CONJ_PROMPTS : FR_PROMPTS) : msgs[x.fmt as keyof typeof msgs]);
+  const promptOf = (x: Q): readonly string[] => (SERIES[x.series].story ? STORY_PROMPTS : x.op === 'eng' ? engPrompt(x) : x.op === 'lec' ? LEC_PROMPTS[x.fmt === 'qcm' ? 'qcm' : 'ecoute'] : x.op === 'fr' ? (x.fr?.verb ? CONJ_PROMPTS : FR_PROMPTS) : msgs[x.fmt as keyof typeof msgs]);
   /** Lecture automatique (réglage du profil) ; jamais quand le chrono tourne, la lecture mangerait le temps. */
   const autoSay = (text: Speakable) => {
     if (p.autoSpeech && !cfg.timed) later(() => speak(text), AUTO_SAY_DELAY);
@@ -245,7 +245,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
       const combo = out.comboMilestone ? session.combo : null;
       // Anglais hors chrono : la bonne réponse est lue, on lui laisse le temps de finir (phrases longues).
       // Français : le temps de relire la phrase complète.
-      const delay = cfg.timed ? OK_FEEDBACK_MS.timed : eng ? Math.min(4000, Math.max(OK_FEEDBACK_MS.classic, 500 + 85 * engRight(q).length)) : fr ? Math.min(3500, Math.max(OK_FEEDBACK_MS.classic, 400 + 45 * frRight(q).length)) : OK_FEEDBACK_MS.classic;
+      const delay = cfg.timed ? OK_FEEDBACK_MS.timed : eng ? Math.min(4000, Math.max(OK_FEEDBACK_MS.classic, 500 + 85 * engRight(q).length)) : fr ? Math.min(3500, Math.max(OK_FEEDBACK_MS.classic, 400 + 45 * frRight(q).length)) : lec ? 1900 : OK_FEEDBACK_MS.classic;
       const sub = cfg.endless
         ? cfg.target ? `${session.good} sur ${cfg.target}` : goodAnswers(session.good)
         : session.done < session.total ? `Encore ${session.remaining} question${session.remaining > 1 ? 's' : ''}` : 'Dernière réponse !';
@@ -263,7 +263,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
       setFb({ ok: false, title, eq: eng ? engRight(q) : fr ? frRight(q) : lec ? q.read!.target : equation(q), q });
       if (eng) autoSay([{ text: `${title} La bonne réponse :`, lang: 'fr' }, { text: engRight(q), lang: 'en' }]);
       else if (fr) autoSay(`${title} ${frRight(q)}`);
-      else if (lec) autoSay(`${title} ${tipOf(q)}`);
+      else if (lec) autoSay(q.fmt === 'ecoute' ? [{ text: `${title} ${tipOf(q)} Écoute :`, lang: 'fr' }, { text: q.read!.say, lang: 'fr' }] : `${title} ${tipOf(q)}`);
       else autoSay(`${title} ${q.a} ${OP_SPOKEN[q.op]} ${q.b} égale ${q.p}.`);
       chime('help');
       if (countdown.current) {
@@ -476,6 +476,11 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
             <EngCard q={q} revealed={!!mark} />
           ) : q && lec ? (
             <ReadCard q={q} />
+          ) : q && SERIES[q.series].story ? (
+            <div class="story-card">
+              <p class="story">{spoken(q)}</p>
+              <div class="expr story-ans" ref={exprRef} aria-hidden="true">{slot}</div>
+            </div>
           ) : q && fr ? (
             <div class="expr fr" role="img" aria-label={spoken(q)}><FrCard q={q} revealed={!!mark} /></div>
           ) : (

@@ -8,6 +8,7 @@ import { BackChip, BtnSay, useAutoSay } from '../app/ui';
 import { lookOf } from '../content/isles';
 import { OP_SIGN, OP_SPOKEN, SERIES, type SeriesId } from '../content/series';
 import { opProg } from '../engine/progress';
+import { storyOf } from '../content/stories';
 import { factsOf } from '../engine/series';
 import { isleOf } from '../engine/unlock';
 
@@ -25,17 +26,21 @@ export function DiscoverCP({ s, m }: { s: SeriesId; m: number }) {
   const n = chips.includes(m) ? m : chips[0]!;
   // Lignes : a + b = n (termes de 0 à 10), ou n − b (b de 0 ou 1 à 10).
   // Liste (amis de 10, doubles) : tous ses calculs d'un coup, sans choix du nombre.
-  const list = def.spec.kind === 'list';
-  const rows = list
-    ? factsOf(def).map((f) => ({ a: f.a, b: f.b, r: f.a + f.b }))
+  const list = def.spec.kind === 'list', story = !!def.story;
+  // Petits problèmes : trois histoires d'exemple, de plus en plus grandes, avec leur calcul.
+  const all = factsOf(def);
+  const rows = story
+    ? [all[Math.floor(all.length / 5)]!, all[Math.floor(all.length / 2)]!, all[all.length - 3]!].map((f) => ({ a: f.a, b: f.b, r: add ? f.a + f.b : f.a - f.b }))
+    : list
+    ? all.map((f) => ({ a: f.a, b: f.b, r: f.a + f.b }))
     : add
     ? Array.from({ length: 11 }, (_, a) => a).filter((a) => n - a >= 0 && n - a <= 10).map((a) => ({ a, b: n - a, r: n }))
     : Array.from({ length: 11 }, (_, b) => b).filter((b) => b <= n && (n <= 10 || b >= 1)).map((b) => ({ a: n, b, r: n - b }));
   const widest = Math.max(n, ...rows.map((x) => x.a + (add ? x.b : 0)));
   const d = Math.max(8, Math.min(18, Math.floor(Math.min(220 / widest, 300 / rows.length)) - 3));
   const w = OP_SPOKEN[def.op];
-  const intro = s === 'add-c10' ? 'Les amis de 10 : deux nombres qui font 10.' : s === 'add-dbl' ? 'Les doubles : un nombre plus lui-même.' : add ? `Toutes les façons de faire ${n}.` : `On part de ${n} et on enlève.`;
-  const say = () => `${intro} ${rows.map((x) => `${x.a} ${w} ${x.b} égale ${x.r}`).join('. ')}.`;
+  const intro = story ? "Une histoire cache un calcul. Écoute, puis trouve-le." : s === 'add-c10' ? 'Les amis de 10 : deux nombres qui font 10.' : s === 'add-dbl' ? 'Les doubles : un nombre plus lui-même.' : add ? `Toutes les façons de faire ${n}.` : `On part de ${n} et on enlève.`;
+  const say = () => (story ? `${intro} ${rows.map((x) => `${storyOf(def.op as 'add' | 'sub', x.a, x.b)} ${x.a} ${w} ${x.b} égale ${x.r}.`).join(' ')}` : `${intro} ${rows.map((x) => `${x.a} ${w} ${x.b} égale ${x.r}`).join('. ')}.`);
   useAutoSay(intro, n);
 
   return (
@@ -49,11 +54,21 @@ export function DiscoverCP({ s, m }: { s: SeriesId; m: number }) {
       </div>
       <div class="dsc-body">
         <div class="dsc-eq">
-          <b>{list ? (s === 'add-c10' ? '10' : '5 + 5') : n}</b>
+          <b>{story ? '?' : list ? (s === 'add-c10' ? '10' : '5 + 5') : n}</b>
           <span>{intro}</span>
         </div>
-        <ul class="sr">{rows.map((x, i) => <li key={i}>{x.a} {w} {x.b} égale {x.r}</li>)}</ul>
-        <div class="viz" key={n} aria-hidden="true">
+        {!story && <ul class="sr">{rows.map((x, i) => <li key={i}>{x.a} {w} {x.b} égale {x.r}</li>)}</ul>}
+        {story && (
+          <div class="stories">
+            {rows.map((x, i) => (
+              <div key={i} class="story-ex">
+                <p class="story">{storyOf(def.op as 'add' | 'sub', x.a, x.b)}</p>
+                <b>{x.a} {OP_SIGN[def.op]} {x.b} = {x.r}</b>
+              </div>
+            ))}
+          </div>
+        )}
+        {!story && <div class="viz" key={n} aria-hidden="true">
           {rows.map((x, i) => (
             <div key={i} class="vrow">
               <span class="vdots cp" style={{ '--d': `${d}px`, '--g': '3px' }}>
@@ -62,7 +77,7 @@ export function DiscoverCP({ s, m }: { s: SeriesId; m: number }) {
               <span class="vtot">{x.a} {OP_SIGN[def.op]} {x.b} = {x.r}</span>
             </div>
           ))}
-        </div>
+        </div>}
         {!list && <div class="mchips">
           {chips.map((k) => (
             <button

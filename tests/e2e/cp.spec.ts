@@ -70,7 +70,7 @@ test('CP : la série jusqu\'à 20 s\'ouvre avec le trophée de la série jusqu\'
   await page.locator('.isles-strip').click();
   await page.getByRole('button', { name: /^Plus/ }).click();
   await expect(page.locator('.isle.locked')).toHaveCount(0);
-  await expect(page.locator('.isle')).toHaveCount(4);
+  await expect(page.locator('.isle')).toHaveCount(5);
   // Les amis de 10 : découvrir les 11 façons de faire 10, puis le nombre manquant d'abord.
   await page.locator('.isle[aria-label^="Île Atoll"]').click();
   await expect(page.locator('[data-screen="isle"] h1')).toHaveText('Atoll');
@@ -86,8 +86,8 @@ test('CP : la série jusqu\'à 20 s\'ouvre avec le trophée de la série jusqu\'
   await page.locator('#mapBack').click();
   await page.locator('.isles-strip').click();
   await page.getByRole('button', { name: /^Moins/ }).click();
-  await expect(page.locator('.isle.locked')).toHaveCount(1);
-  await page.locator('.isle.locked').click();
+  await expect(page.locator('.isle.locked')).toHaveCount(2); // petits problèmes et jusqu'à 20
+  await page.locator('.isle.locked').first().click();
   await expect(page.locator('.toast')).toContainText('Encore 1 trophée');
 });
 
@@ -106,7 +106,7 @@ test('CP et CM1 sur le même appareil ; changer de classe garde la progression',
 
   // Tom (CP) : choix de l'opération, îles du CP.
   await page.getByRole('button', { name: 'Jouer avec le profil de Tom' }).click();
-  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 11 conquises');
+  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 13 conquises');
   await page.locator('#btnSwitch').click();
 
   // Nina passe en CP puis revient en CM1 : sa progression en multiplication est intacte.
@@ -132,4 +132,30 @@ test('CP : la lecture à voix haute se règle par profil', async ({ page }) => {
   await page.reload();
   await openParent(page);
   await expect(page.getByRole('switch', { name: 'Lecture à voix haute pour Tom' })).toHaveAttribute('aria-checked', 'false');
+});
+
+test('CP : petits problèmes, l\'histoire remplace le calcul', async ({ page }) => {
+  test.setTimeout(90_000); // une session entière
+  const won = { steps: 3, trophy: true, stepStars: [3, 3, 3] };
+  await seedProd(page, [cpKid({ prog: { add: { current: 'add-10', series: { 'add-10': won }, mastered: [], traps: [], trapLog: {}, records: {}, stickers: [] } } })], undefined, 3);
+  await page.getByRole('button', { name: 'Jouer avec le profil de Tom' }).click();
+  await page.locator('.isles-strip').click();
+  await page.getByRole('button', { name: /^Plus/ }).click();
+  await page.locator('.isle[aria-label^="Île Marché"]').click();
+  await page.locator('.modes2 .discover').first().click();
+  await expect(page.locator('.story-ex')).toHaveCount(3);
+  await page.getByRole('button', { name: "Je m'entraîne" }).click();
+  for (let i = 0; i < 10; i++) {
+    const t = (await page.locator('.story').textContent())!;
+    await expect(page.locator('.expr .op')).toHaveCount(0); // pas de calcul écrit
+    const [x, y] = [...t.matchAll(/\b(\d+|une?)\b/g)].map((m) => (/^\d+$/.test(m[1]!) ? Number(m[1]) : 1));
+    const r = x! + y!;
+    if (await page.locator('.pad').count()) {
+      for (const d of String(r)) await page.locator('.pad .key', { hasText: new RegExp(`^${d}$`) }).click();
+      await page.getByRole('button', { name: 'Valider' }).click();
+    } else await page.locator('.choices .choice', { hasText: new RegExp(`^${r}$`) }).click();
+    await expect(page.locator('.fb-sheet.ok')).toBeVisible();
+    await page.locator('.fb-sheet').waitFor({ state: 'detached' });
+  }
+  await expect(page.locator('[data-screen="end"]')).toBeVisible();
 });
