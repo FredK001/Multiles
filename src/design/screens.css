@@ -677,3 +677,12 @@
 .story-ex{background:#fff;border:3px solid var(--ink);border-radius:20px;padding:10px 12px;display:grid;gap:6px;text-align:center}
 .story-ex .story{font-size:18px}
 .story-ex b{font-family:var(--titre);font-size:28px;color:var(--ile)}
+
+/* Nombres jusqu'à 100 (CP) */
+.num-wrap{display:flex;justify-content:center;width:100%}
+.num-card{display:flex;flex-direction:column;align-items:center;gap:10px}
+.expr.num-ans{font-size:56px}
+.hundred{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
+.hundred button{aspect-ratio:1;border:2px solid var(--ink);border-radius:8px;background:#fff;font-family:var(--ui);font-weight:800;font-size:14px;padding:0;min-width:0}
+.hundred button.ten{background:var(--ile-clair)}
+.hundred button.on{background:var(--ile);color:#fff}

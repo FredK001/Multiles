@@ -5,6 +5,7 @@ import { defaultRng, pick, shuffle, type Rng } from './random';
 import { engDraft, type EngQ } from './english';
 import { frDraft, type FrQ } from './french';
 import { readDraft, type ReadQ } from './reading';
+import { numAnswer, numChoices, numQ, numSetOfSeries, type NumQ } from './numbers';
 import { displayBounds, drawFact, factsOf, inSeries, resultOf, weightOf, type Fact } from './series';
 
 /** Les 4 formats : pavé numérique, QCM à 3 choix, facteur manquant, vrai/faux ;
@@ -53,6 +54,8 @@ export interface Question {
   fr?: FrQ;
   /** Lecture : ce que dit la voix et les trois écritures ; `p` est l'indice de la bonne. */
   read?: ReadQ;
+  /** Nombres jusqu'à 100 : l'île (dizaines et unités, avant/après, comparer, droite graduée). */
+  num?: NumQ;
 }
 
 export interface GenOptions {
@@ -92,6 +95,13 @@ export function generateQuestion({ series, fmt, fact, step = null, rng = default
     const q: Question = { op: 'eng', series: s.id, a: f.a, b: f.b, fmt: d.fmt, p: d.p, eng: d.eng };
     if (d.fmt === 'qcm' || d.fmt === 'ecoute') q.choices = d.eng.options.map((_, i) => i);
     if (d.truth !== undefined) q.truth = d.truth;
+    assertValid(q);
+    return q;
+  }
+  if (s.op === 'num') {
+    const n = numQ(numSetOfSeries(s), f.b);
+    const q: Question = { op: 'num', series: s.id, a: f.a, b: f.b, fmt: fmt === 'pave' && n.set !== 'comp' ? 'pave' : 'qcm', p: numAnswer(n.set, n.x, n.y), num: n };
+    if (q.fmt === 'qcm') q.choices = numChoices(n.set, n.x, n.y, rng);
     assertValid(q);
     return q;
   }
@@ -142,6 +152,12 @@ export function assertValid(q: Question): void {
       if (o.length !== 1 || q.truth === undefined) fail('vrai/faux');
     } else if (o.length < 2 || o.length > 3 || q.p < 0 || q.p >= o.length || q.choices?.length !== o.length) fail('propositions');
     if (q.fmt === 'ecoute' && o.some((x) => x.word === undefined)) fail('écoute sans dessins');
+    return;
+  }
+  if (q.op === 'num') {
+    const c = q.choices ?? [];
+    if (!q.num || q.p !== numAnswer(q.num.set, q.num.x, q.num.y) || q.p < 0 || q.p > 100) fail('nombres');
+    if (q.fmt === 'qcm' && (c.length < 2 || new Set(c).size !== c.length || !c.includes(q.p) || c.some((x) => x < 0 || x > 100))) fail('nombres : propositions');
     return;
   }
   if (q.op === 'lec') {

@@ -8,6 +8,8 @@ import { GRADE_DESC, GRADES, OP_NAME, OP_SIGN, OPS, seriesOf, zoneOf, type Op, t
 import { engFactLabel } from '../engine/english';
 import { frFactLabel } from '../engine/french';
 import { readFactLabel } from '../engine/reading';
+import { numOfKey } from '../engine/numbers';
+import { numEq } from '../content/messages';
 import { cleanName, setGrade } from '../engine/profile';
 import { checkStreak } from '../engine/streak';
 import { checkForUpdate, useUpdate } from '../pwa';
@@ -407,7 +409,7 @@ export function Parent() {
               <h2>Cette semaine <small>{split ? `${what}, du lundi à aujourd'hui` : "du lundi à aujourd'hui"}</small></h2>
               <div class="kpis">
                 <div class="kpi"><b>{tot} min</b><small>de jeu</small></div>
-                <div class="kpi"><b>{seriesDone(o.mastered, op)}/{seriesOf(op).length}</b><small>{mul || op === 'div' ? 'tables maîtrisées' : eng ? 'thèmes maîtrisés' : op === 'fr' || op === 'lec' ? 'îles maîtrisées' : 'séries maîtrisées'}</small></div>
+                <div class="kpi"><b>{seriesDone(o.mastered, op)}/{seriesOf(op).length}</b><small>{mul || op === 'div' ? 'tables maîtrisées' : eng ? 'thèmes maîtrisés' : op === 'fr' || op === 'lec' || op === 'num' ? 'îles maîtrisées' : 'séries maîtrisées'}</small></div>
                 <div class="kpi"><b>{streak}</b><small>jour{streak > 1 ? 's' : ''} de suite</small></div>
               </div>
               <div class="week-bars" role="img" aria-label={`Minutes par jour : ${['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map((d, i) => `${d} ${mins[i]}`).join(', ')}`}>
@@ -422,7 +424,7 @@ export function Parent() {
               <p style={{ fontSize: '14px', color: 'var(--ink-2)' }}>{plural(totalSessions(p.days, split ? op : undefined), 'session')} depuis le début. Une session dure 3 à 5 minutes.</p>
             </div>
             <div class="pcard2">
-              <h2>{mul || op === 'div' ? 'Tables' : eng ? 'Thèmes' : op === 'fr' ? 'Homophones et conjugaison' : op === 'lec' ? 'Lecture' : 'Séries'} <small>{eng ? 'part des mots et phrases réussis' : op === 'fr' ? 'part des phrases réussies' : op === 'lec' ? 'part des sons et mots réussis' : `part des ${what} réussies`}</small></h2>
+              <h2>{mul || op === 'div' ? 'Tables' : eng ? 'Thèmes' : op === 'fr' ? 'Homophones et conjugaison' : op === 'lec' ? 'Lecture' : op === 'num' ? 'Nombres' : 'Séries'} <small>{eng ? 'part des mots et phrases réussis' : op === 'fr' ? 'part des phrases réussies' : op === 'lec' ? 'part des sons et mots réussis' : op === 'num' ? 'part des questions réussies' : `part des ${what} réussies`}</small></h2>
               <div class="tbl">
                 {seriesOf(op).map((s) => {
                   const v = seriesPct(o.mastered, s.id), b = seriesBadge(s);
@@ -440,7 +442,7 @@ export function Parent() {
               </div>
             </div>
             <div class="pcard2">
-              <h2>{eng ? 'Mots et phrases difficiles' : op === 'fr' ? 'Phrases difficiles' : op === 'lec' ? 'Sons et mots difficiles' : `${OP_NAME[op]} difficiles`} <small>{hard.length}</small></h2>
+              <h2>{eng ? 'Mots et phrases difficiles' : op === 'fr' ? 'Phrases difficiles' : op === 'lec' ? 'Sons et mots difficiles' : op === 'num' ? 'Questions difficiles' : `${OP_NAME[op]} difficiles`} <small>{hard.length}</small></h2>
               {hard.length ? (
                 <>
                   <div class="hard">
@@ -448,6 +450,8 @@ export function Parent() {
                       <div key={h.key} class="row">
                         {h.op === 'eng' ? (
                           <span class="eq eng"><span lang="en">{engFactLabel(h.a, h.b).en}</span>{engFactLabel(h.a, h.b).fr && <small>{engFactLabel(h.a, h.b).fr}</small>}</span>
+                        ) : h.op === 'num' ? (
+                          <span class="eq">{numOfKey(h.a, h.b) ? numEq(numOfKey(h.a, h.b)!) : '?'}</span>
                         ) : h.op === 'lec' ? (
                           <span class="eq eng"><span>{readFactLabel(h.a, h.b).w}</span><small>{readFactLabel(h.a, h.b).set}</small></span>
                         ) : h.op === 'fr' ? (
@@ -456,7 +460,7 @@ export function Parent() {
                           <span class="eq">{h.a} {OP_SIGN[h.op]} {h.b}</span>
                         )}
                         <small>{h.errors} erreur{h.errors > 1 ? 's' : ''} récente{h.errors > 1 ? 's' : ''}</small>
-                        {h.op !== 'eng' && h.op !== 'fr' && h.op !== 'lec' && <small>{h.r}</small>}
+                        {h.op !== 'eng' && h.op !== 'fr' && h.op !== 'lec' && h.op !== 'num' && <small>{h.r}</small>}
                       </div>
                     ))}
                   </div>

@@ -9,13 +9,14 @@ import { SERIES, type SeriesId } from '../content/series';
 import { DiscoverCP } from './DiscoverCP';
 import { DiscoverEng } from './DiscoverEng';
 import { DiscoverFr } from './DiscoverFr';
+import { DiscoverNum } from './DiscoverNum';
 import { DiscoverRead } from './DiscoverRead';
 import { opProg } from '../engine/progress';
 import { isleOf, tableNum } from '../engine/unlock';
 
 export function Discover({ s, m }: { s: SeriesId; m: number }) {
   const op = SERIES[s].op;
-  return op === 'mul' || op === 'div' ? <DiscoverTable s={s} m={m} /> : op === 'eng' ? <DiscoverEng s={s} /> : op === 'fr' ? <DiscoverFr s={s} /> : op === 'lec' ? <DiscoverRead s={s} /> : <DiscoverCP s={s} m={m} />;
+  return op === 'mul' || op === 'div' ? <DiscoverTable s={s} m={m} /> : op === 'eng' ? <DiscoverEng s={s} /> : op === 'fr' ? <DiscoverFr s={s} /> : op === 'lec' ? <DiscoverRead s={s} /> : op === 'num' ? <DiscoverNum s={s} /> : <DiscoverCP s={s} m={m} />;
 }
 
 function DiscoverTable({ s, m }: { s: SeriesId; m: number }) {

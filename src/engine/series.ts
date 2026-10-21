@@ -2,6 +2,7 @@
    Toute question est tirée de cette liste : aucun calcul hors plage ni résultat négatif n'est possible. */
 import { themeOf } from '../content/english';
 import { quizOf } from '../content/french';
+import { numSetOf } from '../content/numbers';
 import { readSetOf } from '../content/reading';
 import { DRILL_BASE, SERIES, seriesOf, type Op, type SeriesDef, type SeriesId, type StepFilter } from '../content/series';
 import { defaultRng, type Rng } from './random';
@@ -44,6 +45,8 @@ function allFacts(s: SeriesDef): Fact[] {
     t.drills.forEach((_, i) => out.push({ a: sp.n, b: DRILL_BASE + i + 1 }));
     return out;
   }
+  // Nombres : a = n° de l'île, b = rang de la question (les nombres eux-mêmes sont dans content/numbers.ts).
+  if (sp.kind === 'num') return numSetOf(sp.set).facts.map((_, i) => ({ a: sp.n, b: i + 1 }));
   if (sp.kind === 'read') return readSetOf(sp.set).items.map((_, i) => ({ a: sp.n, b: i + 1 }));
   if (sp.kind === 'quiz') return quizOf(sp.quiz).items.map((_, i) => ({ a: sp.n, b: i + 1 }));
   if (sp.kind === 'list') return sp.facts.map((f) => ({ ...f }));
@@ -69,6 +72,11 @@ function matches(s: SeriesDef, f: Fact, flt: StepFilter): boolean {
     // Même découpage que stepItems et stepReadItems.
     const n = s.spec.kind === 'quiz' ? quizOf(s.spec.quiz).items.length : readSetOf(s.spec.set).items.length;
     const half = Math.ceil(n / 2);
+    if ((flt.half === 0) !== f.b <= half) return false;
+  }
+  if (flt.half !== undefined && s.spec.kind === 'num') {
+    // Nombres : les petits nombres d'abord (la liste est rangée du plus petit au plus grand).
+    const half = Math.ceil(numSetOf(s.spec.set).facts.length / 2);
     if ((flt.half === 0) !== f.b <= half) return false;
   }
   if (flt.bs && !flt.bs.includes(f.b)) return false;

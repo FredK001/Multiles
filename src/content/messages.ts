@@ -46,12 +46,30 @@ export function spoken(q: Question): string {
   // Français : le trou est lu comme un silence (a et à se prononcent pareil, mais pas toujours et/est).
   // Petit problème : l'histoire elle-même (le calcul n'est pas donné).
   if (SERIES[q.series]?.story && (q.op === 'add' || q.op === 'sub')) return storyOf(q.op, q.a, q.b);
+  if (q.op === 'num' && q.num) return numSpoken(q.num.set, q.num.x, q.num.y);
   if (q.op === 'lec' && q.read) return q.fmt === 'qcm' ? `Trouve : ${q.read.target}.` : 'Écoute bien.';
   if (q.op === 'fr' && q.fr) return q.fr.text.replace(/___/g, '…') + (q.fr.verb ? ` Verbe ${q.fr.verb}.` : '');
   const w = OP_SPOKEN[q.op];
   if (q.fmt === 'manquant') return q.op === 'div' ? `${q.a} ${w} combien égale ${q.p} ?` : `${q.a} ${w} combien font ${q.p} ?`;
   if (q.fmt === 'vf') return `${q.a} ${w} ${q.b} égale ${q.shown}. Vrai ou faux ?`;
   return `Combien font ${q.a} ${w} ${q.b} ?`;
+}
+
+/** Question de nombres, telle qu'on la dit. */
+function numSpoken(set: NonNullable<Question['num']>['set'], a: number, b: number): string {
+  if (set === 'du') return `${a} dizaine${a > 1 ? 's' : ''} et ${b} unité${b > 1 ? 's' : ''}, c'est quel nombre ?`;
+  if (set === 'suite') return b === 1 ? `Quel nombre vient juste après ${a} ?` : `Quel nombre vient juste avant ${a} ?`;
+  if (set === 'comp') return `Quel est le plus grand : ${a} ou ${b} ?`;
+  return `Quel nombre est caché sur la droite, entre ${a} et ${a + 10} ?`;
+}
+
+/** Réponse complète d'une question de nombres (feuille de réponse). */
+export function numEq(n: NonNullable<Question['num']>): string {
+  const { set, x, y } = n;
+  if (set === 'du') return `${x} dizaine${x > 1 ? 's' : ''} et ${y} unité${y > 1 ? 's' : ''} = ${x * 10 + y}`;
+  if (set === 'suite') return y === 1 ? `${x}, puis ${x + 1}` : `${x - 1}, puis ${x}`;
+  if (set === 'comp') return `${Math.max(x, y)} > ${Math.min(x, y)}`;
+  return `${x} … ${y} … ${x + 10}`;
 }
 
 /** Égalité complète affichée : « 7 × 8 = 56 », « 13 − 5 = 8 ». */
@@ -131,7 +149,7 @@ export function engPrompt(q: Question): readonly string[] {
 }
 
 /** Aide après une erreur en anglais : le sens du mot, ou la phrase à retenir. */
-type TipQ = Pick<Question, 'op' | 'a' | 'b'> & Partial<Pick<Question, 'eng' | 'fr' | 'read' | 'p' | 'fmt'>>;
+type TipQ = Pick<Question, 'op' | 'a' | 'b'> & Partial<Pick<Question, 'eng' | 'fr' | 'read' | 'num' | 'p' | 'fmt'>>;
 
 function engTip(q: TipQ): string {
   const e = q.eng, t = e && themeOf(e.theme);
@@ -161,6 +179,22 @@ function frTip(q: TipQ): string {
   return `${quiz.rule[right]} « ${cite(test ?? other)} », ça ne va pas.`;
 }
 
+/** Astuce des nombres : dizaines d'abord. */
+function numTip(q: TipQ): string {
+  if (!q.num) return '';
+  const { set, x: a, y: b } = q.num;
+  if (set === 'du') return `${a} dizaine${a > 1 ? 's' : ''}, c'est ${a * 10}. ${a * 10} et ${b}, ça fait ${a * 10 + b}.`;
+  if (set === 'suite') {
+    if (b === 1) return a % 10 === 9 ? `Après ${a}, on change de dizaine : ${a + 1}.` : `Juste après, c'est un de plus : ${a} + 1 = ${a + 1}.`;
+    return a % 10 === 0 ? `Avant ${a}, on recule d'une dizaine : ${a - 1}.` : `Juste avant, c'est un de moins : ${a} − 1 = ${a - 1}.`;
+  }
+  if (set === 'comp') {
+    const ta = Math.floor(a / 10), tb = Math.floor(b / 10), big = Math.max(a, b);
+    return ta !== tb ? `On regarde d'abord les dizaines : ${Math.max(ta, tb)} dizaines, c'est plus que ${Math.min(ta, tb)}. Le plus grand est ${big}.` : `Même nombre de dizaines : on regarde les unités. Le plus grand est ${big}.`;
+  }
+  return `Compte les traits à partir de ${a} : ${Array.from({ length: Math.min(b - a, 4) }, (_, i) => a + i + 1).join(', ')}${b - a > 4 ? '…' : ''} Le nombre caché est ${b}.`;
+}
+
 /** Astuce de lecture : les lettres qui se ressemblent, ou l'ordre des lettres. */
 function lecTip(q: TipQ): string {
   const r = q.read;
@@ -177,7 +211,7 @@ function lecTip(q: TipQ): string {
 
 /** Astuce adaptée au calcul, quelle que soit l'opération. */
 export function tipOf(q: TipQ): string {
-  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'div' ? divTip(q.a, q.b) : q.op === 'fr' ? frTip(q) : q.op === 'lec' ? lecTip(q) : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
+  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'div' ? divTip(q.a, q.b) : q.op === 'fr' ? frTip(q) : q.op === 'lec' ? lecTip(q) : q.op === 'num' ? numTip(q) : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
 }
 
 /** Bulle d'accueil. */
