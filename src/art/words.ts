@@ -1,7 +1,9 @@
 /* Dessins des mots d'anglais (viewBox 0 0 100 100, trait d'encre comme le reste de l'app).
-   Un mot sans dessin ici est montré par son mot français (voir WordPic). Les thèmes sont dessinés un par un. */
+   Un mot sans dessin ici est montré par son mot français (voir WordPic). Dessins par thème dans words-ce1.ts et words-ce2.ts. */
 import type { ThemeId } from '../content/english';
 import { INK } from './shapes';
+import { ACTIONS, ANIMALS, BODY, FAMILY, FOOD, HOME, SCHOOL, TOYS } from './words-ce1';
+import { ACTIVITIES, CLASSROOM, CLOTHES, FARM, MEALS, PETS, ROOMS, TOWN, TRANSPORT } from './words-ce2';
 
 const svg = (body: string, s: number): string => `<svg width="${s}" height="${s}" viewBox="0 0 100 100" aria-hidden="true">${body}</svg>`;
 
@@ -27,8 +29,27 @@ function dots(n: number): string {
 
 type Drawer = (en: string) => string | null;
 
+const table = (t: Record<string, string>): Drawer => (en) => t[en] ?? null;
+
 const DRAWERS: Partial<Record<ThemeId, Drawer>> = {
   hello: (en) => (en in COLOUR_FILL ? splash(COLOUR_FILL[en]!) : en in NUMBER_OF ? dots(NUMBER_OF[en]!) : null),
+  school: table(SCHOOL),
+  toys: table(TOYS),
+  family: table(FAMILY),
+  home: table(HOME),
+  body: table(BODY),
+  food: table(FOOD),
+  actions: table(ACTIONS),
+  animals: table(ANIMALS),
+  transport: table(TRANSPORT),
+  pets: table(PETS),
+  clothes: table(CLOTHES),
+  rooms: table(ROOMS),
+  meals: table(MEALS),
+  activities: table(ACTIVITIES),
+  town: table(TOWN),
+  farm: table(FARM),
+  classroom: table(CLASSROOM),
 };
 
 /** Dessin d'un mot, ou null s'il n'est pas (encore) dessiné. */
