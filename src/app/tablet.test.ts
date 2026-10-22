@@ -16,4 +16,10 @@ describe('agrandissement tablette', () => {
     expect(tabletScale(1180, 820)).toBeGreaterThanOrEqual(1);
     expect(tabletScale(2732, 2048)).toBeLessThanOrEqual(1.8);
   });
+  it('téléphone couché : un peu réduit pour que tout tienne, jamais illisible', () => {
+    const k = tabletScale(844, 390);
+    expect(k).toBeLessThan(1);
+    expect(k).toBeGreaterThanOrEqual(0.62);
+    expect(tabletScale(390, 844)).toBe(1); // debout : inchangé
+  });
 });

@@ -1,7 +1,7 @@
 /* Grand écran (ordinateur, tablette en paysage) : la colonne de l'app s'élargit (app.css) ; ici, chaque écran
    répartit son contenu. Deux règles : les écrans « héros + actions » passent sur deux colonnes (accueil, île) ;
    les écrans de lecture gardent une largeur lisible, centrée. Les téléphones ne sont pas concernés. */
-@media (min-width:900px) and (orientation:landscape) and (min-height:600px){
+@media (min-width:640px) and (orientation:landscape){
   /* Largeur lisible pour le contenu qui défile : centré, au plus 980 px. */
   .grid-scroll,.alb-scroll,.par-body,.pane,.dsc-body,.end-body,.isd-body{padding-left:max(16px,calc((100% - 980px) / 2));padding-right:max(16px,calc((100% - 980px) / 2))}
   .shop-grid{padding-left:max(16px,calc((100% - 980px) / 2));padding-right:max(16px,calc((100% - 980px) / 2));grid-template-columns:repeat(5,1fr)}
@@ -38,6 +38,12 @@
   .screen[data-screen="shop"] > .shop-grid{grid-column:2;grid-row:4;padding-left:0;padding-right:16px;grid-template-columns:repeat(4,1fr)}
   .screen[data-screen="shop"] > .shop-foot{grid-column:2;grid-row:5;margin-right:16px}
   .screen[data-screen="shop"] > .tabbar{grid-row:6}
+
+  /* Question : le calcul en grand, le pavé et les réponses hauts, pour remplir les deux colonnes. */
+  .scr-q .q-card .expr{font-size:min(calc(var(--fs,62px) * 1.5),15vh)}
+  .scr-q .q-answer .pad .key{height:clamp(64px,11vh,104px)}
+  .scr-q .q-answer .pad .key:not(.erase):not(.go){font-size:clamp(30px,5vh,46px)}
+  .scr-q .q-answer .choices .choice{height:clamp(72px,14vh,130px)}
 
   /* Choix de la matière : cartes en grille. */
   .ops-cards,.ops-cards.many{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:auto;align-content:center}

@@ -102,8 +102,9 @@
   .topbar.tri > :last-child{justify-self:end}
 }
 
-/* ===== Téléphone en paysage dans le navigateur (l'app installée reste en portrait) ===== */
-@media (max-height:480px) and (orientation:landscape){
+/* ===== Très petit téléphone en paysage (moins de 640 px de large) : tout défile.
+   Au-delà, la mise en page large prend le relais (wide.css, src/app/tablet.ts). ===== */
+@media (max-height:480px) and (max-width:639px) and (orientation:landscape){
   .screen{overflow-y:auto}
   .screen > *{flex:0 0 auto}
   .home-body,.q-sheet,.end-body,.pane,.isd-body,.grid-scroll,.shop-grid,.par-body,.ed-grid{overflow:visible}
