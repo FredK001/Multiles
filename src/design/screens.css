@@ -730,3 +730,14 @@
 .eg-w.read.phrase{height:auto;min-height:44px;padding:4px 10px;font-size:15px;line-height:1.2;text-align:left}
 .scr-q.cp .dict .key{height:58px;font-size:34px}
 .scr-q.cp .dict .key.erase,.scr-q.cp .dict .key.go{font-size:18px}
+/* Grands nombres et mesures (CM1) : réponses écrites comme les fractions ; nombres en lettres et énoncés longs plus petits. */
+.wr-q.long{font-size:22px}
+.wr-choices .choice{font-size:28px;font-variant-numeric:tabular-nums}
+.wr-choices.long .choice{font-size:19px;height:auto;min-height:62px;padding:8px 12px;line-height:1.2;white-space:normal;overflow-wrap:anywhere}
+.wr-clock{display:block;line-height:0}
+.wr-classes{display:grid;grid-template-columns:repeat(3,1fr);border:2px solid var(--ink);border-radius:14px;overflow:hidden;background:#fff}
+.wr-class{display:grid;justify-items:center;gap:2px;padding:8px 4px;border-left:2px solid var(--ink)}
+.wr-class:first-child{border-left:0}
+.wr-class small{font-size:14px;color:var(--ink-2)}
+.wr-class b{font-family:var(--titre);font-size:26px;color:var(--ile)}
+.wr-clocks{grid-template-columns:repeat(2,1fr)}

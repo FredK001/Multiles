@@ -13,3 +13,4 @@ export * from './words';
 export { Art, svgHtml } from './Art';
 export * from './fraction';
 export * from './reading';
+export * from './clock';
