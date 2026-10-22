@@ -278,8 +278,9 @@ const readSet = (id: ReadId, i: number): SeriesDef => ({
   need: LEC_NEED[id],
 });
 
-/** Trophées de français nécessaires : a/à, et/est et le présent ouverts au départ, puis un par île. */
-const FR_NEED: Record<FrQuizId, number> = { a: 0, et: 0, son: 1, on: 2, pres: 0, fut: 1, imp: 2, pc: 3 };
+/** Trophées de français nécessaires : a/à, et/est et le présent ouverts au départ, puis un par île ;
+    la grammaire (nature, sujet-verbe, accords du nom, invariables) s'ouvre avec les premiers trophées. */
+const FR_NEED: Record<FrQuizId, number> = { a: 0, et: 0, son: 1, on: 2, pres: 0, fut: 1, imp: 2, pc: 3, nat: 1, sv: 2, gn: 3, inv: 2 };
 
 /** Une île de français : une paire d'homophones ou un temps de conjugaison. */
 const quiz = (id: FrQuizId, i: number): SeriesDef => ({

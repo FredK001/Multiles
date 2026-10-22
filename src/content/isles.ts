@@ -163,6 +163,11 @@ const FR_ISLES: Record<FrQuizId, Omit<IsleLook, 'fort' | 'clair'>> = {
   fut: { name: 'Phare', decor: 'espace', motif: 10, boss: 'Futuro', sticker: 'Longue-vue', of: 'du Phare' },
   imp: { name: 'Ruines', decor: 'desert', motif: 4, boss: 'Jadis', sticker: 'Vieux parchemin', of: 'des Ruines' },
   pc: { name: 'Grotte', decor: 'volcan', motif: 7, boss: 'Hiéro', sticker: 'Sablier', of: 'de la Grotte' },
+  // Grammaire et accords : un lieu par notion.
+  nat: { name: 'Atelier', decor: 'collines', motif: 8, boss: 'Étiquetto', sticker: 'Boîte à étiquettes', of: "de l'Atelier" },
+  sv: { name: 'Kiosque', decor: 'jungle', motif: 2, boss: 'Maestro', sticker: "Baguette de chef d'orchestre", of: 'du Kiosque' },
+  gn: { name: 'Mercerie', decor: 'bonbon', motif: 6, boss: 'Bobine', sticker: 'Pelote de laine', of: 'de la Mercerie' },
+  inv: { name: 'Menhir', decor: 'desert', motif: 4, boss: 'Granito', sticker: 'Caillou gravé', of: 'du Menhir' },
 };
 
 /** Pastille d'une île : numéro de la table, signe de l'opération au CP, numéro du thème en anglais. */

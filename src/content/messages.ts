@@ -35,6 +35,11 @@ export const LEC_PROMPTS = { ecoute: ['Écoute et touche ce que tu entends.'], q
 /** Consignes de la conjugaison (trois formes du verbe). */
 export const CONJ_PROMPTS = ['Choisis la bonne forme du verbe.', 'Conjugue le verbe, {name} !', 'Quelle forme va dans le trou ?'];
 
+/** Consignes de la nature des mots (le mot en couleur). */
+export const NAT_PROMPTS = ['Quelle est la nature du mot en couleur ?', 'Nom, verbe, adjectif… ? À toi, {name} !'];
+/** Consignes des accords et des mots invariables (deux ou trois réponses). */
+export const GRAM_PROMPTS = ['Choisis la bonne écriture.', 'Quel mot va dans le trou, {name} ?', 'Laquelle est juste, {name} ?'];
+
 export const OK_TITLES = ['Bravo {name} !', 'Super !', 'Exact !', 'Bien joué, {name} !', 'Tu assures !', 'Génial !', 'Et voilà !'];
 export const HELP_TITLES = ['Presque, {name} !', 'Pas tout à fait !', 'On regarde ensemble ?'];
 
@@ -50,6 +55,9 @@ export function spoken(q: Question): string {
   if (q.op === 'frac' && q.frac) return sayFrac(q.frac.text);
   if (q.op === 'num' && q.num) return numSpoken(q.num.set, q.num.x, q.num.y);
   if (q.op === 'lec' && q.read) return q.fmt === 'qcm' ? `Trouve : ${q.read.target}.` : 'Écoute bien.';
+  // Nature des mots : la phrase entière, puis la question sur le mot en couleur.
+  if (q.op === 'fr' && q.fr?.focus) return `${fillBlank(q.fr.text, q.fr.focus)} Quelle est la nature du mot « ${q.fr.focus} » ?`;
+  if (q.op === 'fr' && q.fr?.cue) return `${q.fr.text.replace(/___/g, '…')} ${q.fr.cue[0]} « ${q.fr.cue[1]} ».`;
   if (q.op === 'fr' && q.fr) return q.fr.text.replace(/___/g, '…') + (q.fr.verb ? ` Verbe ${q.fr.verb}.` : '');
   const w = OP_SPOKEN[q.op];
   if (q.fmt === 'manquant') return q.op === 'div' ? `${q.a} ${w} combien égale ${q.p} ?` : `${q.a} ${w} combien font ${q.p} ?`;
@@ -175,7 +183,7 @@ function frTip(q: TipQ): string {
   if (!f || q.p === undefined) return '';
   const quiz = quizOf(f.quiz), right = f.options[q.p]!, other = f.options[1 - q.p]!;
   // Conjugaison : la règle du temps et la bonne forme avec son pronom.
-  if (quiz.tense) return ruleOf(quiz, quiz.items[q.b - 1]!);
+  if (quiz.tense || quiz.grammar) return ruleOf(quiz, quiz.items[q.b - 1]!);
   const swap = quiz.swap[right], test = quiz.swap[other], cite = (w: string) => fillBlank(f.text, w).replace(/\s*[.?!]$/, '');
   if (swap) return `${quiz.rule[right]} Ici : « ${cite(swap)} ».`;
   return `${quiz.rule[right]} « ${cite(test ?? other)} », ça ne va pas.`;

@@ -1,8 +1,10 @@
 /* Français (CM1) : une île = une paire d'homophones (deux mots, toujours dans le même ordre)
-   ou un temps de conjugaison (trois formes du verbe, mélangées).
+   ou un temps de conjugaison (trois formes du verbe, mélangées) ;
+   puis la grammaire (content/grammar.ts : nature des mots, accords, mots invariables).
    Étape 1 = première moitié des phrases, étape 2 = seconde moitié, étape 3 et gardien = toutes. */
+import { GRAMMAR } from './grammar';
 
-export type FrQuizId = 'a' | 'et' | 'son' | 'on' | 'pres' | 'fut' | 'imp' | 'pc';
+export type FrQuizId = 'a' | 'et' | 'son' | 'on' | 'pres' | 'fut' | 'imp' | 'pc' | 'nat' | 'sv' | 'gn' | 'inv';
 
 /** Personnes de conjugaison : je, tu, il, nous, vous, ils. */
 export type Person = 0 | 1 | 2 | 3 | 4 | 5;
@@ -17,6 +19,19 @@ export interface FrItem {
   opts?: readonly string[];
   verb?: string;
   who?: Person;
+  /** Nature des mots : le mot mis en évidence, à la place du trou (la réponse `a` est sa nature). */
+  w?: string;
+  /** Grammaire : le mot de départ affiché au-dessus de la phrase (« Adjectif vert »). */
+  cue?: readonly [string, string];
+  /** Grammaire : le truc propre à la phrase (« Qui fait l'action ? … »). */
+  tip?: string;
+}
+
+/** Une carte de leçon de grammaire (écran Découvrir) : un titre, une phrase, des exemples. */
+export interface FrLesson {
+  t: string;
+  d: string;
+  ex: readonly string[];
 }
 
 export interface FrQuiz {
@@ -27,6 +42,8 @@ export interface FrQuiz {
   choices: readonly string[];
   /** Conjugaison : la règle du temps, et ses tableaux (6 formes par verbe). */
   tense?: { name: string; rule: string; tables: Readonly<Record<string, readonly string[]>> };
+  /** Grammaire : la règle de l'île et sa leçon. */
+  grammar?: { rule: string; lesson: readonly FrLesson[] };
   /** Le truc pour choisir, mot par mot. */
   rule: Readonly<Record<string, string>>;
   /** Mot qu'on essaie à la place (« avait » pour « a ») ; absent si aucun ne marche (« à »). */
@@ -203,7 +220,8 @@ const TENSES: readonly FrQuiz[] = [
   },
 ];
 
-export const ALL_QUIZZES: readonly FrQuiz[] = [...QUIZZES, ...TENSES];
+/** Toutes les îles : la grammaire vient en dernier, pour que les clés (île, rang) existantes ne bougent pas. */
+export const ALL_QUIZZES: readonly FrQuiz[] = [...QUIZZES, ...TENSES, ...GRAMMAR];
 
 export const quizOf = (id: FrQuizId): FrQuiz => ALL_QUIZZES.find((q) => q.id === id)!;
 
@@ -213,6 +231,7 @@ export const withPronoun = (who: Person, form: string): string => (who === 0 && 
 /** Le truc pour une phrase : la règle du mot (homophones), ou celle du temps avec la bonne forme (conjugaison). */
 export function ruleOf(q: FrQuiz, it: FrItem): string {
   if (q.tense && it.verb && it.who !== undefined) return `${q.tense.rule} Ici : ${withPronoun(it.who, it.a)} (${it.verb}).`;
+  if (q.grammar) return it.tip ?? q.grammar.rule;
   return q.rule[it.a] ?? '';
 }
 
@@ -232,3 +251,7 @@ export function stepItems(q: FrQuiz, step: number | null): readonly FrItem[] {
   const half = Math.ceil(q.items.length / 2);
   return step === 0 ? q.items.slice(0, half) : step === 1 ? q.items.slice(half) : q.items;
 }
+
+/** Phrase complète, pour les parents et la grille : « Léo a un vélo rouge. » ;
+    en nature des mots, avec le mot et sa nature : « Le chat dort sur le canapé. (chat : nom) ». */
+export const itemText = (it: FrItem): string => (it.w ? `${fillBlank(it.s, it.w)} (${it.w} : ${it.a})` : fillBlank(it.s, it.a));

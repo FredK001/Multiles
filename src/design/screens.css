@@ -707,3 +707,8 @@
 .ops-cards.many .op-card b{font-size:32px}
 .ops-cards.many .op-card small{font-size:15px;margin-top:2px}
 .ops-cards.many .op-stars{margin-top:2px}
+
+/* Français, grammaire : le mot étudié mis en évidence (nature des mots), cartes de leçon */
+.fr-focus{display:inline-block;margin:0 4px;padding:0 6px;border-radius:12px;background:var(--ile);color:#fff;line-height:1.15}
+.fr-lesson h2{font-size:28px}
+.fr-lesson ul{list-style:none;padding-left:0}

@@ -6,7 +6,7 @@ import { useIsleTheme, useProfileTheme } from '../app/theme';
 import { useApp, useBack, usePlayer } from '../app/context';
 import { trapsCfg } from '../app/sessions';
 import { BtnSay, Svg, TabBar } from '../app/ui';
-import { ALL_QUIZZES, fillBlank, ruleOf } from '../content/french';
+import { ALL_QUIZZES, fillBlank, itemText, ruleOf, type FrItem } from '../content/french';
 import { lookOf } from '../content/isles';
 import { FR_ZONE, seriesOf } from '../content/series';
 import { nb } from '../content/text';
@@ -16,6 +16,9 @@ import { seriesDone, seriesPct } from '../engine/mastery';
 import { opProg } from '../engine/progress';
 
 type Item = { a: number; b: number };
+
+/** Phrase d'un piège : le trou en points ; en nature des mots, la phrase avec son mot (« Le chat dort. »). */
+const chipText = (it: FrItem): string => (it.w ? fillBlank(it.s, it.w) : it.s.replace(/___/g, '…'));
 
 export function GridFr({ tabs }: { tabs?: ComponentChildren }) {
   const p = usePlayer();
@@ -31,7 +34,7 @@ export function GridFr({ tabs }: { tabs?: ComponentChildren }) {
 
   let sheet = null;
   if (sel) {
-    const { quiz, item } = itemOf(sel), full = fillBlank(item.s, item.a);
+    const { quiz, item } = itemOf(sel), full = itemText(item);
     sheet = (
       <div class="cell-sheet">
         <div class="cs-top">
@@ -79,7 +82,7 @@ export function GridFr({ tabs }: { tabs?: ComponentChildren }) {
             <>
               <div><h2>Mes phrases pièges</h2><p class="sub">{nb('Elles reviennent plus souvent. Encore un effort !')}</p></div>
               <div class="trap-chips">
-                {traps.map((x) => <button key={`${x.a}f${x.b}`} class="tchip fr" onClick={() => setSel(x)}>{itemOf(x).item.s.replace(/___/g, '…')}</button>)}
+                {traps.map((x) => <button key={`${x.a}f${x.b}`} class="tchip fr" onClick={() => setSel(x)}>{chipText(itemOf(x).item)}</button>)}
               </div>
               <button class="btn-primary" onClick={() => go({ name: 'question', cfg: trapsCfg(traps.map((x) => factKey('fr', x.a, x.b))), back: { name: 'grid' } })}>{nb('Entraîner mes pièges')}</button>
             </>
