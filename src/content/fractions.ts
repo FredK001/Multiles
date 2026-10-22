@@ -60,7 +60,7 @@ const LIRE: FracItem[] = DENOMS.flatMap((d) =>
 /** Fraction et unité : plus petite que 1, égale à 1, plus grande que 1. */
 const less = (n: number, d: number): FracItem => ({ q: `${n}/${d}, c'est…`, a: 'moins que 1', x: ['égal à 1', 'plus que 1'], tip: `${n} parts sur ${d} : il en manque pour faire une unité entière.` });
 const one = (n: number): FracItem => ({ q: `${n}/${n}, c'est…`, a: 'égal à 1', x: ['moins que 1', 'plus que 1'], tip: `${n} parts sur ${n} : toutes les parts, c'est une unité entière.` });
-const more = (n: number, d: number): FracItem => ({ q: `${n}/${d}, c'est…`, a: 'plus que 1', x: ['moins que 1', 'égal à 1'], tip: `${n} parts de ${d} : une unité, c'est ${d} parts ; il y en a plus.` });
+const more = (n: number, d: number): FracItem => ({ q: `${n}/${d}, c'est…`, a: 'plus que 1', x: ['moins que 1', 'égal à 1'], tip: `${fracWords({ n, d })} : une unité, c'est ${d} ${NAMES[d]![1]} ; il y en a plus.` });
 // Les trois cas sont mêlés : chaque étape (première et seconde moitié) les travaille tous.
 const UNITE: FracItem[] = [
   less(3, 4), one(4), more(5, 4), less(2, 5), one(3), more(3, 2), less(5, 8),
