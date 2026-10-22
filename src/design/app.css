@@ -11,7 +11,8 @@
 /* Tablette en paysage : l'écran de question s'élargit et passe sur deux colonnes
    (la question à gauche, les réponses ou le pavé à droite). */
 @media (min-width:900px) and (orientation:landscape) and (min-height:600px){
-  .app:has(.scr-q){max-width:min(1180px,var(--vw,100vw))}
+  /* Grand écran (ordinateur, tablette en paysage) : toute l'app s'élargit ; chaque écran répartit son contenu (voir wide.css). */
+  .app{max-width:min(1240px,var(--vw,100vw))}
   .scr-q .q-sheet{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);column-gap:28px;align-content:stretch}
   .scr-q .buddy{grid-column:1;grid-row:1}
   .scr-q .q-card{grid-column:1;grid-row:2;max-height:none;align-self:stretch}

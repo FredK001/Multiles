@@ -1,0 +1,44 @@
+/* Grand écran (ordinateur, tablette en paysage) : la colonne de l'app s'élargit (app.css) ; ici, chaque écran
+   répartit son contenu. Deux règles : les écrans « héros + actions » passent sur deux colonnes (accueil, île) ;
+   les écrans de lecture gardent une largeur lisible, centrée. Les téléphones ne sont pas concernés. */
+@media (min-width:900px) and (orientation:landscape) and (min-height:600px){
+  /* Largeur lisible pour le contenu qui défile : centré, au plus 980 px. */
+  .grid-scroll,.alb-scroll,.par-body,.pane,.dsc-body,.end-body,.isd-body{padding-left:max(16px,calc((100% - 980px) / 2));padding-right:max(16px,calc((100% - 980px) / 2))}
+  .shop-grid{padding-left:max(16px,calc((100% - 980px) / 2));padding-right:max(16px,calc((100% - 980px) / 2));grid-template-columns:repeat(5,1fr)}
+  .ed-grid{grid-template-columns:repeat(6,1fr)}
+
+  /* Accueil : le joueur et son Pépin à gauche, les îles, la série, le défi et « Jouer » à droite. */
+  .screen[data-screen="home"]{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);grid-template-rows:minmax(0,1fr) auto}
+  .screen[data-screen="home"] > .home-band{grid-column:1;grid-row:1;border-bottom:0;border-right:3px solid var(--ink);border-radius:0 34px 34px 0;display:flex;flex-direction:column;justify-content:center;gap:12px}
+  .screen[data-screen="home"] > .home-body{grid-column:2;grid-row:1;justify-content:center;padding:24px 32px}
+  .screen[data-screen="home"] > .tabbar{grid-column:1 / -1;grid-row:2}
+
+  /* Île : le dessin de l'île et sa progression à gauche, les étapes et le gardien à droite. */
+  .screen[data-screen="isle"]{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);grid-template-rows:minmax(0,1fr)}
+  .screen[data-screen="isle"] > .isd-band{grid-column:1;grid-row:1;border-bottom:0;border-right:3px solid var(--ink);border-radius:0 34px 34px 0;display:flex;flex-direction:column;justify-content:center}
+  .screen[data-screen="isle"] > .isd-body{grid-column:2;grid-row:1;justify-content:center;padding:24px 32px}
+
+  /* Colonne de gauche : la barre du haut reste en haut, le reste est centré dans la hauteur. */
+  .screen[data-screen="home"] > .home-band,.screen[data-screen="isle"] > .isd-band{justify-content:flex-start}
+  .screen[data-screen="home"] > .home-band > :nth-child(2),.screen[data-screen="isle"] > .isd-band > :nth-child(2){margin-top:auto}
+  .screen[data-screen="home"] > .home-band > :last-child,.screen[data-screen="isle"] > .isd-band > :last-child{margin-bottom:auto}
+  /* Colonne de droite : le bouton suit le contenu au lieu d'être collé en bas. */
+  .screen[data-screen="home"] .btn-play,.screen[data-screen="isle"] .btn-isle{margin-top:20px;position:static}
+
+  /* Découvrir : une colonne de lecture plus étroite (les points restent près de leur total). */
+  .dsc-body{padding-left:max(16px,calc((100% - 760px) / 2));padding-right:max(16px,calc((100% - 760px) / 2))}
+  /* Grille de Pythagore : taille d'une page, pas de tout l'écran. */
+  .pyth-card{width:100%;max-width:540px;align-self:center}
+
+  /* Boutique : l'aperçu (joueur et Pépin) à gauche, les catégories, les objets et l'achat à droite. */
+  .screen[data-screen="shop"]{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);grid-template-rows:auto auto auto minmax(0,1fr) auto auto;column-gap:16px}
+  .screen[data-screen="shop"] > .topbar,.screen[data-screen="shop"] > .seg2,.screen[data-screen="shop"] > .tabbar{grid-column:1 / -1}
+  .screen[data-screen="shop"] > :nth-child(3){grid-column:1;grid-row:3 / span 3;margin-left:16px;align-self:center}
+  .screen[data-screen="shop"] > .cat3{grid-column:2;grid-row:3;margin-right:16px}
+  .screen[data-screen="shop"] > .shop-grid{grid-column:2;grid-row:4;padding-left:0;padding-right:16px;grid-template-columns:repeat(4,1fr)}
+  .screen[data-screen="shop"] > .shop-foot{grid-column:2;grid-row:5;margin-right:16px}
+  .screen[data-screen="shop"] > .tabbar{grid-row:6}
+
+  /* Choix de la matière : cartes en grille. */
+  .ops-cards,.ops-cards.many{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:auto;align-content:center}
+}

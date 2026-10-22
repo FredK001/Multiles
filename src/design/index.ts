@@ -4,6 +4,7 @@ import './base.css';
 import './screens.css';
 import './app.css';
 import './fit.css';
+import './wide.css';
 
 export { mix, darken, contrast, luminance } from './color';
 export { applyIsleTheme, applyProfileTheme } from './theme';
