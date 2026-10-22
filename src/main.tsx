@@ -2,9 +2,11 @@ import { render } from 'preact';
 import './design';
 import { installAudioUnlock, installTapSound } from './audio';
 import { App } from './app/App';
+import { installTabletFit } from './app/tablet';
 import { initPwa } from './pwa';
 import { openStore } from './store';
 
+installTabletFit();
 installAudioUnlock();
 installTapSound();
 void initPwa();

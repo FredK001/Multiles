@@ -422,7 +422,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
             fq.num!.set === 'du' ? <div class="num-card"><Svg html={tensArt(fq.num!.x, fq.num!.y, 90)} /></div> : null
           ) : fq.op === 'mul' ? (
             <>
-              <div class="aid-top"><span>{fq.a} rangées de {fq.b}</span><span>{fq.p} en tout</span></div>
+              <div class="aid-top"><span>{fq.a} rangée{fq.a > 1 ? 's' : ''} de {fq.b}</span><span>{fq.p} en tout</span></div>
               <AidGrid rows={fq.a} cols={fq.b} />
             </>
           ) : fq.op === 'div' ? (

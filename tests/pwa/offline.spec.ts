@@ -7,7 +7,7 @@ const HOSTS = [PROD, 'http://localhost:4174/sous-dossier'];
 
 test('manifest et icônes conformes', async ({ request }) => {
   const m = await (await request.get(`${PROD}/manifest.webmanifest`)).json();
-  expect(m).toMatchObject({ name: 'Multîles', short_name: 'Multîles', lang: 'fr', display: 'standalone', orientation: 'portrait', theme_color: '#1E2440', background_color: '#E6F4F2', start_url: './' });
+  expect(m).toMatchObject({ name: 'Multîles', short_name: 'Multîles', lang: 'fr', display: 'standalone', orientation: 'any', theme_color: '#1E2440', background_color: '#E6F4F2', start_url: './' });
   expect(m.icons.map((i: { sizes: string; purpose: string }) => `${i.sizes}/${i.purpose}`)).toEqual(['192x192/any', '512x512/any', '512x512/maskable']);
   for (const i of [...m.icons.map((x: { src: string }) => x.src), 'icons/apple-touch-icon-180.png']) expect((await request.get(`${PROD}/${i}`)).status()).toBe(200);
 });

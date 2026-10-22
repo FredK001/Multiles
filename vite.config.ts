@@ -20,7 +20,8 @@ export default defineConfig({
         start_url: './',
         scope: './',
         display: 'standalone',
-        orientation: 'portrait',
+        // Les tablettes tournent (deux colonnes en paysage) ; les téléphones gardent leur repli paysage (fit.css).
+        orientation: 'any',
         theme_color: '#1E2440',
         background_color: '#E6F4F2',
         categories: ['education', 'kids'],

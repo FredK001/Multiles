@@ -109,7 +109,7 @@ function GridTable({ tabs }: { tabs?: ComponentChildren }) {
         </div>
         {m || t ? (
           <div class="aid">
-            <div class="aid-top"><span>{r} rangées de {c}</span><span>{r * c} en tout</span></div>
+            <div class="aid-top"><span>{r} rangée{r > 1 ? 's' : ''} de {c}</span><span>{r * c} en tout</span></div>
             <AidGrid rows={r} cols={c} />
             <p class="tip" style={{ fontSize: '16px' }}>{nb(tipFor(r, c))}</p>
           </div>

@@ -4,6 +4,20 @@
 .app{position:relative;width:100%;height:100vh;height:100dvh;overflow:hidden;background:var(--lagon);margin:0 auto}
 @media (min-width:640px){.app{max-width:600px;box-shadow:0 0 0 3px var(--ink)}}
 
+/* Tablette (src/app/tablet.ts) : toute la colonne est agrandie d'un facteur --k ; sa hauteur est divisée d'autant
+   pour remplir exactement l'écran. Les feuilles et fenêtres, à l'intérieur de .app, suivent. */
+@media (min-width:640px){.app{zoom:var(--k,1);height:calc(100dvh / var(--k,1))}}
+
+/* Tablette en paysage : l'écran de question s'élargit et passe sur deux colonnes
+   (la question à gauche, les réponses ou le pavé à droite). */
+@media (min-width:900px) and (orientation:landscape) and (min-height:600px){
+  .app:has(.scr-q){max-width:min(1180px,var(--vw,100vw))}
+  .scr-q .q-sheet{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);column-gap:28px;align-content:stretch}
+  .scr-q .buddy{grid-column:1;grid-row:1}
+  .scr-q .q-card{grid-column:1;grid-row:2;max-height:none;align-self:stretch}
+  .scr-q .q-answer{grid-column:2;grid-row:1 / span 2;margin-top:0;justify-content:center;padding-top:0}
+}
+
 /* Écart volontaire au prototype : avec « réduire les animations », les étoiles de fin
    (opacité 0 tant que l'animation starIn ne joue pas) restaient invisibles. */
 @media (prefers-reduced-motion:reduce){.stars3 .s{opacity:1}}
