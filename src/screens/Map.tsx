@@ -92,7 +92,7 @@ export function MapScreen({ op }: { op: Op }) {
                   </span>
                 )}
                 <Svg html={islandArt(I.motif, !open, I.fort)} />
-                <span class="plate"><span class="num" style={{ background: open ? I.fort : '#6B7390' }}>{num}</span>{mul || op === 'div' || op === 'fr' || op === 'lec' || op === 'num' || op === 'frac' ? I.name : eng ? <span lang="en">{I.name}</span> : def.title}</span>
+                <span class="plate"><span class="num" style={{ background: open ? I.fort : '#6B7390' }}>{num}</span>{mul || op === 'div' || op === 'fr' || op === 'lec' || op === 'num' || op === 'frac' || op === 'grd' || op === 'esp' ? I.name : eng ? <span lang="en">{I.name}</span> : def.title}</span>
                 {open ? (
                   <span class="pips" aria-hidden="true">
                     {[0, 1, 2].map((i) => <span key={i} class={`pip ${i < st.steps ? 'on' : ''}`}></span>)}

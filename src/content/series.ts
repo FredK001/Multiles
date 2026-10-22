@@ -7,29 +7,37 @@ import { ALL_QUIZZES, type FrQuizId } from './french';
 import { FRAC_SETS, type FracId } from './fractions';
 import { NUM_SETS, type NumId } from './numbers';
 import { READ_SETS, type ReadId } from './reading';
+import { GRD_SETS, type GrdId } from './measures';
+import { ESP_SETS, type EspId } from './space';
 
-export type Op = 'mul' | 'div' | 'frac' | 'add' | 'sub' | 'num' | 'lec' | 'fr' | 'eng';
+export type Op = 'mul' | 'div' | 'frac' | 'add' | 'sub' | 'num' | 'grd' | 'esp' | 'lec' | 'fr' | 'eng';
 
 /** Toutes les opérations, dans l'ordre d'affichage (album, espace parent, sauvegarde). */
-export const OPS: readonly Op[] = ['mul', 'div', 'frac', 'add', 'sub', 'num', 'lec', 'fr', 'eng'];
+export const OPS: readonly Op[] = ['mul', 'div', 'frac', 'add', 'sub', 'num', 'grd', 'esp', 'lec', 'fr', 'eng'];
 export type Grade = 'CP' | 'CM1';
 
 export const GRADES: readonly Grade[] = ['CP', 'CM1'];
 
 /** Opérations proposées à chaque niveau, dans l'ordre d'affichage. */
-export const CURRICULUM: Record<Grade, readonly Op[]> = { CP: ['add', 'sub', 'num', 'lec'], CM1: ['mul', 'div', 'frac', 'fr', 'eng'] };
+export const CURRICULUM: Record<Grade, readonly Op[]> = { CP: ['add', 'sub', 'num', 'grd', 'esp', 'lec'], CM1: ['mul', 'div', 'frac', 'fr', 'eng'] };
 
 /** Couleur de zone de l'anglais (îles, questions, carte) : bleu marine, 9,6:1 avec le blanc. */
 export const ENG_ZONE = { fort: '#23408E', clair: '#DCE3F5' } as const;
 
 /** Couleur d'une opération (pastilles, cartes de choix) ; les tables gardent la couleur de profil. */
-export const zoneOf = (op: Op): string => (op === 'eng' ? ENG_ZONE.fort : op === 'mul' ? 'var(--ballon)' : op === 'div' ? DIV_ZONE.fort : op === 'fr' ? FR_ZONE.fort : op === 'lec' ? LEC_ZONE.fort : op === 'num' ? NUM_ZONE.fort : op === 'frac' ? FRAC_ZONE.fort : CP_ZONE.fort);
+export const zoneOf = (op: Op): string => (op === 'eng' ? ENG_ZONE.fort : op === 'mul' ? 'var(--ballon)' : op === 'div' ? DIV_ZONE.fort : op === 'fr' ? FR_ZONE.fort : op === 'lec' ? LEC_ZONE.fort : op === 'num' ? NUM_ZONE.fort : op === 'frac' ? FRAC_ZONE.fort : op === 'grd' ? GRD_ZONE.fort : op === 'esp' ? ESP_ZONE.fort : CP_ZONE.fort);
 
 /** Couleur de zone des fractions (CM1) : framboise, 6,9:1 avec le blanc. */
 export const FRAC_ZONE = { fort: '#9C2F5B', clair: '#F6DDE7' } as const;
 
 /** Couleur de zone des nombres (CP) : bleu canard, 6,2:1 avec le blanc. */
 export const NUM_ZONE = { fort: '#0B6E75', clair: '#D3EEF0' } as const;
+
+/** Couleur de zone des grandeurs, monnaie et heure (CP) : bronze, 6,3:1 avec le blanc. */
+export const GRD_ZONE = { fort: '#7A5C00', clair: '#F3EBC8' } as const;
+
+/** Couleur de zone de l'espace et des formes (CP) : prune, 7:1 avec le blanc. */
+export const ESP_ZONE = { fort: '#7A3E9D', clair: '#EFE2F6' } as const;
 
 /** Couleur de zone de la lecture (CP) : bleu roi, 6,4:1 avec le blanc. */
 export const LEC_ZONE = { fort: '#1D5FA8', clair: '#DCE8F7' } as const;
@@ -44,25 +52,26 @@ export const DIV_ZONE = { fort: '#6B2E8F', clair: '#EBDDF3' } as const;
 export const CP_ZONE = { fort: '#B04A00', clair: '#FBE4D3' } as const;
 
 /** Noms au pluriel (espace parent, choix de l'opération). */
-export const OP_NAME: Record<Op, string> = { mul: 'Multiplications', div: 'Divisions', frac: 'Fractions', fr: 'Français', lec: 'Lecture', num: 'Nombres', add: 'Additions', sub: 'Soustractions', eng: 'Anglais' };
+export const OP_NAME: Record<Op, string> = { mul: 'Multiplications', div: 'Divisions', frac: 'Fractions', fr: 'Français', lec: 'Lecture', num: 'Nombres', grd: 'Monnaie et heure', esp: 'Formes et espace', add: 'Additions', sub: 'Soustractions', eng: 'Anglais' };
 
 /** Nom d'une opération. */
-export const OP_SINGULAR: Record<Op, string> = { mul: 'Multiplication', div: 'Division', frac: 'Fractions', fr: 'Français', lec: 'Lecture', num: 'Nombres', add: 'Addition', sub: 'Soustraction', eng: 'Anglais' };
+export const OP_SINGULAR: Record<Op, string> = { mul: 'Multiplication', div: 'Division', frac: 'Fractions', fr: 'Français', lec: 'Lecture', num: 'Nombres', grd: 'Monnaie et heure', esp: 'Formes et espace', add: 'Addition', sub: 'Soustraction', eng: 'Anglais' };
 
 /** Mot court lu et affiché pour un enfant qui lit peu. */
-export const OP_WORD: Record<Op, string> = { mul: 'Fois', div: 'Divisé', frac: 'Fractions', fr: 'Français', lec: 'Lire', num: 'Nombres', add: 'Plus', sub: 'Moins', eng: 'Anglais' };
+export const OP_WORD: Record<Op, string> = { mul: 'Fois', div: 'Divisé', frac: 'Fractions', fr: 'Français', lec: 'Lire', num: 'Nombres', grd: 'Mesurer', esp: 'Formes', add: 'Plus', sub: 'Moins', eng: 'Anglais' };
 
 /** Mot lu à voix haute entre les deux nombres. */
-export const OP_SPOKEN: Record<Op, string> = { mul: 'fois', div: 'divisé par', frac: '', fr: '', lec: '', num: '', add: 'plus', sub: 'moins', eng: '' };
+export const OP_SPOKEN: Record<Op, string> = { mul: 'fois', div: 'divisé par', frac: '', fr: '', lec: '', num: '', grd: '', esp: '', add: 'plus', sub: 'moins', eng: '' };
 
 /** Ce que propose chaque classe (création de profil, espace parent). */
-export const GRADE_DESC: Record<Grade, string> = { CP: 'Additions, soustractions, nombres et lecture', CM1: 'Tables de multiplication, divisions, fractions, français et anglais' };
+export const GRADE_DESC: Record<Grade, string> = { CP: 'Additions, soustractions, nombres, monnaie et heure, formes et lecture', CM1: 'Tables de multiplication, divisions, fractions, français et anglais' };
 
 /** Signe affiché (vrai signe moins, pas le tiret). */
-export const OP_SIGN: Record<Op, string> = { mul: '×', div: '÷', frac: '½', fr: 'Aa', lec: 'ab', num: '123', add: '+', sub: '−', eng: 'EN' };
+export const OP_SIGN: Record<Op, string> = { mul: '×', div: '÷', frac: '½', fr: 'Aa', lec: 'ab', num: '123', grd: '€', esp: '▲', add: '+', sub: '−', eng: 'EN' };
 
-/** Lettre utilisée dans les clés de calcul : « 7x8 », « 56d7 », « 3+4 », « 9-2 », « 4e12 » (thème 4, mot 12). */
-export const OP_KEY: Record<Op, 'x' | 'd' | 'r' | '+' | '-' | 'n' | 'l' | 'f' | 'e'> = { mul: 'x', div: 'd', frac: 'r', add: '+', sub: '-', num: 'n', lec: 'l', fr: 'f', eng: 'e' };
+/** Lettre utilisée dans les clés de calcul : « 7x8 », « 56d7 », « 3+4 », « 9-2 », « 4e12 » (thème 4, mot 12) ;
+    grandeurs « 3h5 » et espace « 2s4 » (île, rang). */
+export const OP_KEY: Record<Op, 'x' | 'd' | 'r' | '+' | '-' | 'n' | 'h' | 's' | 'l' | 'f' | 'e'> = { mul: 'x', div: 'd', frac: 'r', add: '+', sub: '-', num: 'n', grd: 'h', esp: 's', lec: 'l', fr: 'f', eng: 'e' };
 
 export type SeriesSpec =
   /** Table de n : n × 1 à n × 10 ; en division, n × 1 ÷ n à n × 10 ÷ n (a = dividende, b = n). */
@@ -76,6 +85,10 @@ export type SeriesSpec =
   | { kind: 'frac'; set: FracId; n: number }
   /** Nombres jusqu'à 100 n° `n` (1 à 4) : le sens de a et b dépend de l'île (content/numbers.ts). */
   | { kind: 'num'; set: NumId; n: number }
+  /** Grandeurs n° `n` (1 à 4 : pièces, payer, heure, demie) : a = n, b = rang de la question (content/measures.ts). */
+  | { kind: 'grd'; set: GrdId; n: number }
+  /** Espace et formes n° `n` (1 à 4 : formes, côtés, quadrillage, position) : a = n, b = rang (content/space.ts). */
+  | { kind: 'esp'; set: EspId; n: number }
   /** Lecture n° `n` (1 à 5) : a = n, b = n° du son, de la syllabe ou du mot. */
   | { kind: 'read'; set: ReadId; n: number }
   /** Français n° `n` (1 à 8 : homophones puis temps) : a = n, b = n° de la phrase. */
@@ -104,7 +117,9 @@ export type FrId = `fr-${FrQuizId}`;
 export type LecId = `lec-${ReadId}`;
 export type NumSeries = `num-${NumId}`;
 export type FracSeries = `frac-${FracId}`;
-export type SeriesId = TableId | DivId | 'add-10' | 'add-c10' | 'add-dbl' | 'add-pb' | 'add-20' | 'sub-pb' | 'sub-half' | 'sub-10' | 'sub-20' | NumSeries | LecId | FracSeries | FrId | EngId;
+export type GrdSeries = `grd-${GrdId}`;
+export type EspSeries = `esp-${EspId}`;
+export type SeriesId = TableId | DivId | 'add-10' | 'add-c10' | 'add-dbl' | 'add-pb' | 'add-20' | 'sub-pb' | 'sub-half' | 'sub-10' | 'sub-20' | NumSeries | GrdSeries | EspSeries | LecId | FracSeries | FrId | EngId;
 
 export interface SeriesDef {
   id: SeriesId;
@@ -266,6 +281,32 @@ const numSet = (id: NumId, i: number): SeriesDef => ({
   formats: id === 'comp' ? ['qcm'] : ['pave', 'qcm'],
 });
 
+/** Grandeurs : les pièces et l'heure juste ouvertes au départ ; payer et la demie avec un trophée. */
+const GRD_NEED: Record<GrdId, number> = { pieces: 0, payer: 1, heure: 0, demie: 1 };
+const grdSet = (id: GrdId, i: number): SeriesDef => ({
+  id: `grd-${id}`,
+  op: 'grd',
+  spec: { kind: 'grd', set: id, n: i + 1 },
+  steps: [{ half: 0 }, { half: 1 }, null],
+  title: GRD_SETS[i]!.title,
+  stepLabels: ['Partie 1', 'Partie 2', 'Tout'],
+  need: GRD_NEED[id],
+  formats: ['qcm'],
+});
+
+/** Espace : les formes ouvertes au départ, puis un trophée par île. */
+const ESP_NEED: Record<EspId, number> = { formes: 0, cotes: 1, quadri: 2, position: 0 };
+const espSet = (id: EspId, i: number): SeriesDef => ({
+  id: `esp-${id}`,
+  op: 'esp',
+  spec: { kind: 'esp', set: id, n: i + 1 },
+  steps: [{ half: 0 }, { half: 1 }, null],
+  title: ESP_SETS[i]!.title,
+  stepLabels: ['Partie 1', 'Partie 2', 'Tout'],
+  need: ESP_NEED[id],
+  formats: ['qcm'],
+});
+
 /** Lecture : les voyelles et les premières syllabes ouvertes au départ, puis un trophée par île. */
 const LEC_NEED: Record<ReadId, number> = { voy: 0, syl1: 0, syl2: 1, sons: 2, mots: 3 };
 const readSet = (id: ReadId, i: number): SeriesDef => ({
@@ -300,6 +341,8 @@ export const SERIES: Record<SeriesId, SeriesDef> = {
   'sub-10': upTo10('sub'), 'sub-pb': problems('sub'), 'sub-half': halves, 'sub-20': upTo20('sub'),
   ...(Object.fromEntries(FRAC_SETS.map((r, i) => [`frac-${r.id}`, fracSet(r.id, i)])) as Record<FracSeries, SeriesDef>),
   ...(Object.fromEntries(NUM_SETS.map((r, i) => [`num-${r.id}`, numSet(r.id, i)])) as Record<NumSeries, SeriesDef>),
+  ...(Object.fromEntries(GRD_SETS.map((r, i) => [`grd-${r.id}`, grdSet(r.id, i)])) as Record<GrdSeries, SeriesDef>),
+  ...(Object.fromEntries(ESP_SETS.map((r, i) => [`esp-${r.id}`, espSet(r.id, i)])) as Record<EspSeries, SeriesDef>),
   ...(Object.fromEntries(READ_SETS.map((r, i) => [`lec-${r.id}`, readSet(r.id, i)])) as Record<LecId, SeriesDef>),
   ...(Object.fromEntries(ALL_QUIZZES.map((q, i) => [`fr-${q.id}`, quiz(q.id, i)])) as Record<FrId, SeriesDef>),
   ...(Object.fromEntries(THEMES.map((t, i) => [`eng-${t.id}`, theme(t.id, i)])) as Record<EngId, SeriesDef>),

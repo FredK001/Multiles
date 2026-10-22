@@ -5,6 +5,7 @@ import { quizOf } from '../content/french';
 import { fracSetOf } from '../content/fractions';
 import { numSetOf } from '../content/numbers';
 import { readSetOf } from '../content/reading';
+import { picItemsOf } from './picquiz';
 import { DRILL_BASE, SERIES, seriesOf, type Op, type SeriesDef, type SeriesId, type StepFilter } from '../content/series';
 import { defaultRng, type Rng } from './random';
 
@@ -50,6 +51,8 @@ function allFacts(s: SeriesDef): Fact[] {
   if (sp.kind === 'frac') return fracSetOf(sp.set).items.map((_, i) => ({ a: sp.n, b: i + 1 }));
   if (sp.kind === 'num') return numSetOf(sp.set).facts.map((_, i) => ({ a: sp.n, b: i + 1 }));
   if (sp.kind === 'read') return readSetOf(sp.set).items.map((_, i) => ({ a: sp.n, b: i + 1 }));
+  // Grandeurs et espace (CP) : a = n° de l'île, b = rang de la question (content/measures.ts, content/space.ts).
+  if (sp.kind === 'grd' || sp.kind === 'esp') return picItemsOf(sp).map((_, i) => ({ a: sp.n, b: i + 1 }));
   if (sp.kind === 'quiz') return quizOf(sp.quiz).items.map((_, i) => ({ a: sp.n, b: i + 1 }));
   if (sp.kind === 'list') return sp.facts.map((f) => ({ ...f }));
   const lo = sp.zero ? 0 : 1;
@@ -80,6 +83,10 @@ function matches(s: SeriesDef, f: Fact, flt: StepFilter): boolean {
     // Nombres, fractions : les questions les plus simples d'abord (listes rangées).
     const half = Math.ceil((s.spec.kind === 'num' ? numSetOf(s.spec.set).facts : fracSetOf(s.spec.set).items).length / 2);
     if ((flt.half === 0) !== f.b <= half) return false;
+  }
+  if (flt.half !== undefined && (s.spec.kind === 'grd' || s.spec.kind === 'esp')) {
+    // Grandeurs, espace : les questions les plus simples d'abord (listes rangées).
+    if ((flt.half === 0) !== f.b <= Math.ceil(picItemsOf(s.spec).length / 2)) return false;
   }
   if (flt.bs && !flt.bs.includes(f.b)) return false;
   if (flt.mult && !flt.mult.includes(op === 'div' ? f.a / f.b : f.b)) return false;

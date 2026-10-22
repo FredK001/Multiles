@@ -707,3 +707,22 @@
 .ops-cards.many .op-card b{font-size:32px}
 .ops-cards.many .op-card small{font-size:15px;margin-top:2px}
 .ops-cards.many .op-stars{margin-top:2px}
+
+/* Grandeurs et espace (CP) : un grand dessin, trois réponses écrites (une par ligne) ou dessinées (côte à côte) */
+.pic-card{display:flex;flex-direction:column;align-items:center;gap:8px}
+.pic-art{display:flex;justify-content:center;max-width:100%}
+.pic-art svg{max-height:190px;max-width:100%;height:auto}
+.pic-big{font-family:var(--titre);font-weight:700;font-size:56px;line-height:1.1;text-align:center;color:var(--ile)}
+.scr-q.pic .pic-choices{grid-template-columns:1fr}
+.scr-q.pic .pic-choices .choice{height:68px;font-family:var(--ui);font-weight:800;font-size:28px;line-height:1.1;padding:0 10px}
+.scr-q.pic .pic-choices.pics{grid-template-columns:repeat(3,1fr)}
+.scr-q.pic .pic-choices.pics .choice{height:124px;display:flex;align-items:center;justify-content:center;padding:6px;overflow:hidden}
+.scr-q.pic .pic-choices.pics .choice svg{max-width:100%;max-height:100%;height:auto}
+.scr-q.pic .pic-choices.pics.wide{grid-template-columns:1fr}
+.scr-q.pic .pic-choices.pics.wide .choice{height:84px}
+.pic-aid svg{max-width:100%;height:auto}
+.pic-lesson{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.pic-ex{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:8px}
+.pic-ex svg{max-width:100%;height:auto}
+.pic-ex b{font-family:var(--titre);font-weight:600;font-size:20px;line-height:1.1;color:var(--ile)}
+.scr-q.pic .fb-eq{font-size:24px;line-height:1.2}

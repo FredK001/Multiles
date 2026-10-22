@@ -3,7 +3,9 @@ import type { FrQuizId } from './french';
 import type { FracId } from './fractions';
 import type { NumId } from './numbers';
 import type { ReadId } from './reading';
-import { CP_ZONE, DIV_ZONE, ENG_ZONE, FR_ZONE, FRAC_ZONE, LEC_ZONE, NUM_ZONE, OP_SIGN, SERIES, type SeriesId } from './series';
+import type { GrdId } from './measures';
+import type { EspId } from './space';
+import { CP_ZONE, DIV_ZONE, ENG_ZONE, ESP_ZONE, FR_ZONE, FRAC_ZONE, GRD_ZONE, LEC_ZONE, NUM_ZONE, OP_SIGN, SERIES, type SeriesId } from './series';
 
 export type IsleId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type DecorKind =
@@ -143,6 +145,22 @@ const NUM_ISLES: Record<NumId, Omit<IsleLook, 'fort' | 'clair'>> = {
   droite: { name: 'Rail', decor: 'espace', motif: 10, boss: 'Wagonnet', sticker: 'Petit train', of: 'du Rail' },
 };
 
+/* Grandeurs (CP) : la monnaie, puis l'heure. */
+const GRD_ISLES: Record<GrdId, Omit<IsleLook, 'fort' | 'clair'>> = {
+  pieces: { name: 'Tirelire', decor: 'bonbon', motif: 6, boss: 'Piécette', sticker: 'Cochon tirelire', of: 'de la Tirelire' },
+  payer: { name: 'Épicerie', decor: 'verger', motif: 3, boss: 'Caissor', sticker: 'Porte-monnaie', of: "de l'Épicerie" },
+  heure: { name: 'Horloge', decor: 'collines', motif: 8, boss: 'Tic-Tac', sticker: 'Réveil', of: "de l'Horloge" },
+  demie: { name: 'Clocher', decor: 'nuages', motif: 9, boss: 'Ding-Dong', sticker: 'Cloche dorée', of: 'du Clocher' },
+};
+
+/* Espace et formes (CP). */
+const ESP_ISLES: Record<EspId, Omit<IsleLook, 'fort' | 'clair'>> = {
+  formes: { name: 'Mosaïque', decor: 'desert', motif: 4, boss: 'Formo', sticker: 'Pyramide', of: 'de la Mosaïque' },
+  cotes: { name: 'Cristal', decor: 'glace', motif: 5, boss: 'Pointu', sticker: 'Diamant', of: 'du Cristal' },
+  quadri: { name: 'Damier', decor: 'jungle', motif: 2, boss: 'Boussolo', sticker: 'Carte au trésor', of: 'du Damier' },
+  position: { name: 'Cabane', decor: 'plage', motif: 1, boss: 'Cachou', sticker: 'Chat malin', of: 'de la Cabane' },
+};
+
 /* Lecture (CP) : une île par étape de l'apprentissage. */
 const LEC_ISLES: Record<ReadId, Omit<IsleLook, 'fort' | 'clair'>> = {
   voy: { name: 'Baie', decor: 'plage', motif: 1, boss: 'Voyello', sticker: 'Coquillage', of: 'de la Baie' },
@@ -170,7 +188,7 @@ export function seriesBadge(id: SeriesId): string {
   const sp = SERIES[id].spec;
   // Division : « ÷7 », pour ne pas confondre avec la table de 7.
   if (sp.kind === 'table' && SERIES[id].op === 'div') return `÷${sp.n}`;
-  return sp.kind === 'table' || sp.kind === 'theme' || sp.kind === 'quiz' || sp.kind === 'read' || sp.kind === 'num' || sp.kind === 'frac' ? String(sp.n) : OP_SIGN[SERIES[id].op];
+  return sp.kind === 'table' || sp.kind === 'theme' || sp.kind === 'quiz' || sp.kind === 'read' || sp.kind === 'num' || sp.kind === 'frac' || sp.kind === 'grd' || sp.kind === 'esp' ? String(sp.n) : OP_SIGN[SERIES[id].op];
 }
 
 /** Habillage de l'île d'une série. */
@@ -186,6 +204,8 @@ export function lookOf(id: SeriesId): IsleLook {
   const spec = SERIES[id].spec;
   if (spec.kind === 'frac') return { ...FRAC_ISLES[spec.set], fort: FRAC_ZONE.fort, clair: FRAC_ZONE.clair };
   if (spec.kind === 'num') return { ...NUM_ISLES[spec.set], fort: NUM_ZONE.fort, clair: NUM_ZONE.clair };
+  if (spec.kind === 'grd') return { ...GRD_ISLES[spec.set], fort: GRD_ZONE.fort, clair: GRD_ZONE.clair };
+  if (spec.kind === 'esp') return { ...ESP_ISLES[spec.set], fort: ESP_ZONE.fort, clair: ESP_ZONE.clair };
   if (spec.kind === 'read') return { ...LEC_ISLES[spec.set], fort: LEC_ZONE.fort, clair: LEC_ZONE.clair };
   if (spec.kind === 'quiz') return { ...FR_ISLES[spec.quiz], fort: FR_ZONE.fort, clair: FR_ZONE.clair };
   if (spec.kind === 'theme') {

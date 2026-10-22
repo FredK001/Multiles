@@ -27,6 +27,8 @@ import { FrAid, FrAnswers, FrCard, frRight } from './FrQuestion';
 import { ReadAid, ReadAnswers, ReadCard, sayRead } from './ReadQuestion';
 import { NumCard, tensArt } from './NumQuestion';
 import { FracAid, FracAnswers, FracCard, fracRight } from './FracQuestion';
+import { PicAid, PicAnswers, PicCard, picRight } from './PicQuestion';
+import { sayEuros } from '../content/picquiz';
 
 type Feedback =
   | { ok: true; title: string; sub: string; eq: string; combo: number | null; delay: number }
@@ -76,8 +78,10 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
   // Au CP : consignes courtes, chiffres et touches plus grands, aide avec jetons.
   // En anglais : dessins, mots et phrases à la place des nombres (EngQuestion).
   const op = opOf(cfg), cp = op === 'add' || op === 'sub', eng = op === 'eng', fr = op === 'fr', lec = op === 'lec', num = op === 'num', frac = op === 'frac', msgs = cp ? MSG_CP : MSG;
+  // Grandeurs et espace (CP) : un dessin, trois réponses ; la consigne et les réponses écrites sont lues.
+  const pq = op === 'grd' || op === 'esp';
   /** Consigne d'une question, selon l'opération. */
-  const promptOf = (x: Q): readonly string[] => (x.op === 'num' ? [spoken(x)] : x.op === 'frac' ? ['Choisis la bonne réponse.', 'Laquelle est juste, {name} ?'] : SERIES[x.series].story ? STORY_PROMPTS : x.op === 'eng' ? engPrompt(x) : x.op === 'lec' ? LEC_PROMPTS[x.fmt === 'qcm' ? 'qcm' : 'ecoute'] : x.op === 'fr' ? (x.fr?.verb ? CONJ_PROMPTS : FR_PROMPTS) : msgs[x.fmt as keyof typeof msgs]);
+  const promptOf = (x: Q): readonly string[] => (x.op === 'num' ? [spoken(x)] : x.picq ? [x.picq.text] : x.op === 'frac' ? ['Choisis la bonne réponse.', 'Laquelle est juste, {name} ?'] : SERIES[x.series].story ? STORY_PROMPTS : x.op === 'eng' ? engPrompt(x) : x.op === 'lec' ? LEC_PROMPTS[x.fmt === 'qcm' ? 'qcm' : 'ecoute'] : x.op === 'fr' ? (x.fr?.verb ? CONJ_PROMPTS : FR_PROMPTS) : msgs[x.fmt as keyof typeof msgs]);
   /** Lecture automatique (réglage du profil) ; jamais quand le chrono tourne, la lecture mangerait le temps. */
   const autoSay = (text: Speakable) => {
     if (p.autoSpeech && !cfg.timed) later(() => speak(text), AUTO_SAY_DELAY);
@@ -107,6 +111,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
       if (cur.fmt === 'ecoute') later(() => speak(p.autoSpeech && !cfg.timed ? [{ text, lang: 'fr' }, { text: cur.read!.say, lang: 'fr' }] : [{ text: cur.read!.say, lang: 'fr' }]), AUTO_SAY_DELAY);
       else autoSay(text);
     } else if (n.op === 'num') autoSay(text);
+    else if (n.picq) autoSay(spoken(n));
     else if (n.op === 'frac') autoSay(`${text} ${spoken(n)}`);
     else if (n.op !== 'eng') autoSay(sayQuestion(n, text));
     else if (p.autoSpeech && !cfg.timed) autoSay(engSayParts(n, text));
@@ -255,7 +260,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
         ? cfg.target ? `${session.good} sur ${cfg.target}` : goodAnswers(session.good)
         : session.done < session.total ? `Encore ${session.remaining} question${session.remaining > 1 ? 's' : ''}` : 'Dernière réponse !';
       const title = fill(pick(OK_TITLES), q, p.name);
-      setFb({ ok: true, title, sub: nb(sub), eq: eng ? engRight(q) : fr ? frRight(q) : lec ? q.read!.target : num ? numEq(q.num!) : frac ? fracRight(q) : equation(q), combo, delay });
+      setFb({ ok: true, title, sub: nb(sub), eq: eng ? engRight(q) : fr ? frRight(q) : lec ? q.read!.target : num ? numEq(q.num!) : frac ? fracRight(q) : pq ? picRight(q) : equation(q), combo, delay });
       chime(combo ? 'combo' : 'ok');
       // Anglais : on entend la bonne réponse (pas pendant le chrono, qui doit rester rapide).
       if (eng && !cfg.timed) later(() => speak([{ text: engRight(q), lang: 'en' }]), 350);
@@ -265,10 +270,11 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
     } else {
       setBuddy({ mood: 'encourage', anim: 'idle' });
       const title = fill(pick(HELP_TITLES), q, p.name);
-      setFb({ ok: false, title, eq: eng ? engRight(q) : fr ? frRight(q) : lec ? q.read!.target : num ? numEq(q.num!) : frac ? fracRight(q) : equation(q), q });
+      setFb({ ok: false, title, eq: eng ? engRight(q) : fr ? frRight(q) : lec ? q.read!.target : num ? numEq(q.num!) : frac ? fracRight(q) : pq ? picRight(q) : equation(q), q });
       if (eng) autoSay([{ text: `${title} La bonne réponse :`, lang: 'fr' }, { text: engRight(q), lang: 'en' }]);
       else if (fr) autoSay(`${title} ${frRight(q)}`);
       else if (num || frac) autoSay(sayFrac(`${title} ${tipOf(q)}`));
+      else if (pq) autoSay(sayEuros(`${title} ${picRight(q)}. ${tipOf(q)}`));
       else if (lec) autoSay(q.fmt === 'ecoute' ? [{ text: `${title} ${tipOf(q)} Écoute :`, lang: 'fr' }, { text: q.read!.say, lang: 'fr' }] : `${title} ${tipOf(q)}`);
       else autoSay(`${title} ${q.a} ${OP_SPOKEN[q.op]} ${q.b} égale ${q.p}.`);
       chime('help');
@@ -338,14 +344,15 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
   );
   let expr = null;
   const sign = q ? OP_SIGN[q.op] : '×';
-  if (q && !eng && !fr && !lec && !frac) {
+  if (q && !eng && !fr && !lec && !frac && !pq) {
     if (q.fmt === 'pave' || q.fmt === 'qcm') expr = <><span>{q.a}</span><span class="op">{sign}</span><span>{q.b}</span><span class="op">=</span>{slot}</>;
     if (q.fmt === 'manquant') expr = <><span>{q.a}</span><span class="op">{sign}</span>{slot}<span class="op">=</span><span>{q.p}</span></>;
     if (q.fmt === 'vf') expr = <><span>{q.a}</span><span class="op">{sign}</span><span>{q.b}</span><span class="op">=</span><span class={`shown ${mark ? 'ok' : ''}`} id="shown" ref={slotRef}>{mark && !q.truth ? q.p : q.shown}</span></>;
   }
 
   let answer = null;
-  if (q && frac) answer = <FracAnswers q={q} picked={picked} locked={locked} onPick={(v) => check(isCorrect(q, v), v)} />;
+  if (q && pq) answer = <PicAnswers q={q} picked={picked} locked={locked} onPick={(v) => check(isCorrect(q, v), v)} />;
+  else if (q && frac) answer = <FracAnswers q={q} picked={picked} locked={locked} onPick={(v) => check(isCorrect(q, v), v)} />;
   else if (q && lec) answer = <ReadAnswers q={q} picked={picked} locked={locked} onPick={(v) => check(isCorrect(q, v), v)} />;
   else if (q && fr) answer = <FrAnswers q={q} picked={picked} locked={locked} onPick={(v) => check(isCorrect(q, v), v)} />;
   else if (q && eng) answer = <EngAnswers q={q} picked={picked} locked={locked} onPick={(v) => check(isCorrect(q, v), v)} />;
@@ -359,7 +366,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
       </div>
     );
   }
-  if (q && !eng && !fr && !lec && !frac && q.fmt === 'qcm') {
+  if (q && !eng && !fr && !lec && !frac && !pq && q.fmt === 'qcm') {
     answer = (
       <div class="choices">
         {q.choices!.map((c) => {
@@ -404,6 +411,8 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
           <div style={{ flex: 1 }}><p class="fb-title" style={{ fontSize: '28px' }}>{fb.title}</p><p class="fb-sub">{nb('La bonne réponse :')}</p></div>
           {eng ? (
             <BtnSay wrap id="fbSay" label="Écouter la bonne réponse" style={{ background: '#fff' }} langs={['fr', 'en']} text={[{ text: `${fb.title} La bonne réponse :`, lang: 'fr' }, { text: engRight(fq), lang: 'en' }]} />
+          ) : pq ? (
+            <BtnSay wrap id="fbSay" label="Écouter l'astuce" style={{ background: '#fff' }} text={sayEuros(`${fb.title} ${picRight(fq)}. ${tip}`)} />
           ) : (
             <BtnSay wrap id="fbSay" label="Écouter l'astuce" style={{ background: '#fff' }} text={fr || lec || num || frac ? sayFrac(`${fb.title} ${fr ? frRight(fq) : frac ? fracRight(fq) : ''} ${tip}`) : `${fb.title} ${fq.a} ${OP_SPOKEN[fq.op]} ${fq.b} égale ${fq.p}. ${tip}`} />
           )}
@@ -416,6 +425,8 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
             <FrAid q={fq} />
           ) : lec ? (
             <ReadAid q={fq} />
+          ) : pq ? (
+            <PicAid q={fq} />
           ) : frac ? (
             <FracAid q={fq} />
           ) : num ? (
@@ -448,7 +459,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
   }
 
   return (
-    <section class={`screen scr-q${cp ? ' cp' : ''}${eng ? ' eng' : ''}${fr ? ' fr' : ''}${lec ? ' lec cp' : ''}${num ? ' num cp' : ''}${frac ? ' frac' : ''}`} data-screen="question" aria-label="Question">
+    <section class={`screen scr-q${cp ? ' cp' : ''}${eng ? ' eng' : ''}${fr ? ' fr' : ''}${lec ? ' lec cp' : ''}${num ? ' num cp' : ''}${frac ? ' frac' : ''}${pq ? ` pic cp ${op}` : ''}`} data-screen="question" aria-label="Question">
       <header class="q-band">
         <div class="q-top">
           <button class="btn-chip" id="btnQuit" aria-label="Quitter la session" onClick={quit}>
@@ -478,7 +489,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
               id="btnSayQ"
               label="Écouter la question"
               langs={eng ? ['fr', 'en'] : ['fr']}
-              text={() => (q ? (locked ? bubble : q.op === 'num' ? bubble : lec && q.fmt === 'ecoute' ? [{ text: bubble, lang: 'fr' }, { text: q.read!.say, lang: 'fr' }] : eng ? engSayParts(q, bubble) : cp ? sayQuestion(q, bubble) : `${bubble} ${spoken(q)}`) : bubble)}
+              text={() => (q ? (locked ? bubble : q.op === 'num' ? bubble : q.picq ? spoken(q) : lec && q.fmt === 'ecoute' ? [{ text: bubble, lang: 'fr' }, { text: q.read!.say, lang: 'fr' }] : eng ? engSayParts(q, bubble) : cp ? sayQuestion(q, bubble) : `${bubble} ${spoken(q)}`) : bubble)}
             />
           </div>
         </div>
@@ -487,6 +498,8 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
             <EngCard q={q} revealed={!!mark} />
           ) : q && lec ? (
             <ReadCard q={q} />
+          ) : q && pq ? (
+            <div class="num-wrap" ref={exprRef}><PicCard q={q} /></div>
           ) : q && frac ? (
             <div class="num-wrap" ref={exprRef}><FracCard q={q} /></div>
           ) : q && num ? (

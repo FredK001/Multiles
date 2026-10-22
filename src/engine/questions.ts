@@ -7,6 +7,7 @@ import { frDraft, type FrQ } from './french';
 import { readDraft, type ReadQ } from './reading';
 import { numAnswer, numChoices, numQ, numSetOfSeries, type NumQ } from './numbers';
 import { fracDraft, fracSetOfSeries, type FracQ } from './fractions';
+import { picDraft, picSpecOf, type PicQ } from './picquiz';
 import { displayBounds, drawFact, factsOf, inSeries, resultOf, weightOf, type Fact } from './series';
 
 /** Les 4 formats : pavé numérique, QCM à 3 choix, facteur manquant, vrai/faux ;
@@ -59,6 +60,8 @@ export interface Question {
   num?: NumQ;
   /** Fractions et décimaux : l'énoncé et les trois réponses ; `p` est l'indice de la bonne. */
   frac?: FracQ;
+  /** Grandeurs et espace (CP) : consigne, dessin et trois réponses (écrites ou dessinées) ; `p` est l'indice de la bonne. */
+  picq?: PicQ;
 }
 
 export interface GenOptions {
@@ -104,6 +107,12 @@ export function generateQuestion({ series, fmt, fact, step = null, rng = default
   if (s.op === 'frac') {
     const d = fracDraft(fracSetOfSeries(s), f.b, rng);
     const q: Question = { op: 'frac', series: s.id, a: f.a, b: f.b, fmt: 'qcm', p: d.p, frac: d.frac, choices: [0, 1, 2] };
+    assertValid(q);
+    return q;
+  }
+  if (s.op === 'grd' || s.op === 'esp') {
+    const d = picDraft(picSpecOf(s), f.b, rng);
+    const q: Question = { op: s.op, series: s.id, a: f.a, b: f.b, fmt: 'qcm', p: d.p, picq: d.pic, choices: [0, 1, 2] };
     assertValid(q);
     return q;
   }
@@ -166,6 +175,11 @@ export function assertValid(q: Question): void {
   if (q.op === 'frac') {
     const o = q.frac?.options ?? [];
     if (!q.frac || q.fmt !== 'qcm' || o.length !== 3 || new Set(o).size !== 3 || q.p < 0 || q.p > 2) fail('fractions');
+    return;
+  }
+  if (q.op === 'grd' || q.op === 'esp') {
+    const o = q.picq?.options ?? [];
+    if (!q.picq || q.fmt !== 'qcm' || o.length !== 3 || new Set(o).size !== 3 || q.p < 0 || q.p > 2) fail('grandeurs, espace');
     return;
   }
   if (q.op === 'num') {
