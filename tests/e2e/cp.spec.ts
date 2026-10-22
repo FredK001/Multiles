@@ -98,7 +98,7 @@ test('CP et CM1 sur le même appareil ; changer de classe garde la progression',
 
   // Nina (CM1) : Jouer passe par le choix « × ou anglais », puis la multiplication de son île.
   await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
-  await expect(page.locator('.btn-play small')).toHaveText('× ou ÷ ou ½ ou Aa ou EN ?');
+  await expect(page.locator('.btn-play small')).toHaveText('× ou ÷ ou ½ ou 1M ou cm ou △ ou Aa ou EN ?');
   await playOp(page, 'Fois');
   await expect(page.locator('.expr .op').first()).toHaveText('×');
   await page.locator('#btnQuit').click();
@@ -106,7 +106,7 @@ test('CP et CM1 sur le même appareil ; changer de classe garde la progression',
 
   // Tom (CP) : choix de l'opération, îles du CP.
   await page.getByRole('button', { name: 'Jouer avec le profil de Tom' }).click();
-  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 26 conquises');
+  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 30 conquises');
   await page.locator('#btnSwitch').click();
 
   // Nina passe en CP puis revient en CM1 : sa progression en multiplication est intacte.

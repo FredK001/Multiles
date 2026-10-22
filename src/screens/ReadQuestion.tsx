@@ -1,6 +1,6 @@
 /* Question de lecture (CP) : réécouter le son (ou voir l'écriture à retrouver), trois écritures, l'aide.
    Îles de phrases : la phrase à lire, trois dessins. Îles de dictée : la voix (ou le dessin), le clavier de lettres. */
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { icoErase, icoSay, readPicArt } from '../art';
 import { speak } from '../audio';
 import { BtnSay, Svg, useCanSpeak } from '../app/ui';
@@ -64,11 +64,14 @@ export function ReadAnswers({ q, picked, locked, onPick }: { q: Question; picked
     Clavier physique : les lettres du clavier, Retour arrière, Entrée. */
 export function DictAnswers({ q, locked, mark, onCheck }: { q: Question; locked: boolean; mark: '' | 'ok' | 'help'; onCheck: (ok: boolean) => void }) {
   const r = q.read!, n = dictMax(r);
-  const [typed, setTyped] = useState('');
+  const [typed, setTypedState] = useState('');
+  // Saisie à jour tout de suite : une lettre suivie d'Entrée au clavier peut arriver avant le nouveau rendu.
+  const now = useRef('');
+  const setTyped = (v: string) => { now.current = v; setTypedState(v); };
   useEffect(() => setTyped(''), [q]);
-  const add = (l: string) => !locked && setTyped((t) => dictType(r, t, l));
-  const erase = () => !locked && setTyped((t) => [...t].slice(0, -1).join(''));
-  const validate = () => !locked && typed && onCheck(dictOk(r, typed));
+  const add = (l: string) => !locked && setTyped(dictType(r, now.current, l));
+  const erase = () => !locked && setTyped([...now.current].slice(0, -1).join(''));
+  const validate = () => !locked && now.current && onCheck(dictOk(r, now.current));
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -76,7 +79,7 @@ export function DictAnswers({ q, locked, mark, onCheck }: { q: Question; locked:
       const k = e.key.normalize('NFC').toLowerCase();
       if (r.options.includes(k)) add(k);
       else if (e.key === 'Backspace') erase();
-      else if (e.key === 'Enter' && typed) { e.preventDefault(); validate(); }
+      else if (e.key === 'Enter' && now.current) { e.preventDefault(); validate(); }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);

@@ -28,6 +28,8 @@ export const MIGRATIONS: Record<number, (d: Raw) => Raw> = {
   3: (d) => d,
   // Version 5 : la division (prog.div) au CM1. Même raison : une ancienne app ne doit pas la perdre en réécrivant.
   4: (d) => d,
+  // Version 6 : grands nombres, mesures, géométrie (CM1), grandeurs et espace (CP). Rien à convertir.
+  5: (d) => d,
 };
 
 /** Profil v2 (tout à plat, tables 1 à 10) → profil v3 (classe CM1, progression dans prog.mul). */
