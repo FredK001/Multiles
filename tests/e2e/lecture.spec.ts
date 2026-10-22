@@ -35,7 +35,7 @@ test('CP : lecture, découvrir, session complète à l’écoute, grille', async
   await page.getByRole('button', { name: 'Jouer avec le profil de Tom' }).click();
   await page.locator('.isles-strip').click();
   await page.locator('.op-card', { hasText: 'Lire' }).click();
-  await expect(page.locator('.isle')).toHaveCount(5);
+  await expect(page.locator('.isle')).toHaveCount(9); // 5 îles de sons, puis phrases et dictée
   await expect(page.locator('.isle:not(.locked)')).toHaveCount(2);
   await page.locator('.isle').first().click();
   await expect(page.locator('[data-screen="isle"] h1')).toHaveText('Baie');

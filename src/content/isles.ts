@@ -150,6 +150,11 @@ const LEC_ISLES: Record<ReadId, Omit<IsleLook, 'fort' | 'clair'>> = {
   syl2: { name: 'Pont', decor: 'glace', motif: 5, boss: 'Bédé', sticker: 'Grenouille', of: 'du Pont' },
   sons: { name: 'Moulin', decor: 'collines', motif: 8, boss: 'Chouchou', sticker: 'Moulin à vent', of: 'du Moulin' },
   mots: { name: 'Château', decor: 'espace', motif: 10, boss: 'Motus', sticker: 'Livre magique', of: 'du Château' },
+  // Lire une phrase, écrire un mot dicté.
+  phr1: { name: 'Kiosque', decor: 'verger', motif: 3, boss: 'Phrasou', sticker: 'Journal illustré', of: 'du Kiosque' },
+  dict1: { name: 'Ardoise', decor: 'desert', motif: 4, boss: 'Dictor', sticker: 'Bâton de craie', of: "de l'Ardoise" },
+  phr2: { name: 'Grenier', decor: 'bonbon', motif: 6, boss: 'Lisette', sticker: "Album d'images", of: 'du Grenier' },
+  dict2: { name: 'Encrier', decor: 'volcan', motif: 7, boss: 'Plumette', sticker: "Plume d'oie", of: "de l'Encrier" },
 };
 
 /* Français : une île par paire d'homophones (des mots qui se font écho). */

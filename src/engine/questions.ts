@@ -10,8 +10,9 @@ import { fracDraft, fracSetOfSeries, type FracQ } from './fractions';
 import { displayBounds, drawFact, factsOf, inSeries, resultOf, weightOf, type Fact } from './series';
 
 /** Les 4 formats : pavé numérique, QCM à 3 choix, facteur manquant, vrai/faux ;
-    plus, en anglais, l'écoute (la voix dit le mot, l'enfant touche le dessin). */
-export type Format = 'pave' | 'qcm' | 'manquant' | 'vf' | 'ecoute';
+    plus, en anglais, l'écoute (la voix dit le mot, l'enfant touche le dessin) ;
+    plus, en lecture, la dictée (la voix dit le mot, l'enfant l'écrit au clavier de lettres). */
+export type Format = 'pave' | 'qcm' | 'manquant' | 'vf' | 'ecoute' | 'dictee';
 
 /** Rotation des formats en session classique. */
 export const FORMAT_ORDER: readonly Format[] = ['pave', 'qcm', 'manquant', 'vf'];
@@ -115,8 +116,11 @@ export function generateQuestion({ series, fmt, fact, step = null, rng = default
     return q;
   }
   if (s.op === 'lec') {
-    const d = readDraft(s, f, rng);
-    const q: Question = { op: 'lec', series: s.id, a: f.a, b: f.b, fmt: fmt === 'qcm' ? 'qcm' : 'ecoute', p: d.p, read: d.read, choices: [0, 1, 2] };
+    const d = readDraft(s, f, rng), kind = d.read.kind;
+    // Le format dépend de l'île : sons à l'écoute (ou « trouve la même »), phrases à lire (qcm), mots dictés.
+    const lfmt: Format = kind === 'dictee' ? 'dictee' : kind === 'phrase' || fmt === 'qcm' ? 'qcm' : 'ecoute';
+    const q: Question = { op: 'lec', series: s.id, a: f.a, b: f.b, fmt: lfmt, p: d.p, read: d.read };
+    if (kind !== 'dictee') q.choices = [0, 1, 2];
     assertValid(q);
     return q;
   }
@@ -175,8 +179,16 @@ export function assertValid(q: Question): void {
     return;
   }
   if (q.op === 'lec') {
-    const o = q.read?.options ?? [];
-    if (!q.read || (q.fmt !== 'qcm' && q.fmt !== 'ecoute') || o.length !== 3 || new Set(o).size !== 3 || o[q.p] !== q.read.target) fail('lecture');
+    const r = q.read, o = r?.options ?? [];
+    if (!r) return fail('lecture sans contenu');
+    if (r.kind === 'dictee') {
+      // Clavier : chaque lettre du mot présente une fois, au moins deux pièges, pas plus de 9 touches.
+      const need = new Set(r.target);
+      if (q.fmt !== 'dictee' || !r.pic || new Set(o).size !== o.length || [...need].some((l) => !o.includes(l)) || o.length < need.size + 2 || o.length > 9) fail('dictée');
+      return;
+    }
+    const right = r.kind === 'phrase' ? r.pic : r.target;
+    if ((r.kind === 'phrase' ? q.fmt !== 'qcm' : q.fmt !== 'qcm' && q.fmt !== 'ecoute') || o.length !== 3 || new Set(o).size !== 3 || o[q.p] !== right) fail('lecture');
     return;
   }
   if (q.op === 'fr') {
@@ -202,9 +214,10 @@ export function makeQ(a: number, b: number, fmt: Format, rng: Rng = defaultRng):
 /** Même calcul, même format, nouvelles propositions (question remise en fin de file). */
 export const remakeQ = (q: Question, rng: Rng = defaultRng): Question => generateQuestion({ series: q.series, fact: q, fmt: q.fmt, rng });
 
-/** Sans voix anglaise, une question d'écoute devient une question dessin → mot sur le même mot. */
+/** Sans voix anglaise, une question d'écoute devient une question dessin → mot sur le même mot.
+    Dictée sans voix française : le dessin du mot est montré à la place de la voix. */
 export const withoutListening = (q: Question, rng: Rng = defaultRng): Question =>
-  q.fmt === 'ecoute' ? { ...generateQuestion({ series: q.series, fact: q, fmt: 'qcm', rng }), ...(q.retry ? { retry: true } : {}), ...(q.trap ? { trap: true } : {}) } : q;
+  q.fmt === 'dictee' && q.read ? { ...q, read: { ...q.read, seen: true } } : q.fmt === 'ecoute' ? { ...generateQuestion({ series: q.series, fact: q, fmt: 'qcm', rng }), ...(q.retry ? { retry: true } : {}), ...(q.trap ? { trap: true } : {}) } : q;
 
 /** Valeur attendue au pavé : le résultat, ou le nombre manquant (second terme). */
 export const expected = (q: Question): number => (q.fmt === 'manquant' ? q.b : q.p);

@@ -18,6 +18,7 @@ import { pick } from '../engine/random';
 import type { EndSummary } from '../engine/rewards';
 import type { SessionConfig } from '../engine/session';
 import { opProg } from '../engine/progress';
+import { readKindOf } from '../engine/reading';
 import { timedRules } from '../engine/session';
 import { tableNum } from '../engine/unlock';
 import { MiniGrid } from './MiniGrid';
@@ -156,7 +157,7 @@ export function End({ end: E, cfg, back }: { end: EndSummary; cfg: SessionConfig
         <button class="end-grid" onClick={() => go({ name: 'grid' })}>
           {mul && <MiniGrid mastered={opProg(p, 'mul').mastered} fresh={E.fresh} />}
           <span>
-            <b>{nf ? `+${nf} ${mul ? 'case' : def.op === 'eng' ? 'mot' : def.op === 'fr' ? 'phrase' : def.op === 'lec' ? 'son' : def.op === 'num' ? 'nombre' : def.op === 'frac' ? 'réponse' : 'calcul'}${nf > 1 ? 's' : ''}` : 'Ta grille'}</b>
+            <b>{nf ? `+${nf} ${mul ? 'case' : def.op === 'eng' ? 'mot' : def.op === 'fr' ? 'phrase' : def.op === 'lec' ? ({ phrase: 'phrase', dictee: 'mot', son: 'son' } as const)[readKindOf(def) ?? 'son'] : def.op === 'num' ? 'nombre' : def.op === 'frac' ? 'réponse' : 'calcul'}${nf > 1 ? 's' : ''}` : 'Ta grille'}</b>
             <small>{nf ? (mul ? 'dans ta grille de Pythagore' : 'réussis du premier coup') : 'Rejoue pour la colorier'}</small>
             <span class="xp"><span>Niv. {p.level}</span><span class="bar"><i style={{ width: `${xpW}%` }}></i></span></span>
           </span>

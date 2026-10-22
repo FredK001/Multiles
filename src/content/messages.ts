@@ -3,6 +3,7 @@ import type { Question } from '../engine/questions';
 import { themeOf } from './english';
 import { fillBlank, quizOf, ruleOf } from './french';
 import { sayFrac } from './fractions';
+import { PICS, spell } from './reading';
 import { DRILL_BASE, OP_SIGN, OP_SPOKEN, SERIES } from './series';
 import { seriesStory } from './stories';
 import { nb } from './text';
@@ -30,7 +31,19 @@ export const FR_PROMPTS = ['Choisis le bon mot.', 'Quel mot va dans le trou, {na
 export const STORY_PROMPTS = ["Écoute bien l'histoire.", "Lis l'histoire, puis réponds."] as const;
 
 /** Consignes de la lecture (CP) : très courtes, lues par la voix. */
-export const LEC_PROMPTS = { ecoute: ['Écoute et touche ce que tu entends.'], qcm: ['Trouve le même mot.'] } as const;
+export const LEC_PROMPTS = {
+  ecoute: ['Écoute et touche ce que tu entends.'], qcm: ['Trouve le même mot.'],
+  // Phrases : la consigne est lue, jamais la phrase (c'est l'exercice). Dictée : avec la voix, ou avec le dessin.
+  phrase: ['Lis la phrase et touche le bon dessin.'], dictee: ['Écoute et écris le mot.'], vu: ['Écris le mot du dessin.'],
+} as const;
+
+/** Consignes d'une question de lecture, selon l'île (sons, phrases, dictée) et la voix. */
+export function lecPrompts(q: Pick<Question, 'fmt' | 'read'>): readonly string[] {
+  const k = q.read?.kind;
+  if (k === 'phrase') return LEC_PROMPTS.phrase;
+  if (k === 'dictee') return q.read!.seen ? LEC_PROMPTS.vu : LEC_PROMPTS.dictee;
+  return LEC_PROMPTS[q.fmt === 'qcm' ? 'qcm' : 'ecoute'];
+}
 
 /** Consignes de la conjugaison (trois formes du verbe). */
 export const CONJ_PROMPTS = ['Choisis la bonne forme du verbe.', 'Conjugue le verbe, {name} !', 'Quelle forme va dans le trou ?'];
@@ -49,6 +62,8 @@ export function spoken(q: Question): string {
   if (SERIES[q.series]?.story && (q.op === 'add' || q.op === 'sub')) return seriesStory(q.series, q.op, q.a, q.b);
   if (q.op === 'frac' && q.frac) return sayFrac(q.frac.text);
   if (q.op === 'num' && q.num) return numSpoken(q.num.set, q.num.x, q.num.y);
+  if (q.op === 'lec' && q.read?.kind === 'phrase') return LEC_PROMPTS.phrase[0];
+  if (q.op === 'lec' && q.read?.kind === 'dictee') return q.read.seen ? `Écris le mot du dessin : ${PICS[q.read.pic!].label}.` : LEC_PROMPTS.dictee[0];
   if (q.op === 'lec' && q.read) return q.fmt === 'qcm' ? `Trouve : ${q.read.target}.` : 'Écoute bien.';
   if (q.op === 'fr' && q.fr) return q.fr.text.replace(/___/g, '…') + (q.fr.verb ? ` Verbe ${q.fr.verb}.` : '');
   const w = OP_SPOKEN[q.op];
@@ -203,6 +218,11 @@ function numTip(q: TipQ): string {
 function lecTip(q: TipQ): string {
   const r = q.read;
   if (!r) return '';
+  if (r.kind === 'phrase') return phraseTip(r);
+  if (r.kind === 'dictee') {
+    const accent = r.target.includes('é') ? " N'oublie pas l'accent sur le é." : '';
+    return `${r.seen ? `C'est ${PICS[r.pic!].label}` : `On entend « ${r.target} »`} : ça s'écrit ${spell(r.target)}.${accent}`;
+  }
   const w = r.target, letters = w.length <= 4 ? w.split('').join(' puis ') : w;
   // Un intrus est-il la cible avec deux lettres échangées (b ↔ d…) ?
   const swapped = (x: string, y: string) => r.options.includes(w.replace(new RegExp(`[${x}${y}]`, 'g'), (c) => (c === x ? y : x)));
@@ -211,6 +231,14 @@ function lecTip(q: TipQ): string {
   if (/[pb]/.test(w) && swapped('p', 'b')) return `Attention au p et au b : le p descend, le b monte. Ici : ${w}.`;
   if (w.length === 2 && r.options.includes(w[1]! + w[0]!)) return `On lit de gauche à droite : ${letters}.${q.fmt === 'qcm' ? '' : ` Ça fait « ${r.say} ».`}`;
   return q.fmt === 'qcm' ? `Cherche le même mot, lettre par lettre : ${letters}.` : `On entend « ${r.say} » : ça s'écrit ${letters}.`;
+}
+
+/** Phrase lue : les mots qui font choisir le bon dessin (ceux qui le distinguent d'au moins un intrus). */
+function phraseTip(r: NonNullable<TipQ['read']>): string {
+  const right = PICS[r.pic!].keys, others = r.options.filter((o) => o !== r.pic).map((o) => PICS[o as keyof typeof PICS].keys);
+  const clue = right.filter((k) => others.some((x) => !x.includes(k)));
+  const quoted = clue.map((k) => `« ${k} »`), words = quoted.length > 1 ? `${quoted.slice(0, -1).join(', ')} et ${quoted[quoted.length - 1]}` : quoted.join('');
+  return `Relis la phrase mot à mot : ${r.target} ${clue.length > 1 ? `Les mots ${words} disent` : `Le mot ${words} dit`} quel dessin choisir : ${PICS[r.pic!].label}.`;
 }
 
 /** Astuce adaptée au calcul, quelle que soit l'opération. */

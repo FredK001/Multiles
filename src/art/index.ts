@@ -12,3 +12,4 @@ export * from './shopItem';
 export * from './words';
 export { Art, svgHtml } from './Art';
 export * from './fraction';
+export * from './reading';
