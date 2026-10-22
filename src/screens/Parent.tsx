@@ -425,7 +425,7 @@ export function Parent() {
               <p style={{ fontSize: '14px', color: 'var(--ink-2)' }}>{plural(totalSessions(p.days, split ? op : undefined), 'session')} depuis le début. Une session dure 3 à 5 minutes.</p>
             </div>
             <div class="pcard2">
-              <h2>{mul || op === 'div' ? 'Tables' : eng ? 'Thèmes' : op === 'fr' ? 'Homophones et conjugaison' : op === 'lec' ? 'Lecture' : op === 'num' ? 'Nombres' : op === 'frac' ? 'Fractions et décimaux' : 'Séries'} <small>{eng ? 'part des mots et phrases réussis' : op === 'fr' ? 'part des phrases réussies' : op === 'lec' ? 'part des sons et mots réussis' : op === 'num' || op === 'frac' ? 'part des questions réussies' : `part des ${what} réussies`}</small></h2>
+              <h2>{mul || op === 'div' ? 'Tables' : eng ? 'Thèmes' : op === 'fr' ? 'Homophones et conjugaison' : op === 'lec' ? 'Lecture' : op === 'num' ? 'Nombres' : op === 'frac' ? 'Fractions et décimaux' : 'Séries'} <small>{eng ? 'part des mots et phrases réussis' : op === 'fr' ? 'part des phrases réussies' : op === 'lec' ? 'part des sons, mots et phrases réussis' : op === 'num' || op === 'frac' ? 'part des questions réussies' : `part des ${what} réussies`}</small></h2>
               <div class="tbl">
                 {seriesOf(op).map((s) => {
                   const v = seriesPct(o.mastered, s.id), b = seriesBadge(s);
@@ -443,7 +443,7 @@ export function Parent() {
               </div>
             </div>
             <div class="pcard2">
-              <h2>{eng ? 'Mots et phrases difficiles' : op === 'fr' ? 'Phrases difficiles' : op === 'lec' ? 'Sons et mots difficiles' : op === 'num' || op === 'frac' ? 'Questions difficiles' : `${OP_NAME[op]} difficiles`} <small>{hard.length}</small></h2>
+              <h2>{eng ? 'Mots et phrases difficiles' : op === 'fr' ? 'Phrases difficiles' : op === 'lec' ? 'Sons, mots et phrases difficiles' : op === 'num' || op === 'frac' ? 'Questions difficiles' : `${OP_NAME[op]} difficiles`} <small>{hard.length}</small></h2>
               {hard.length ? (
                 <>
                   <div class="hard">

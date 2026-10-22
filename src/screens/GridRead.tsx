@@ -1,11 +1,11 @@
-/* Ma grille en lecture (CP) : chaque son, syllabe ou petit mot, en couleur une fois réussi ; touche pour l'entendre. */
+/* Ma grille en lecture (CP) : chaque son, syllabe, petit mot, phrase ou mot dicté, en couleur une fois réussi ; touche pour l'entendre. */
 import type { ComponentChildren } from 'preact';
 import { mascot } from '../art';
 import { speak } from '../audio';
 import { useApp, usePlayer } from '../app/context';
 import { trapsCfg } from '../app/sessions';
 import { BtnSay, Svg, TabBar } from '../app/ui';
-import { READ_SETS, sayOf } from '../content/reading';
+import { kindOf, READ_SETS, sayOf } from '../content/reading';
 import { nb } from '../content/text';
 import { factKey, parseFact } from '../engine/keys';
 import { stageFor } from '../engine/level';
@@ -38,7 +38,7 @@ export function GridRead({ tabs }: { tabs?: ComponentChildren }) {
               {s.items.map((it, i) => {
                 const key = factKey('lec', k + 1, i + 1), t = hard.has(key), m = done.has(key);
                 return (
-                  <button key={i} class={`eg-w read ${t ? 't' : m ? 'm' : ''}`} onClick={() => say(sayOf(it))}>
+                  <button key={i} class={`eg-w read ${kindOf(s) === 'son' ? '' : kindOf(s)} ${t ? 't' : m ? 'm' : ''}`} onClick={() => say(kindOf(s) === 'dictee' ? it.w : sayOf(it))}>
                     <span aria-hidden="true">{it.w}</span>
                     <span class="sr">{it.w}{t ? ', piège' : m ? ', réussi' : ', à découvrir'}</span>
                   </button>

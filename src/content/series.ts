@@ -76,7 +76,7 @@ export type SeriesSpec =
   | { kind: 'frac'; set: FracId; n: number }
   /** Nombres jusqu'à 100 n° `n` (1 à 4) : le sens de a et b dépend de l'île (content/numbers.ts). */
   | { kind: 'num'; set: NumId; n: number }
-  /** Lecture n° `n` (1 à 5) : a = n, b = n° du son, de la syllabe ou du mot. */
+  /** Lecture n° `n` (1 à 9) : a = n, b = n° du son, de la syllabe, du mot, de la phrase ou du mot dicté. */
   | { kind: 'read'; set: ReadId; n: number }
   /** Français n° `n` (1 à 8 : homophones puis temps) : a = n, b = n° de la phrase. */
   | { kind: 'quiz'; quiz: FrQuizId; n: number }
@@ -266,8 +266,9 @@ const numSet = (id: NumId, i: number): SeriesDef => ({
   formats: id === 'comp' ? ['qcm'] : ['pave', 'qcm'],
 });
 
-/** Lecture : les voyelles et les premières syllabes ouvertes au départ, puis un trophée par île. */
-const LEC_NEED: Record<ReadId, number> = { voy: 0, syl1: 0, syl2: 1, sons: 2, mots: 3 };
+/** Lecture : les voyelles et les premières syllabes ouvertes au départ, puis un trophée par île ;
+    phrases et dictée (ajoutées après les petits mots) quand l'enfant sait déjà lire des syllabes et des sons. */
+const LEC_NEED: Record<ReadId, number> = { voy: 0, syl1: 0, syl2: 1, sons: 2, mots: 3, phr1: 4, dict1: 4, phr2: 5, dict2: 6 };
 const readSet = (id: ReadId, i: number): SeriesDef => ({
   id: `lec-${id}`,
   op: 'lec',

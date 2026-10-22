@@ -707,3 +707,26 @@
 .ops-cards.many .op-card b{font-size:32px}
 .ops-cards.many .op-card small{font-size:15px;margin-top:2px}
 .ops-cards.many .op-stars{margin-top:2px}
+
+/* Lecture CP : phrases à lire (trois dessins) et dictée de mots (clavier de lettres). */
+.read-phrase{font-family:var(--ui);font-weight:800;font-size:34px;line-height:1.25;text-align:center;color:var(--ink);margin:0;padding:6px 8px}
+.read-pic{display:inline-flex;align-items:center;justify-content:center}
+.read-pics .choice{display:flex;align-items:center;justify-content:center;padding:4px;overflow:hidden}
+.read-aid.phrase,.read-aid.dictee{flex-wrap:wrap}
+.read-aid.phrase b{font-size:28px;line-height:1.2;text-align:center;flex:1 1 160px}
+.dict-spell{display:flex;gap:6px}
+.dict-spell span{display:grid;place-items:center;min-width:44px;height:56px;padding:0 4px;border:3px solid var(--ink);border-radius:12px;background:#fff;font-size:40px}
+.dict{display:flex;flex-direction:column;gap:12px}
+.dict-slots{display:flex;justify-content:center;gap:6px}
+.dict-slot{display:grid;place-items:center;width:46px;height:58px;border:3px dashed var(--ile);border-radius:12px;background:var(--ile-clair);font-family:var(--ui);font-weight:800;font-size:38px;color:var(--ink)}
+.dict-slot.filled{border-style:solid;background:#fff}
+.dict-slots.ok .dict-slot{background:var(--feuille);border:3px solid var(--ink);color:#fff}
+.dict-slots.help .dict-slot{background:var(--miel);border:3px solid var(--ink)}
+.dict-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.dict-key{font-family:var(--ui);font-weight:800;text-transform:none}
+.dict-row{display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.img-card.phrase{grid-column:1/-1;flex-direction:row;gap:10px;min-height:0;padding:6px 12px;justify-content:flex-start}
+.img-card.phrase b,.img-card.dictee b{font-size:22px;text-align:left}
+.eg-w.read.phrase{height:auto;min-height:44px;padding:4px 10px;font-size:15px;line-height:1.2;text-align:left}
+.scr-q.cp .dict .key{height:58px;font-size:34px}
+.scr-q.cp .dict .key.erase,.scr-q.cp .dict .key.go{font-size:18px}

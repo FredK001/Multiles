@@ -10,7 +10,7 @@ import { AUTO_SAY_DELAY, BtnSay, Svg } from '../app/ui';
 import { lookOf } from '../content/isles';
 import { SERIES } from '../content/series';
 import { sayFrac } from '../content/fractions';
-import { CONJ_PROMPTS, LEC_PROMPTS, numEq, STORY_PROMPTS, engPrompt, equation, fill, FR_PROMPTS, goodAnswers, HELP_TITLES, MSG, MSG_CP, OK_TITLES, spoken, tipOf } from '../content/messages';
+import { CONJ_PROMPTS, lecPrompts, numEq, STORY_PROMPTS, engPrompt, equation, fill, FR_PROMPTS, goodAnswers, HELP_TITLES, MSG, MSG_CP, OK_TITLES, spoken, tipOf } from '../content/messages';
 import { OP_SIGN, OP_SPOKEN } from '../content/series';
 import type { Format } from '../engine/questions';
 import { nb } from '../content/text';
@@ -24,7 +24,7 @@ import { ActiveClock, Countdown, fmtTime } from '../engine/timer';
 import { AidGrid, AidTokens } from './Aid';
 import { EngAid, EngAnswers, EngCard, engRight, engSayParts } from './EngQuestion';
 import { FrAid, FrAnswers, FrCard, frRight } from './FrQuestion';
-import { ReadAid, ReadAnswers, ReadCard, sayRead } from './ReadQuestion';
+import { DictAnswers, dictHeard, ReadAid, ReadAnswers, ReadCard, sayRead } from './ReadQuestion';
 import { NumCard, tensArt } from './NumQuestion';
 import { FracAid, FracAnswers, FracCard, fracRight } from './FracQuestion';
 
@@ -77,7 +77,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
   // En anglais : dessins, mots et phrases à la place des nombres (EngQuestion).
   const op = opOf(cfg), cp = op === 'add' || op === 'sub', eng = op === 'eng', fr = op === 'fr', lec = op === 'lec', num = op === 'num', frac = op === 'frac', msgs = cp ? MSG_CP : MSG;
   /** Consigne d'une question, selon l'opération. */
-  const promptOf = (x: Q): readonly string[] => (x.op === 'num' ? [spoken(x)] : x.op === 'frac' ? ['Choisis la bonne réponse.', 'Laquelle est juste, {name} ?'] : SERIES[x.series].story ? STORY_PROMPTS : x.op === 'eng' ? engPrompt(x) : x.op === 'lec' ? LEC_PROMPTS[x.fmt === 'qcm' ? 'qcm' : 'ecoute'] : x.op === 'fr' ? (x.fr?.verb ? CONJ_PROMPTS : FR_PROMPTS) : msgs[x.fmt as keyof typeof msgs]);
+  const promptOf = (x: Q): readonly string[] => (x.op === 'num' ? [spoken(x)] : x.op === 'frac' ? ['Choisis la bonne réponse.', 'Laquelle est juste, {name} ?'] : SERIES[x.series].story ? STORY_PROMPTS : x.op === 'eng' ? engPrompt(x) : x.op === 'lec' ? lecPrompts(x) : x.op === 'fr' ? (x.fr?.verb ? CONJ_PROMPTS : FR_PROMPTS) : msgs[x.fmt as keyof typeof msgs]);
   /** Lecture automatique (réglage du profil) ; jamais quand le chrono tourne, la lecture mangerait le temps. */
   const autoSay = (text: Speakable) => {
     if (p.autoSpeech && !cfg.timed) later(() => speak(text), AUTO_SAY_DELAY);
@@ -101,10 +101,11 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
     setBuddy({ mood: 'neutre', anim: 'idle' });
     const text = fill(pick(promptOf(n)), n, p.name);
     setBubble(text);
-    // Lecture : le son est toujours dit (c'est la question), précédé de la consigne si la lecture auto est active.
+    // Lecture : le son (ou le mot dicté) est toujours dit (c'est la question), précédé de la consigne si la lecture auto est active.
+    // Phrases : seule la consigne peut être lue, jamais la phrase.
     if (n.op === 'lec') {
       const cur = n;
-      if (cur.fmt === 'ecoute') later(() => speak(p.autoSpeech && !cfg.timed ? [{ text, lang: 'fr' }, { text: cur.read!.say, lang: 'fr' }] : [{ text: cur.read!.say, lang: 'fr' }]), AUTO_SAY_DELAY);
+      if (cur.fmt === 'ecoute' || dictHeard(cur)) later(() => speak(p.autoSpeech && !cfg.timed ? [{ text, lang: 'fr' }, { text: cur.read!.say, lang: 'fr' }] : [{ text: cur.read!.say, lang: 'fr' }]), AUTO_SAY_DELAY);
       else autoSay(text);
     } else if (n.op === 'num') autoSay(text);
     else if (n.op === 'frac') autoSay(`${text} ${spoken(n)}`);
@@ -250,7 +251,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
       const combo = out.comboMilestone ? session.combo : null;
       // Anglais hors chrono : la bonne réponse est lue, on lui laisse le temps de finir (phrases longues).
       // Français : le temps de relire la phrase complète.
-      const delay = cfg.timed ? OK_FEEDBACK_MS.timed : eng ? Math.min(4000, Math.max(OK_FEEDBACK_MS.classic, 500 + 85 * engRight(q).length)) : fr ? Math.min(3500, Math.max(OK_FEEDBACK_MS.classic, 400 + 45 * frRight(q).length)) : lec ? 1900 : OK_FEEDBACK_MS.classic;
+      const delay = cfg.timed ? OK_FEEDBACK_MS.timed : eng ? Math.min(4000, Math.max(OK_FEEDBACK_MS.classic, 500 + 85 * engRight(q).length)) : fr ? Math.min(3500, Math.max(OK_FEEDBACK_MS.classic, 400 + 45 * frRight(q).length)) : lec ? (q.read!.kind === 'phrase' ? 2600 : 1900) : OK_FEEDBACK_MS.classic;
       const sub = cfg.endless
         ? cfg.target ? `${session.good} sur ${cfg.target}` : goodAnswers(session.good)
         : session.done < session.total ? `Encore ${session.remaining} question${session.remaining > 1 ? 's' : ''}` : 'Dernière réponse !';
@@ -269,7 +270,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
       if (eng) autoSay([{ text: `${title} La bonne réponse :`, lang: 'fr' }, { text: engRight(q), lang: 'en' }]);
       else if (fr) autoSay(`${title} ${frRight(q)}`);
       else if (num || frac) autoSay(sayFrac(`${title} ${tipOf(q)}`));
-      else if (lec) autoSay(q.fmt === 'ecoute' ? [{ text: `${title} ${tipOf(q)} Écoute :`, lang: 'fr' }, { text: q.read!.say, lang: 'fr' }] : `${title} ${tipOf(q)}`);
+      else if (lec) autoSay(q.fmt === 'ecoute' || dictHeard(q) ? [{ text: `${title} ${tipOf(q)} Écoute :`, lang: 'fr' }, { text: q.read!.say, lang: 'fr' }] : `${title} ${tipOf(q)}`);
       else autoSay(`${title} ${q.a} ${OP_SPOKEN[q.op]} ${q.b} égale ${q.p}.`);
       chime('help');
       if (countdown.current) {
@@ -346,6 +347,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
 
   let answer = null;
   if (q && frac) answer = <FracAnswers q={q} picked={picked} locked={locked} onPick={(v) => check(isCorrect(q, v), v)} />;
+  else if (q && lec && q.fmt === 'dictee') answer = <DictAnswers q={q} locked={locked} mark={mark} onCheck={(ok) => check(ok)} />;
   else if (q && lec) answer = <ReadAnswers q={q} picked={picked} locked={locked} onPick={(v) => check(isCorrect(q, v), v)} />;
   else if (q && fr) answer = <FrAnswers q={q} picked={picked} locked={locked} onPick={(v) => check(isCorrect(q, v), v)} />;
   else if (q && eng) answer = <EngAnswers q={q} picked={picked} locked={locked} onPick={(v) => check(isCorrect(q, v), v)} />;
@@ -478,7 +480,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
               id="btnSayQ"
               label="Écouter la question"
               langs={eng ? ['fr', 'en'] : ['fr']}
-              text={() => (q ? (locked ? bubble : q.op === 'num' ? bubble : lec && q.fmt === 'ecoute' ? [{ text: bubble, lang: 'fr' }, { text: q.read!.say, lang: 'fr' }] : eng ? engSayParts(q, bubble) : cp ? sayQuestion(q, bubble) : `${bubble} ${spoken(q)}`) : bubble)}
+              text={() => (q ? (locked ? bubble : q.op === 'num' ? bubble : lec && (q.fmt === 'ecoute' || dictHeard(q)) ? [{ text: bubble, lang: 'fr' }, { text: q.read!.say, lang: 'fr' }] : eng ? engSayParts(q, bubble) : cp ? sayQuestion(q, bubble) : `${bubble} ${spoken(q)}`) : bubble)}
             />
           </div>
         </div>
