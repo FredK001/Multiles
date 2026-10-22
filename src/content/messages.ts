@@ -6,6 +6,7 @@ import { sayFrac } from './fractions';
 import { DRILL_BASE, OP_SIGN, OP_SPOKEN, SERIES } from './series';
 import { seriesStory } from './stories';
 import { nb } from './text';
+import { sayMaths } from './written';
 
 export const MSG = {
   pave: ['Combien font {a} {op} {b} ?', 'À toi, {name} : {a} {op} {b} ?'],
@@ -48,6 +49,9 @@ export function spoken(q: Question): string {
   // Petit problème : l'histoire elle-même (le calcul n'est pas donné).
   if (SERIES[q.series]?.story && (q.op === 'add' || q.op === 'sub')) return seriesStory(q.series, q.op, q.a, q.b);
   if (q.op === 'frac' && q.frac) return sayFrac(q.frac.text);
+  // Grands nombres, mesures : les nombres d'un seul tenant, les signes et les unités en mots.
+  if (q.op === 'big' && q.big) return sayMaths(q.big.text);
+  if (q.op === 'mes' && q.mes) return sayMaths(q.mes.text);
   if (q.op === 'num' && q.num) return numSpoken(q.num.set, q.num.x, q.num.y);
   if (q.op === 'lec' && q.read) return q.fmt === 'qcm' ? `Trouve : ${q.read.target}.` : 'Écoute bien.';
   if (q.op === 'fr' && q.fr) return q.fr.text.replace(/___/g, '…') + (q.fr.verb ? ` Verbe ${q.fr.verb}.` : '');
@@ -151,7 +155,7 @@ export function engPrompt(q: Question): readonly string[] {
 }
 
 /** Aide après une erreur en anglais : le sens du mot, ou la phrase à retenir. */
-type TipQ = Pick<Question, 'op' | 'a' | 'b'> & Partial<Pick<Question, 'eng' | 'fr' | 'read' | 'num' | 'frac' | 'p' | 'fmt'>>;
+type TipQ = Pick<Question, 'op' | 'a' | 'b'> & Partial<Pick<Question, 'eng' | 'fr' | 'read' | 'num' | 'frac' | 'big' | 'mes' | 'p' | 'fmt'>>;
 
 function engTip(q: TipQ): string {
   const e = q.eng, t = e && themeOf(e.theme);
@@ -215,7 +219,7 @@ function lecTip(q: TipQ): string {
 
 /** Astuce adaptée au calcul, quelle que soit l'opération. */
 export function tipOf(q: TipQ): string {
-  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'div' ? divTip(q.a, q.b) : q.op === 'fr' ? frTip(q) : q.op === 'lec' ? lecTip(q) : q.op === 'num' ? numTip(q) : q.op === 'frac' ? (q.frac?.tip ?? '') : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
+  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'div' ? divTip(q.a, q.b) : q.op === 'fr' ? frTip(q) : q.op === 'lec' ? lecTip(q) : q.op === 'num' ? numTip(q) : q.op === 'frac' ? (q.frac?.tip ?? '') : q.op === 'big' ? (q.big?.tip ?? '') : q.op === 'mes' ? (q.mes?.tip ?? '') : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
 }
 
 /** Bulle d'accueil. */

@@ -1,8 +1,11 @@
+import type { BigId } from './bignums';
 import { THEMES, type ThemeId } from './english';
 import type { FrQuizId } from './french';
 import type { FracId } from './fractions';
+import type { MesId } from './measures';
 import type { NumId } from './numbers';
 import type { ReadId } from './reading';
+import { BIG_ZONE, MES_ZONE } from './series';
 import { CP_ZONE, DIV_ZONE, ENG_ZONE, FR_ZONE, FRAC_ZONE, LEC_ZONE, NUM_ZONE, OP_SIGN, SERIES, type SeriesId } from './series';
 
 export type IsleId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
@@ -135,6 +138,22 @@ const FRAC_ISLES: Record<FracId, Omit<IsleLook, 'fort' | 'clair'>> = {
   comp: { name: 'Podium', decor: 'volcan', motif: 7, boss: 'Centimo', sticker: 'Médaille', of: 'du Podium' },
 };
 
+/* Grands nombres (CM1). */
+const BIG_ISLES: Record<BigId, Omit<IsleLook, 'fort' | 'clair'>> = {
+  lire: { name: 'Observatoire', decor: 'espace', motif: 10, boss: 'Millionix', sticker: 'Télescope', of: "de l'Observatoire" },
+  chiffre: { name: 'Citadelle', decor: 'collines', motif: 8, boss: 'Classor', sticker: 'Bouclier', of: 'de la Citadelle' },
+  calc: { name: 'Glacier', decor: 'glace', motif: 5, boss: 'Zérotin', sticker: 'Boule de neige géante', of: 'du Glacier' },
+  reste: { name: 'Ruche', decor: 'jungle', motif: 2, boss: 'Restou', sticker: 'Pot de miel', of: 'de la Ruche' },
+};
+
+/* Mesures (CM1). */
+const MES_ISLES: Record<MesId, Omit<IsleLook, 'fort' | 'clair'>> = {
+  long: { name: 'Chantier', decor: 'desert', motif: 4, boss: 'Mètro', sticker: 'Mètre ruban', of: 'du Chantier' },
+  masse: { name: 'Épicerie', decor: 'bonbon', motif: 6, boss: 'Grammo', sticker: 'Bocal de confiture', of: "de l'Épicerie" },
+  heure: { name: 'Horloge', decor: 'nuages', motif: 9, boss: 'Tic-Tac', sticker: 'Montre à gousset', of: "de l'Horloge" },
+  pb: { name: 'Atelier', decor: 'verger', motif: 3, boss: 'Mesurine', sticker: 'Boîte à outils', of: "de l'Atelier" },
+};
+
 /* Nombres jusqu'à 100 (CP). */
 const NUM_ISLES: Record<NumId, Omit<IsleLook, 'fort' | 'clair'>> = {
   du: { name: 'Carrière', decor: 'desert', motif: 4, boss: 'Dizainor', sticker: 'Pile de cubes', of: 'de la Carrière' },
@@ -170,7 +189,7 @@ export function seriesBadge(id: SeriesId): string {
   const sp = SERIES[id].spec;
   // Division : « ÷7 », pour ne pas confondre avec la table de 7.
   if (sp.kind === 'table' && SERIES[id].op === 'div') return `÷${sp.n}`;
-  return sp.kind === 'table' || sp.kind === 'theme' || sp.kind === 'quiz' || sp.kind === 'read' || sp.kind === 'num' || sp.kind === 'frac' ? String(sp.n) : OP_SIGN[SERIES[id].op];
+  return sp.kind === 'table' || sp.kind === 'theme' || sp.kind === 'quiz' || sp.kind === 'read' || sp.kind === 'num' || sp.kind === 'frac' || sp.kind === 'big' || sp.kind === 'mes' ? String(sp.n) : OP_SIGN[SERIES[id].op];
 }
 
 /** Habillage de l'île d'une série. */
@@ -185,6 +204,8 @@ export function lookOf(id: SeriesId): IsleLook {
   }
   const spec = SERIES[id].spec;
   if (spec.kind === 'frac') return { ...FRAC_ISLES[spec.set], fort: FRAC_ZONE.fort, clair: FRAC_ZONE.clair };
+  if (spec.kind === 'big') return { ...BIG_ISLES[spec.set], fort: BIG_ZONE.fort, clair: BIG_ZONE.clair };
+  if (spec.kind === 'mes') return { ...MES_ISLES[spec.set], fort: MES_ZONE.fort, clair: MES_ZONE.clair };
   if (spec.kind === 'num') return { ...NUM_ISLES[spec.set], fort: NUM_ZONE.fort, clair: NUM_ZONE.clair };
   if (spec.kind === 'read') return { ...LEC_ISLES[spec.set], fort: LEC_ZONE.fort, clair: LEC_ZONE.clair };
   if (spec.kind === 'quiz') return { ...FR_ISLES[spec.quiz], fort: FR_ZONE.fort, clair: FR_ZONE.clair };
