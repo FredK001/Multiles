@@ -15,3 +15,4 @@ export * from './fraction';
 export * from './reading';
 export * from './clock';
 export * from './pic';
+export * from './geometry';

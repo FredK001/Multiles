@@ -7,27 +7,28 @@ import { THEMES, type ThemeId } from './english';
 import { ALL_QUIZZES, type FrQuizId } from './french';
 import { FRAC_SETS, type FracId } from './fractions';
 import { MES_SETS, type MesId } from './measures';
+import { GEO_SETS, type GeoId } from './geometry';
 import { NUM_SETS, type NumId } from './numbers';
 import { READ_SETS, type ReadId } from './reading';
 import { GRD_SETS, type GrdId } from './grandeurs';
 import { ESP_SETS, type EspId } from './space';
 
-export type Op = 'mul' | 'div' | 'frac' | 'big' | 'mes' | 'add' | 'sub' | 'num' | 'grd' | 'esp' | 'lec' | 'fr' | 'eng';
+export type Op = 'mul' | 'div' | 'frac' | 'big' | 'mes' | 'geo' | 'add' | 'sub' | 'num' | 'grd' | 'esp' | 'lec' | 'fr' | 'eng';
 
 /** Toutes les opérations, dans l'ordre d'affichage (album, espace parent, sauvegarde). */
-export const OPS: readonly Op[] = ['mul', 'div', 'frac', 'big', 'mes', 'add', 'sub', 'num', 'grd', 'esp', 'lec', 'fr', 'eng'];
+export const OPS: readonly Op[] = ['mul', 'div', 'frac', 'big', 'mes', 'geo', 'add', 'sub', 'num', 'grd', 'esp', 'lec', 'fr', 'eng'];
 export type Grade = 'CP' | 'CM1';
 
 export const GRADES: readonly Grade[] = ['CP', 'CM1'];
 
 /** Opérations proposées à chaque niveau, dans l'ordre d'affichage. */
-export const CURRICULUM: Record<Grade, readonly Op[]> = { CP: ['add', 'sub', 'num', 'grd', 'esp', 'lec'], CM1: ['mul', 'div', 'frac', 'big', 'mes', 'fr', 'eng'] };
+export const CURRICULUM: Record<Grade, readonly Op[]> = { CP: ['add', 'sub', 'num', 'grd', 'esp', 'lec'], CM1: ['mul', 'div', 'frac', 'big', 'mes', 'geo', 'fr', 'eng'] };
 
 /** Couleur de zone de l'anglais (îles, questions, carte) : bleu marine, 9,6:1 avec le blanc. */
 export const ENG_ZONE = { fort: '#23408E', clair: '#DCE3F5' } as const;
 
 /** Couleur d'une opération (pastilles, cartes de choix) ; les tables gardent la couleur de profil. */
-export const zoneOf = (op: Op): string => (op === 'eng' ? ENG_ZONE.fort : op === 'mul' ? 'var(--ballon)' : op === 'div' ? DIV_ZONE.fort : op === 'fr' ? FR_ZONE.fort : op === 'lec' ? LEC_ZONE.fort : op === 'num' ? NUM_ZONE.fort : op === 'frac' ? FRAC_ZONE.fort : op === 'big' ? BIG_ZONE.fort : op === 'mes' ? MES_ZONE.fort : op === 'grd' ? GRD_ZONE.fort : op === 'esp' ? ESP_ZONE.fort : CP_ZONE.fort);
+export const zoneOf = (op: Op): string => (op === 'eng' ? ENG_ZONE.fort : op === 'mul' ? 'var(--ballon)' : op === 'div' ? DIV_ZONE.fort : op === 'fr' ? FR_ZONE.fort : op === 'lec' ? LEC_ZONE.fort : op === 'num' ? NUM_ZONE.fort : op === 'frac' ? FRAC_ZONE.fort : op === 'big' ? BIG_ZONE.fort : op === 'mes' ? MES_ZONE.fort : op === 'grd' ? GRD_ZONE.fort : op === 'esp' ? ESP_ZONE.fort : op === 'geo' ? GEO_ZONE.fort : CP_ZONE.fort);
 
 /** Couleur de zone des fractions (CM1) : framboise, 6,9:1 avec le blanc. */
 export const FRAC_ZONE = { fort: '#9C2F5B', clair: '#F6DDE7' } as const;
@@ -37,6 +38,9 @@ export const BIG_ZONE = { fort: '#8A5300', clair: '#F6E8CF' } as const;
 
 /** Couleur de zone des mesures (CM1) : brique, 6,5:1 avec le blanc. */
 export const MES_ZONE = { fort: '#A33B2B', clair: '#FADDD6' } as const;
+
+/** Couleur de zone de la géométrie (CM1) : ardoise, 7,8:1 avec le blanc. */
+export const GEO_ZONE = { fort: '#3E5468', clair: '#E0E7EE' } as const;
 
 /** Couleur de zone des nombres (CP) : bleu canard, 6,2:1 avec le blanc. */
 export const NUM_ZONE = { fort: '#0B6E75', clair: '#D3EEF0' } as const;
@@ -60,26 +64,26 @@ export const DIV_ZONE = { fort: '#6B2E8F', clair: '#EBDDF3' } as const;
 export const CP_ZONE = { fort: '#B04A00', clair: '#FBE4D3' } as const;
 
 /** Noms au pluriel (espace parent, choix de l'opération). */
-export const OP_NAME: Record<Op, string> = { mul: 'Multiplications', div: 'Divisions', frac: 'Fractions', big: 'Grands nombres', mes: 'Mesures', fr: 'Français', lec: 'Lecture', num: 'Nombres', grd: 'Monnaie et heure', esp: 'Formes et espace', add: 'Additions', sub: 'Soustractions', eng: 'Anglais' };
+export const OP_NAME: Record<Op, string> = { mul: 'Multiplications', div: 'Divisions', frac: 'Fractions', big: 'Grands nombres', mes: 'Mesures', geo: 'Géométrie', fr: 'Français', lec: 'Lecture', num: 'Nombres', grd: 'Monnaie et heure', esp: 'Formes et espace', add: 'Additions', sub: 'Soustractions', eng: 'Anglais' };
 
 /** Nom d'une opération. */
-export const OP_SINGULAR: Record<Op, string> = { mul: 'Multiplication', div: 'Division', frac: 'Fractions', big: 'Grands nombres', mes: 'Mesures', fr: 'Français', lec: 'Lecture', num: 'Nombres', grd: 'Monnaie et heure', esp: 'Formes et espace', add: 'Addition', sub: 'Soustraction', eng: 'Anglais' };
+export const OP_SINGULAR: Record<Op, string> = { mul: 'Multiplication', div: 'Division', frac: 'Fractions', big: 'Grands nombres', mes: 'Mesures', geo: 'Géométrie', fr: 'Français', lec: 'Lecture', num: 'Nombres', grd: 'Monnaie et heure', esp: 'Formes et espace', add: 'Addition', sub: 'Soustraction', eng: 'Anglais' };
 
 /** Mot court lu et affiché pour un enfant qui lit peu. */
-export const OP_WORD: Record<Op, string> = { mul: 'Fois', div: 'Divisé', frac: 'Fractions', big: 'Nombres', mes: 'Mesures', fr: 'Français', lec: 'Lire', num: 'Nombres', grd: 'Mesurer', esp: 'Formes', add: 'Plus', sub: 'Moins', eng: 'Anglais' };
+export const OP_WORD: Record<Op, string> = { mul: 'Fois', div: 'Divisé', frac: 'Fractions', big: 'Nombres', mes: 'Mesures', geo: 'Géométrie', fr: 'Français', lec: 'Lire', num: 'Nombres', grd: 'Mesurer', esp: 'Formes', add: 'Plus', sub: 'Moins', eng: 'Anglais' };
 
 /** Mot lu à voix haute entre les deux nombres. */
-export const OP_SPOKEN: Record<Op, string> = { mul: 'fois', div: 'divisé par', frac: '', big: '', mes: '', fr: '', lec: '', num: '', grd: '', esp: '', add: 'plus', sub: 'moins', eng: '' };
+export const OP_SPOKEN: Record<Op, string> = { mul: 'fois', div: 'divisé par', frac: '', big: '', mes: '', geo: '', fr: '', lec: '', num: '', grd: '', esp: '', add: 'plus', sub: 'moins', eng: '' };
 
 /** Ce que propose chaque classe (création de profil, espace parent). */
-export const GRADE_DESC: Record<Grade, string> = { CP: 'Additions, soustractions, nombres, monnaie et heure, formes et lecture', CM1: 'Tables de multiplication, divisions, fractions, grands nombres, mesures, français et anglais' };
+export const GRADE_DESC: Record<Grade, string> = { CP: 'Additions, soustractions, nombres, monnaie et heure, formes et lecture', CM1: 'Tables de multiplication, divisions, fractions, grands nombres, mesures, géométrie, français et anglais' };
 
 /** Signe affiché (vrai signe moins, pas le tiret). */
-export const OP_SIGN: Record<Op, string> = { mul: '×', div: '÷', frac: '½', big: '1M', mes: 'cm', fr: 'Aa', lec: 'ab', num: '123', grd: '€', esp: '▲', add: '+', sub: '−', eng: 'EN' };
+export const OP_SIGN: Record<Op, string> = { mul: '×', div: '÷', frac: '½', big: '1M', mes: 'cm', geo: '△', fr: 'Aa', lec: 'ab', num: '123', grd: '€', esp: '▲', add: '+', sub: '−', eng: 'EN' };
 
 /** Lettre utilisée dans les clés de calcul : « 7x8 », « 56d7 », « 3+4 », « 9-2 », « 4e12 » (thème 4, mot 12) ;
-    pour les matières à îles et rangs : « 2g7 », « 3m12 », « 3h5 », « 2s4 »… */
-export const OP_KEY: Record<Op, 'x' | 'd' | 'r' | 'g' | 'm' | '+' | '-' | 'n' | 'h' | 's' | 'l' | 'f' | 'e'> = { mul: 'x', div: 'd', frac: 'r', big: 'g', mes: 'm', add: '+', sub: '-', num: 'n', grd: 'h', esp: 's', lec: 'l', fr: 'f', eng: 'e' };
+    pour les matières à îles et rangs : « 2g7 », « 3m12 », « 3h5 », « 2s4 », « 2o5 »… */
+export const OP_KEY: Record<Op, 'x' | 'd' | 'r' | 'g' | 'm' | 'o' | '+' | '-' | 'n' | 'h' | 's' | 'l' | 'f' | 'e'> = { mul: 'x', div: 'd', frac: 'r', big: 'g', mes: 'm', geo: 'o', add: '+', sub: '-', num: 'n', grd: 'h', esp: 's', lec: 'l', fr: 'f', eng: 'e' };
 
 export type SeriesSpec =
   /** Table de n : n × 1 à n × 10 ; en division, n × 1 ÷ n à n × 10 ÷ n (a = dividende, b = n). */
@@ -95,6 +99,8 @@ export type SeriesSpec =
   | { kind: 'big'; set: BigId; n: number }
   /** Mesures n° `n` (1 à 4) : a = n, b = rang de la question (content/measures.ts). */
   | { kind: 'mes'; set: MesId; n: number }
+  /** Géométrie n° `n` (1 à 4) : a = n, b = rang de la question (content/geometry.ts). */
+  | { kind: 'geo'; set: GeoId; n: number }
   /** Nombres jusqu'à 100 n° `n` (1 à 4) : le sens de a et b dépend de l'île (content/numbers.ts). */
   | { kind: 'num'; set: NumId; n: number }
   /** Grandeurs n° `n` (1 à 4 : pièces, payer, heure, demie) : a = n, b = rang de la question (content/grandeurs.ts). */
@@ -133,7 +139,8 @@ export type BigSeries = `big-${BigId}`;
 export type MesSeries = `mes-${MesId}`;
 export type GrdSeries = `grd-${GrdId}`;
 export type EspSeries = `esp-${EspId}`;
-export type SeriesId = TableId | DivId | 'add-10' | 'add-c10' | 'add-dbl' | 'add-pb' | 'add-20' | 'sub-pb' | 'sub-half' | 'sub-10' | 'sub-20' | NumSeries | GrdSeries | EspSeries | LecId | FracSeries | BigSeries | MesSeries | FrId | EngId;
+export type GeoSeries = `geo-${GeoId}`;
+export type SeriesId = TableId | DivId | 'add-10' | 'add-c10' | 'add-dbl' | 'add-pb' | 'add-20' | 'sub-pb' | 'sub-half' | 'sub-10' | 'sub-20' | NumSeries | GrdSeries | EspSeries | LecId | FracSeries | BigSeries | MesSeries | GeoSeries | FrId | EngId;
 
 export interface SeriesDef {
   id: SeriesId;
@@ -308,6 +315,19 @@ const mesSet = (id: MesId, i: number): SeriesDef => ({
   formats: ['qcm'],
 });
 
+/** Géométrie : les angles ouverts au départ, puis les droites et les figures, enfin symétrie et périmètre. */
+const GEO_NEED: Record<GeoId, number> = { angle: 0, droite: 1, figure: 1, sym: 2 };
+const geoSet = (id: GeoId, i: number): SeriesDef => ({
+  id: `geo-${id}`,
+  op: 'geo',
+  spec: { kind: 'geo', set: id, n: i + 1 },
+  steps: [{ half: 0 }, { half: 1 }, null],
+  title: GEO_SETS[i]!.title,
+  stepLabels: ['Partie 1', 'Partie 2', 'Tout'],
+  need: GEO_NEED[id],
+  formats: ['qcm'],
+});
+
 /** Nombres : dizaines et unités, avant/après ouverts au départ ; comparer puis la droite graduée. */
 const NUM_NEED: Record<NumId, number> = { du: 0, suite: 0, comp: 1, droite: 2 };
 const numSet = (id: NumId, i: number): SeriesDef => ({
@@ -360,8 +380,9 @@ const readSet = (id: ReadId, i: number): SeriesDef => ({
   need: LEC_NEED[id],
 });
 
-/** Trophées de français nécessaires : a/à, et/est et le présent ouverts au départ, puis un par île. */
-const FR_NEED: Record<FrQuizId, number> = { a: 0, et: 0, son: 1, on: 2, pres: 0, fut: 1, imp: 2, pc: 3 };
+/** Trophées de français nécessaires : a/à, et/est et le présent ouverts au départ, puis un par île ;
+    la grammaire (nature, sujet-verbe, accords du nom, invariables) s'ouvre avec les premiers trophées. */
+const FR_NEED: Record<FrQuizId, number> = { a: 0, et: 0, son: 1, on: 2, pres: 0, fut: 1, imp: 2, pc: 3, nat: 1, sv: 2, gn: 3, inv: 2 };
 
 /** Une île de français : une paire d'homophones ou un temps de conjugaison. */
 const quiz = (id: FrQuizId, i: number): SeriesDef => ({
@@ -383,6 +404,7 @@ export const SERIES: Record<SeriesId, SeriesDef> = {
   ...(Object.fromEntries(FRAC_SETS.map((r, i) => [`frac-${r.id}`, fracSet(r.id, i)])) as Record<FracSeries, SeriesDef>),
   ...(Object.fromEntries(BIG_SETS.map((r, i) => [`big-${r.id}`, bigSet(r.id, i)])) as Record<BigSeries, SeriesDef>),
   ...(Object.fromEntries(MES_SETS.map((r, i) => [`mes-${r.id}`, mesSet(r.id, i)])) as Record<MesSeries, SeriesDef>),
+  ...(Object.fromEntries(GEO_SETS.map((r, i) => [`geo-${r.id}`, geoSet(r.id, i)])) as Record<GeoSeries, SeriesDef>),
   ...(Object.fromEntries(NUM_SETS.map((r, i) => [`num-${r.id}`, numSet(r.id, i)])) as Record<NumSeries, SeriesDef>),
   ...(Object.fromEntries(GRD_SETS.map((r, i) => [`grd-${r.id}`, grdSet(r.id, i)])) as Record<GrdSeries, SeriesDef>),
   ...(Object.fromEntries(ESP_SETS.map((r, i) => [`esp-${r.id}`, espSet(r.id, i)])) as Record<EspSeries, SeriesDef>),

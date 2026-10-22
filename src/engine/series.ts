@@ -3,6 +3,7 @@
 import { themeOf } from '../content/english';
 import { quizOf } from '../content/french';
 import { fracSetOf } from '../content/fractions';
+import { geoSetOf } from '../content/geometry';
 import { numSetOf } from '../content/numbers';
 import { readSetOf } from '../content/reading';
 import { picItemsOf } from './picquiz';
@@ -51,6 +52,7 @@ function allFacts(s: SeriesDef): Fact[] {
   // Nombres : a = n° de l'île, b = rang de la question (les nombres eux-mêmes sont dans content/numbers.ts).
   if (sp.kind === 'frac') return fracSetOf(sp.set).items.map((_, i) => ({ a: sp.n, b: i + 1 }));
   if (sp.kind === 'big' || sp.kind === 'mes') return writtenItems(s).map((_, i) => ({ a: sp.n, b: i + 1 }));
+  if (sp.kind === 'geo') return geoSetOf(sp.set).items.map((_, i) => ({ a: sp.n, b: i + 1 }));
   if (sp.kind === 'num') return numSetOf(sp.set).facts.map((_, i) => ({ a: sp.n, b: i + 1 }));
   if (sp.kind === 'read') return readSetOf(sp.set).items.map((_, i) => ({ a: sp.n, b: i + 1 }));
   // Grandeurs et espace (CP) : a = n° de l'île, b = rang de la question (content/measures.ts, content/space.ts).
@@ -94,6 +96,11 @@ function matches(s: SeriesDef, f: Fact, flt: StepFilter): boolean {
   if (flt.half !== undefined && (s.spec.kind === 'grd' || s.spec.kind === 'esp')) {
     // Grandeurs, espace : les questions les plus simples d'abord (listes rangées).
     if ((flt.half === 0) !== f.b <= Math.ceil(picItemsOf(s.spec).length / 2)) return false;
+  }
+  if (flt.half !== undefined && s.spec.kind === 'geo') {
+    // Géométrie : comme les fractions, les questions les plus simples d'abord.
+    const half = Math.ceil(geoSetOf(s.spec.set).items.length / 2);
+    if ((flt.half === 0) !== f.b <= half) return false;
   }
   if (flt.bs && !flt.bs.includes(f.b)) return false;
   if (flt.mult && !flt.mult.includes(op === 'div' ? f.a / f.b : f.b)) return false;

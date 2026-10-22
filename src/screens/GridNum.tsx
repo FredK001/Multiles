@@ -1,21 +1,21 @@
-/* Ma grille par îles (nombres, grandeurs et espace au CP ; fractions, grands nombres et mesures au CM1) : la part réussie de chaque île, et les questions pièges. */
+/* Ma grille par îles (nombres, grandeurs et espace au CP ; fractions, grands nombres, mesures et géométrie au CM1) : la part réussie de chaque île, et les questions pièges. */
 import type { ComponentChildren } from 'preact';
 import { mascot } from '../art';
 import { useApp, usePlayer } from '../app/context';
 import { trapsCfg } from '../app/sessions';
 import { BtnSay, Svg, TabBar } from '../app/ui';
 import { lookOf } from '../content/isles';
-import { BIG_ZONE, ESP_ZONE, FRAC_ZONE, GRD_ZONE, MES_ZONE, NUM_ZONE, OP_NAME, OP_SIGN, seriesOf } from '../content/series';
+import { BIG_ZONE, ESP_ZONE, FRAC_ZONE, GEO_ZONE, GRD_ZONE, MES_ZONE, NUM_ZONE, OP_NAME, OP_SIGN, seriesOf } from '../content/series';
 import { nb } from '../content/text';
 import { parseFact } from '../engine/keys';
 import { stageFor } from '../engine/level';
 import { seriesDone, seriesPct } from '../engine/mastery';
 import { opProg } from '../engine/progress';
 
-export function GridNum({ tabs, op = 'num' }: { tabs?: ComponentChildren; op?: 'num' | 'frac' | 'big' | 'mes' | 'grd' | 'esp' }) {
+export function GridNum({ tabs, op = 'num' }: { tabs?: ComponentChildren; op?: 'num' | 'frac' | 'big' | 'mes' | 'grd' | 'esp' | 'geo' }) {
   const p = usePlayer();
   const { go } = useApp();
-  const zone = op === 'frac' ? FRAC_ZONE : op === 'big' ? BIG_ZONE : op === 'mes' ? MES_ZONE : op === 'grd' ? GRD_ZONE : op === 'esp' ? ESP_ZONE : NUM_ZONE;
+  const zone = op === 'frac' ? FRAC_ZONE : op === 'big' ? BIG_ZONE : op === 'mes' ? MES_ZONE : op === 'grd' ? GRD_ZONE : op === 'esp' ? ESP_ZONE : op === 'geo' ? GEO_ZONE : NUM_ZONE;
   const o = opProg(p, op), stage = stageFor(p.level), list = seriesOf(op), done = seriesDone(o.mastered, op);
   const traps = o.traps.filter((k) => parseFact(k)?.op === op);
 
@@ -29,7 +29,7 @@ export function GridNum({ tabs, op = 'num' }: { tabs?: ComponentChildren; op?: '
       <div class="grid-scroll">
         {tabs}
         <div class="pcard2">
-          <h2>{OP_NAME[op]} <small>{op === 'frac' || op === 'mes' ? 'réussies' : op === 'num' || op === 'big' ? 'réussis' : 'questions réussies'} du premier coup</small></h2>
+          <h2>{OP_NAME[op]} <small>{op === 'frac' || op === 'mes' || op === 'geo' ? 'réussies' : op === 'num' || op === 'big' ? 'réussis' : 'questions réussies'} du premier coup</small></h2>
           <div class="tbl">
             {list.map((d) => {
               const v = seriesPct(o.mastered, d.id);

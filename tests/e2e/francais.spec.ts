@@ -16,7 +16,8 @@ test('CM1 : homophones, règle, session complète, grille Français', async ({ p
   await seedProd(page, [kid()]);
   await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
   await openMap(page, 'Français');
-  await expect(page.locator('.isle')).toHaveCount(8);
+  // 4 homophones, 4 temps, 4 îles de grammaire (fermées au départ).
+  await expect(page.locator('.isle')).toHaveCount(12);
   await expect(page.locator('.isle:not(.locked)')).toHaveCount(3);
   await page.locator('.isle').first().click();
   await expect(page.locator('[data-screen="isle"] h1')).toHaveText('Écho');

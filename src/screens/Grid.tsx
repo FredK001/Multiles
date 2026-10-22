@@ -8,7 +8,7 @@ import { trapsCfg } from '../app/sessions';
 import { BtnSay, Svg, TabBar } from '../app/ui';
 import { ISLES, ofIsle, type IsleId } from '../content/isles';
 import { tipFor } from '../content/messages';
-import { BIG_ZONE, FRAC_ZONE, MES_ZONE, OP_NAME, OP_SIGN } from '../content/series';
+import { BIG_ZONE, FRAC_ZONE, GEO_ZONE, MES_ZONE, OP_NAME, OP_SIGN } from '../content/series';
 import { nb } from '../content/text';
 import { applyIsleTheme } from '../design/theme';
 import { parseKey } from '../engine/keys';
@@ -38,6 +38,11 @@ function GridMes({ tabs }: { tabs?: ComponentChildren }) {
   useIsleTheme(MES_ZONE.fort, MES_ZONE.clair);
   return <GridNum tabs={tabs} op="mes" />;
 }
+/** Géométrie : même grille par îles, à sa couleur. */
+function GridGeo({ tabs }: { tabs?: ComponentChildren }) {
+  useIsleTheme(GEO_ZONE.fort, GEO_ZONE.clair);
+  return <GridNum tabs={tabs} op="geo" />;
+}
 
 export function Grid() {
   const p = usePlayer();
@@ -47,9 +52,9 @@ export function Grid() {
 /** CM1 : onglets Multiplications / Anglais quand l'enfant a les deux. */
 function GridCM1() {
   const p = usePlayer();
-  type CmOp = 'mul' | 'div' | 'frac' | 'big' | 'mes' | 'fr' | 'eng';
-  const ops = opsOf(p).filter((x): x is CmOp => x === 'mul' || x === 'div' || x === 'frac' || x === 'big' || x === 'mes' || x === 'fr' || x === 'eng');
-  const [op, setOp] = useState<CmOp>(p.op === 'eng' || p.op === 'div' || p.op === 'fr' || p.op === 'frac' || p.op === 'big' || p.op === 'mes' ? p.op : 'mul');
+  type CmOp = 'mul' | 'div' | 'frac' | 'big' | 'mes' | 'geo' | 'fr' | 'eng';
+  const ops = opsOf(p).filter((x): x is CmOp => x === 'mul' || x === 'div' || x === 'frac' || x === 'big' || x === 'mes' || x === 'geo' || x === 'fr' || x === 'eng');
+  const [op, setOp] = useState<CmOp>(p.op === 'eng' || p.op === 'div' || p.op === 'fr' || p.op === 'frac' || p.op === 'big' || p.op === 'mes' || p.op === 'geo' ? p.op : 'mul');
   const tabs = ops.length > 1 && (
     <div class="opts op-tabs" role="group" aria-label="Opération">
       {ops.map((x) => (
@@ -57,7 +62,7 @@ function GridCM1() {
       ))}
     </div>
   );
-  return op === 'eng' ? <GridEng key="eng" tabs={tabs} /> : op === 'div' ? <GridDiv key="div" tabs={tabs} /> : op === 'fr' ? <GridFr key="fr" tabs={tabs} /> : op === 'frac' ? <GridFrac key="frac" tabs={tabs} /> : op === 'big' ? <GridBig key="big" tabs={tabs} /> : op === 'mes' ? <GridMes key="mes" tabs={tabs} /> : <GridTable key="mul" tabs={tabs} />;
+  return op === 'eng' ? <GridEng key="eng" tabs={tabs} /> : op === 'div' ? <GridDiv key="div" tabs={tabs} /> : op === 'fr' ? <GridFr key="fr" tabs={tabs} /> : op === 'frac' ? <GridFrac key="frac" tabs={tabs} /> : op === 'big' ? <GridBig key="big" tabs={tabs} /> : op === 'mes' ? <GridMes key="mes" tabs={tabs} /> : op === 'geo' ? <GridGeo key="geo" tabs={tabs} /> : <GridTable key="mul" tabs={tabs} />;
 }
 
 function GridTable({ tabs }: { tabs?: ComponentChildren }) {

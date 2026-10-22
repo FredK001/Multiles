@@ -50,6 +50,11 @@ export function lecPrompts(q: Pick<Question, 'fmt' | 'read'>): readonly string[]
 /** Consignes de la conjugaison (trois formes du verbe). */
 export const CONJ_PROMPTS = ['Choisis la bonne forme du verbe.', 'Conjugue le verbe, {name} !', 'Quelle forme va dans le trou ?'];
 
+/** Consignes de la nature des mots (le mot en couleur). */
+export const NAT_PROMPTS = ['Quelle est la nature du mot en couleur ?', 'Nom, verbe, adjectif… ? À toi, {name} !'];
+/** Consignes des accords et des mots invariables (deux ou trois réponses). */
+export const GRAM_PROMPTS = ['Choisis la bonne écriture.', 'Quel mot va dans le trou, {name} ?', 'Laquelle est juste, {name} ?'];
+
 export const OK_TITLES = ['Bravo {name} !', 'Super !', 'Exact !', 'Bien joué, {name} !', 'Tu assures !', 'Génial !', 'Et voilà !'];
 export const HELP_TITLES = ['Presque, {name} !', 'Pas tout à fait !', 'On regarde ensemble ?'];
 
@@ -66,11 +71,15 @@ export function spoken(q: Question): string {
   // Grands nombres, mesures : les nombres d'un seul tenant, les signes et les unités en mots.
   if (q.op === 'big' && q.big) return sayMaths(q.big.text);
   if (q.op === 'mes' && q.mes) return sayMaths(q.mes.text);
+  if (q.op === 'geo' && q.geo) return q.geo.text;
   if (q.op === 'num' && q.num) return numSpoken(q.num.set, q.num.x, q.num.y);
   if (q.op === 'lec' && q.read?.kind === 'phrase') return LEC_PROMPTS.phrase[0];
   if (q.op === 'lec' && q.read?.kind === 'dictee') return q.read.seen ? `Écris le mot du dessin : ${PICS[q.read.pic!].label}.` : LEC_PROMPTS.dictee[0];
   if ((q.op === 'grd' || q.op === 'esp') && q.picq) return picSpoken(q.picq);
   if (q.op === 'lec' && q.read) return q.fmt === 'qcm' ? `Trouve : ${q.read.target}.` : 'Écoute bien.';
+  // Nature des mots : la phrase entière, puis la question sur le mot en couleur.
+  if (q.op === 'fr' && q.fr?.focus) return `${fillBlank(q.fr.text, q.fr.focus)} Quelle est la nature du mot « ${q.fr.focus} » ?`;
+  if (q.op === 'fr' && q.fr?.cue) return `${q.fr.text.replace(/___/g, '…')} ${q.fr.cue[0]} « ${q.fr.cue[1]} ».`;
   if (q.op === 'fr' && q.fr) return q.fr.text.replace(/___/g, '…') + (q.fr.verb ? ` Verbe ${q.fr.verb}.` : '');
   const w = OP_SPOKEN[q.op];
   if (q.fmt === 'manquant') return q.op === 'div' ? `${q.a} ${w} combien égale ${q.p} ?` : `${q.a} ${w} combien font ${q.p} ?`;
@@ -179,7 +188,7 @@ export function engPrompt(q: Question): readonly string[] {
 }
 
 /** Aide après une erreur en anglais : le sens du mot, ou la phrase à retenir. */
-type TipQ = Pick<Question, 'op' | 'a' | 'b'> & Partial<Pick<Question, 'eng' | 'fr' | 'read' | 'num' | 'frac' | 'big' | 'mes' | 'picq' | 'p' | 'fmt'>>;
+type TipQ = Pick<Question, 'op' | 'a' | 'b'> & Partial<Pick<Question, 'eng' | 'fr' | 'read' | 'num' | 'frac' | 'big' | 'mes' | 'picq' | 'geo' | 'p' | 'fmt'>>;
 
 function engTip(q: TipQ): string {
   const e = q.eng, t = e && themeOf(e.theme);
@@ -203,7 +212,7 @@ function frTip(q: TipQ): string {
   if (!f || q.p === undefined) return '';
   const quiz = quizOf(f.quiz), right = f.options[q.p]!, other = f.options[1 - q.p]!;
   // Conjugaison : la règle du temps et la bonne forme avec son pronom.
-  if (quiz.tense) return ruleOf(quiz, quiz.items[q.b - 1]!);
+  if (quiz.tense || quiz.grammar) return ruleOf(quiz, quiz.items[q.b - 1]!);
   const swap = quiz.swap[right], test = quiz.swap[other], cite = (w: string) => fillBlank(f.text, w).replace(/\s*[.?!]$/, '');
   if (swap) return `${quiz.rule[right]} Ici : « ${cite(swap)} ».`;
   return `${quiz.rule[right]} « ${cite(test ?? other)} », ça ne va pas.`;
@@ -256,7 +265,7 @@ function phraseTip(r: NonNullable<TipQ['read']>): string {
 
 /** Astuce adaptée au calcul, quelle que soit l'opération. */
 export function tipOf(q: TipQ): string {
-  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'div' ? divTip(q.a, q.b) : q.op === 'fr' ? frTip(q) : q.op === 'lec' ? lecTip(q) : q.op === 'num' ? numTip(q) : q.op === 'frac' ? (q.frac?.tip ?? '') : q.op === 'big' ? (q.big?.tip ?? '') : q.op === 'mes' ? (q.mes?.tip ?? '') : q.op === 'grd' || q.op === 'esp' ? (q.picq?.tip ?? '') : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
+  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'div' ? divTip(q.a, q.b) : q.op === 'fr' ? frTip(q) : q.op === 'lec' ? lecTip(q) : q.op === 'num' ? numTip(q) : q.op === 'frac' ? (q.frac?.tip ?? '') : q.op === 'geo' ? (q.geo?.tip ?? '') : q.op === 'big' ? (q.big?.tip ?? '') : q.op === 'mes' ? (q.mes?.tip ?? '') : q.op === 'grd' || q.op === 'esp' ? (q.picq?.tip ?? '') : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
 }
 
 /** Bulle d'accueil. */

@@ -116,7 +116,7 @@ test('imagier de l’île, puis grille : onglets × / Anglais et fiche d’un mo
   await page.goto(PROD + '/');
   await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
   await page.getByRole('button', { name: 'Ma grille' }).click();
-  await expect(page.locator('.op-tabs button')).toHaveCount(5);
+  await expect(page.locator('.op-tabs button')).toHaveCount(6); // ×, ÷, fractions, géométrie, français, anglais
   await expect(page.locator('.op-tabs button[aria-pressed="true"]')).toContainText('Anglais'); // dernier choix : l'anglais
   await expect(page.locator('.g-big')).toContainText('mots sur 198');
   await expect(page.locator('.eg-theme')).toHaveCount(18);

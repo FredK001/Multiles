@@ -759,3 +759,22 @@
 .pic-ex svg{max-width:100%;height:auto}
 .pic-ex b{font-family:var(--titre);font-weight:600;font-size:20px;line-height:1.1;color:var(--ile)}
 .scr-q.pic .fb-eq{font-size:24px;line-height:1.2}
+/* Français, grammaire : le mot étudié mis en évidence (nature des mots), cartes de leçon */
+.fr-focus{display:inline-block;margin:0 4px;padding:0 6px;border-radius:12px;background:var(--ile);color:#fff;line-height:1.15}
+.fr-lesson h2{font-size:28px}
+.fr-lesson ul{list-style:none;padding-left:0}
+
+/* Géométrie (CM1) : dessin net au-dessus de l'énoncé, réponses écrites sur une colonne (deux pour oui/non) */
+.geo-card{gap:6px}
+.geo-pic{display:flex;justify-content:center;max-width:100%}
+.geo-pic svg{max-height:min(170px,24vh);width:auto}
+.geo-q{font-size:24px}
+.geo-choices{grid-template-columns:minmax(0,1fr)}
+.geo-choices .choice{height:auto;min-height:60px;padding:8px 12px;font-size:26px;line-height:1.15}
+.geo-choices.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.geo-choices.two .choice{min-height:72px;font-size:34px}
+.geo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.geo-ex{justify-items:center;text-align:center;padding:8px}
+.geo-ex svg{max-height:110px;width:auto;max-width:100%}
+.geo-ex b{font-family:var(--titre);font-size:20px;line-height:1.1;color:var(--ile)}
+.geo-ex small{font-size:14px;color:var(--ink-2)}

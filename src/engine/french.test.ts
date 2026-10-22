@@ -63,8 +63,9 @@ describe('français : les homophones', () => {
 
 describe('français : la conjugaison', () => {
   it('4 îles de plus après les homophones, le présent ouvert au départ', () => {
-    expect(seriesOf('fr').map((s) => s.id)).toEqual(['fr-a', 'fr-et', 'fr-son', 'fr-on', 'fr-pres', 'fr-fut', 'fr-imp', 'fr-pc']);
-    expect(seriesOf('fr').slice(4).map((s) => s.need)).toEqual([0, 1, 2, 3]);
+    // Puis les 4 îles de grammaire (grammar.test.ts).
+    expect(seriesOf('fr').map((s) => s.id)).toEqual(['fr-a', 'fr-et', 'fr-son', 'fr-on', 'fr-pres', 'fr-fut', 'fr-imp', 'fr-pc', 'fr-nat', 'fr-sv', 'fr-gn', 'fr-inv']);
+    expect(seriesOf('fr').slice(4, 8).map((s) => s.need)).toEqual([0, 1, 2, 3]);
   });
 
   it('chaque phrase propose 3 formes distinctes du même verbe, dont la bonne', () => {

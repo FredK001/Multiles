@@ -8,7 +8,8 @@ import type { ReadId } from './reading';
 import { BIG_ZONE, MES_ZONE } from './series';
 import type { GrdId } from './grandeurs';
 import type { EspId } from './space';
-import { CP_ZONE, DIV_ZONE, ENG_ZONE, ESP_ZONE, FR_ZONE, FRAC_ZONE, GRD_ZONE, LEC_ZONE, NUM_ZONE, OP_SIGN, SERIES, type SeriesId } from './series';
+import type { GeoId } from './geometry';
+import { CP_ZONE, DIV_ZONE, ENG_ZONE, ESP_ZONE, FR_ZONE, FRAC_ZONE, GEO_ZONE, GRD_ZONE, LEC_ZONE, NUM_ZONE, OP_SIGN, SERIES, type SeriesId } from './series';
 
 export type IsleId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type DecorKind =
@@ -156,6 +157,14 @@ const MES_ISLES: Record<MesId, Omit<IsleLook, 'fort' | 'clair'>> = {
   pb: { name: 'Atelier', decor: 'verger', motif: 3, boss: 'Mesurine', sticker: 'Boîte à outils', of: "de l'Atelier" },
 };
 
+/* Géométrie (CM1) : un chantier, un atelier… des lieux où l'on trace et où l'on mesure. */
+const GEO_ISLES: Record<GeoId, Omit<IsleLook, 'fort' | 'clair'>> = {
+  angle: { name: 'Équerre', decor: 'desert', motif: 4, boss: 'Angulo', sticker: 'Équerre dorée', of: "de l'Équerre" },
+  droite: { name: 'Rails', decor: 'collines', motif: 8, boss: 'Parallax', sticker: 'Aiguillage', of: 'des Rails' },
+  figure: { name: 'Mosaïque', decor: 'bonbon', motif: 6, boss: 'Polygone', sticker: 'Losange brillant', of: 'de la Mosaïque' },
+  sym: { name: 'Miroir', decor: 'glace', motif: 5, boss: 'Reflet', sticker: 'Papillon', of: 'du Miroir' },
+};
+
 /* Nombres jusqu'à 100 (CP). */
 const NUM_ISLES: Record<NumId, Omit<IsleLook, 'fort' | 'clair'>> = {
   du: { name: 'Carrière', decor: 'desert', motif: 4, boss: 'Dizainor', sticker: 'Pile de cubes', of: 'de la Carrière' },
@@ -205,6 +214,11 @@ const FR_ISLES: Record<FrQuizId, Omit<IsleLook, 'fort' | 'clair'>> = {
   fut: { name: 'Phare', decor: 'espace', motif: 10, boss: 'Futuro', sticker: 'Longue-vue', of: 'du Phare' },
   imp: { name: 'Ruines', decor: 'desert', motif: 4, boss: 'Jadis', sticker: 'Vieux parchemin', of: 'des Ruines' },
   pc: { name: 'Grotte', decor: 'volcan', motif: 7, boss: 'Hiéro', sticker: 'Sablier', of: 'de la Grotte' },
+  // Grammaire et accords : un lieu par notion.
+  nat: { name: 'Atelier', decor: 'collines', motif: 8, boss: 'Étiquetto', sticker: 'Boîte à étiquettes', of: "de l'Atelier" },
+  sv: { name: 'Kiosque', decor: 'jungle', motif: 2, boss: 'Maestro', sticker: "Baguette de chef d'orchestre", of: 'du Kiosque' },
+  gn: { name: 'Mercerie', decor: 'bonbon', motif: 6, boss: 'Bobine', sticker: 'Pelote de laine', of: 'de la Mercerie' },
+  inv: { name: 'Menhir', decor: 'desert', motif: 4, boss: 'Granito', sticker: 'Caillou gravé', of: 'du Menhir' },
 };
 
 /** Pastille d'une île : numéro de la table, signe de l'opération au CP, numéro du thème en anglais. */
@@ -212,7 +226,7 @@ export function seriesBadge(id: SeriesId): string {
   const sp = SERIES[id].spec;
   // Division : « ÷7 », pour ne pas confondre avec la table de 7.
   if (sp.kind === 'table' && SERIES[id].op === 'div') return `÷${sp.n}`;
-  return sp.kind === 'table' || sp.kind === 'theme' || sp.kind === 'quiz' || sp.kind === 'read' || sp.kind === 'num' || sp.kind === 'frac' || sp.kind === 'big' || sp.kind === 'mes' || sp.kind === 'grd' || sp.kind === 'esp' ? String(sp.n) : OP_SIGN[SERIES[id].op];
+  return sp.kind === 'table' || sp.kind === 'theme' || sp.kind === 'quiz' || sp.kind === 'read' || sp.kind === 'num' || sp.kind === 'frac' || sp.kind === 'big' || sp.kind === 'mes' || sp.kind === 'grd' || sp.kind === 'esp' || sp.kind === 'geo' ? String(sp.n) : OP_SIGN[SERIES[id].op];
 }
 
 /** Habillage de l'île d'une série. */
@@ -229,6 +243,7 @@ export function lookOf(id: SeriesId): IsleLook {
   if (spec.kind === 'frac') return { ...FRAC_ISLES[spec.set], fort: FRAC_ZONE.fort, clair: FRAC_ZONE.clair };
   if (spec.kind === 'big') return { ...BIG_ISLES[spec.set], fort: BIG_ZONE.fort, clair: BIG_ZONE.clair };
   if (spec.kind === 'mes') return { ...MES_ISLES[spec.set], fort: MES_ZONE.fort, clair: MES_ZONE.clair };
+  if (spec.kind === 'geo') return { ...GEO_ISLES[spec.set], fort: GEO_ZONE.fort, clair: GEO_ZONE.clair };
   if (spec.kind === 'num') return { ...NUM_ISLES[spec.set], fort: NUM_ZONE.fort, clair: NUM_ZONE.clair };
   if (spec.kind === 'grd') return { ...GRD_ISLES[spec.set], fort: GRD_ZONE.fort, clair: GRD_ZONE.clair };
   if (spec.kind === 'esp') return { ...ESP_ISLES[spec.set], fort: ESP_ZONE.fort, clair: ESP_ZONE.clair };

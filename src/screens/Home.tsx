@@ -39,7 +39,7 @@ export function Home() {
   const stage = stageFor(p.level);
   const defiSeries = o.defiPick?.day === today ? o.defiPick.series : dailySeries(today, openSeries(o.series, p.op));
   const rules = timedRules(p.op), minutes = rules.seconds / 60;
-  const defiWhat = p.op === 'mul' ? `Table de ${tableNum(defiSeries)}` : p.op === 'div' ? `Table de ${tableNum(defiSeries)} à l'envers` : p.op === 'eng' ? `Anglais, île ${lookOf(defiSeries).name}` : p.op === 'fr' ? `Français, ${SERIES[defiSeries].title}` : p.op === 'lec' ? `Lecture, ${SERIES[defiSeries].title.toLowerCase()}` : p.op === 'num' ? `Nombres, ${SERIES[defiSeries].title.toLowerCase()}` : p.op === 'frac' ? `Fractions, ${SERIES[defiSeries].title.toLowerCase()}` : p.op === 'big' ? `Grands nombres, ${SERIES[defiSeries].title.toLowerCase()}` : p.op === 'mes' ? `Mesures, ${SERIES[defiSeries].title.toLowerCase()}` : `${OP_WORD[p.op]}, ${SERIES[defiSeries].title.toLowerCase()}`;
+  const defiWhat = p.op === 'mul' ? `Table de ${tableNum(defiSeries)}` : p.op === 'div' ? `Table de ${tableNum(defiSeries)} à l'envers` : p.op === 'eng' ? `Anglais, île ${lookOf(defiSeries).name}` : p.op === 'fr' ? `Français, ${SERIES[defiSeries].title}` : p.op === 'lec' ? `Lecture, ${SERIES[defiSeries].title.toLowerCase()}` : p.op === 'num' ? `Nombres, ${SERIES[defiSeries].title.toLowerCase()}` : p.op === 'frac' ? `Fractions, ${SERIES[defiSeries].title.toLowerCase()}` : p.op === 'big' ? `Grands nombres, ${SERIES[defiSeries].title.toLowerCase()}` : p.op === 'mes' ? `Mesures, ${SERIES[defiSeries].title.toLowerCase()}` : p.op === 'geo' ? `Géométrie, ${SERIES[defiSeries].title.toLowerCase()}` : `${OP_WORD[p.op]}, ${SERIES[defiSeries].title.toLowerCase()}`;
   const done = defiDone(o.defiDay, today);
 
   useProfileTheme(p.color);

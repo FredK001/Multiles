@@ -1,4 +1,5 @@
-/* Découvrir en français : la règle de la paire, et des phrases exemples pour chacun des deux mots. */
+/* Découvrir en français : la règle de la paire, et des phrases exemples pour chacun des deux mots ;
+   en conjugaison, les tableaux du temps ; en grammaire, la règle et les cartes de la leçon. */
 import { useIsleTheme } from '../app/theme';
 import { useApp, useBack, usePlayer } from '../app/context';
 import { stepCfg } from '../app/sessions';
@@ -20,7 +21,8 @@ export function DiscoverFr({ s }: { s: SeriesId }) {
   useIsleTheme(I.fort, I.clair);
   // Trois exemples par mot, pris dans l'ordre des phrases.
   const examples = (w: string) => quiz.items.filter((x) => x.a === w).slice(0, 3).map((x) => fillBlank(x.s, w));
-  const say = () => (quiz.tense ? quiz.tense.rule : quiz.choices.map((w) => `${quiz.rule[w]} ${examples(w).join(' ')}`).join(' '));
+  const g = quiz.grammar;
+  const say = () => (g ? [g.rule, ...g.lesson.map((l) => `${l.t}. ${l.d} ${l.ex.join(', ')}.`)].join(' ') : quiz.tense ? quiz.tense.rule : quiz.choices.map((w) => `${quiz.rule[w]} ${examples(w).join(' ')}`).join(' '));
 
   return (
     <section class="screen" data-screen="discover" aria-label="Revoir la règle" style={{ background: 'var(--ile-clair)' }}>
@@ -38,6 +40,20 @@ export function DiscoverFr({ s }: { s: SeriesId }) {
             <div class="conj-grid">
               {Object.entries(quiz.tense.tables).map(([v, forms]) => <ConjTable key={v} verb={v} forms={forms} title={v} />)}
             </div>
+          </>
+        )}
+        {g && (
+          <>
+            <p class="fr-rule ok">{g.rule}</p>
+            {g.lesson.map((l) => (
+              <div key={l.t} class="fr-card fr-lesson">
+                <h2>{l.t}</h2>
+                <p class="fr-rule">{l.d}</p>
+                <ul>
+                  {l.ex.map((x) => <li key={x}>{x}</li>)}
+                </ul>
+              </div>
+            ))}
           </>
         )}
         {quiz.choices.map((w) => (

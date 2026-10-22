@@ -10,6 +10,7 @@ import { DiscoverCP } from './DiscoverCP';
 import { DiscoverEng } from './DiscoverEng';
 import { DiscoverFr } from './DiscoverFr';
 import { DiscoverFrac } from './DiscoverFrac';
+import { DiscoverGeo } from './DiscoverGeo';
 import { DiscoverNum } from './DiscoverNum';
 import { DiscoverPic } from './DiscoverPic';
 import { DiscoverRead } from './DiscoverRead';
@@ -19,7 +20,7 @@ import { isleOf, tableNum } from '../engine/unlock';
 
 export function Discover({ s, m }: { s: SeriesId; m: number }) {
   const op = SERIES[s].op;
-  return op === 'mul' || op === 'div' ? <DiscoverTable s={s} m={m} /> : op === 'eng' ? <DiscoverEng s={s} /> : op === 'fr' ? <DiscoverFr s={s} /> : op === 'lec' ? <DiscoverRead s={s} /> : op === 'num' ? <DiscoverNum s={s} /> : op === 'frac' ? <DiscoverFrac s={s} /> : op === 'big' || op === 'mes' ? <DiscoverWritten s={s} /> : op === 'grd' || op === 'esp' ? <DiscoverPic s={s} /> : <DiscoverCP s={s} m={m} />;
+  return op === 'mul' || op === 'div' ? <DiscoverTable s={s} m={m} /> : op === 'eng' ? <DiscoverEng s={s} /> : op === 'fr' ? <DiscoverFr s={s} /> : op === 'lec' ? <DiscoverRead s={s} /> : op === 'num' ? <DiscoverNum s={s} /> : op === 'frac' ? <DiscoverFrac s={s} /> : op === 'big' || op === 'mes' ? <DiscoverWritten s={s} /> : op === 'grd' || op === 'esp' ? <DiscoverPic s={s} /> : op === 'geo' ? <DiscoverGeo s={s} /> : <DiscoverCP s={s} m={m} />;
 }
 
 function DiscoverTable({ s, m }: { s: SeriesId; m: number }) {
