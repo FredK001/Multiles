@@ -1,5 +1,5 @@
 /* Questions à dessins du CP (grandeurs, espace) : une consigne lue, un dessin, trois réponses écrites ou dessinées. */
-import { GRD_SETS, grdSetOf } from '../content/measures';
+import { GRD_SETS, grdSetOf } from '../content/grandeurs';
 import { picLabel, type PicCode, type PicItem } from '../content/picquiz';
 import type { SeriesDef, SeriesSpec } from '../content/series';
 import { ESP_SETS, espSetOf } from '../content/space';

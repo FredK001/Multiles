@@ -1,6 +1,6 @@
 /* Dessin d'un code de question à dessins (CP, grandeurs et espace) : voir src/content/picquiz.ts. */
 import { clockOf, moneyOf, shapeOf, type PicCode } from '../content/picquiz';
-import { clockArt, moneyArt, skyArt } from './measures';
+import { clockArt, moneyArt, skyArt } from './grandeurs';
 import { gridArt, placeArt, shapeArt } from './space';
 
 /** `size` : taille de référence (hauteur de la monnaie, côté des autres dessins) ; `aid` : version de l'aide

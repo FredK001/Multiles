@@ -3,7 +3,7 @@ import type { FrQuizId } from './french';
 import type { FracId } from './fractions';
 import type { NumId } from './numbers';
 import type { ReadId } from './reading';
-import type { GrdId } from './measures';
+import type { GrdId } from './grandeurs';
 import type { EspId } from './space';
 import { CP_ZONE, DIV_ZONE, ENG_ZONE, ESP_ZONE, FR_ZONE, FRAC_ZONE, GRD_ZONE, LEC_ZONE, NUM_ZONE, OP_SIGN, SERIES, type SeriesId } from './series';
 

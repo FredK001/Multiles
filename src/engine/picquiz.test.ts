@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { picArt } from '../art/pic';
-import { GRD_SETS, moneySum } from '../content/measures';
+import { GRD_SETS, moneySum } from '../content/grandeurs';
 import { spoken, tipOf } from '../content/messages';
 import { clockOf, hourText, moneyOf, picLabel, sayEuros, shapeOf, SIDES, type PicItem } from '../content/picquiz';
 import { CURRICULUM, seriesOf } from '../content/series';

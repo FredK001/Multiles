@@ -7,7 +7,7 @@ import { ALL_QUIZZES, type FrQuizId } from './french';
 import { FRAC_SETS, type FracId } from './fractions';
 import { NUM_SETS, type NumId } from './numbers';
 import { READ_SETS, type ReadId } from './reading';
-import { GRD_SETS, type GrdId } from './measures';
+import { GRD_SETS, type GrdId } from './grandeurs';
 import { ESP_SETS, type EspId } from './space';
 
 export type Op = 'mul' | 'div' | 'frac' | 'add' | 'sub' | 'num' | 'grd' | 'esp' | 'lec' | 'fr' | 'eng';

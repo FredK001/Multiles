@@ -7,7 +7,7 @@ import { useApp, useBack, usePlayer } from '../app/context';
 import { stepCfg } from '../app/sessions';
 import { BackChip, BtnSay, Svg } from '../app/ui';
 import { lookOf } from '../content/isles';
-import type { GrdId } from '../content/measures';
+import type { GrdId } from '../content/grandeurs';
 import { clock, hourText, money, sayEuros, shape, type PicCode } from '../content/picquiz';
 import { SERIES, type SeriesId } from '../content/series';
 import type { EspId } from '../content/space';
