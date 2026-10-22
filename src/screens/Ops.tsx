@@ -10,7 +10,7 @@ import { opProg, opsOf } from '../engine/progress';
 import { totalStars } from '../engine/unlock';
 
 /** Sous-titre des cartes quand le nom de la matière ne dit pas tout. */
-const OP_HINT: Partial<Record<Op, string>> = { frac: 'Fractions et décimaux', big: 'Lire, calculer, diviser', mes: 'Longueurs, masses, heures', fr: 'Homophones et conjugaison', num: "Jusqu'à 100", lec: 'Sons, phrases, dictée' };
+const OP_HINT: Partial<Record<Op, string>> = { frac: 'Fractions et décimaux', big: 'Lire, calculer, diviser', mes: 'Longueurs, masses, heures', fr: 'Homophones et conjugaison', num: "Jusqu'à 100", grd: 'Monnaie et heure', esp: 'Formes et cases', lec: 'Sons, phrases, dictée' };
 
 export function OpsScreen({ then }: { then: 'play' | 'map' }) {
   const p = usePlayer();

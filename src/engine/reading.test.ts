@@ -10,7 +10,7 @@ import { factsOf } from './series';
 
 describe('lecture au CP', () => {
   it('proposée au CP, 9 îles (phrases et dictée ajoutées à la fin), voyelles et premières syllabes ouvertes au départ', () => {
-    expect(CURRICULUM.CP).toEqual(['add', 'sub', 'num', 'lec']);
+    expect(CURRICULUM.CP).toEqual(['add', 'sub', 'num', 'grd', 'esp', 'lec']);
     expect(seriesOf('lec').map((s) => s.id)).toEqual(['lec-voy', 'lec-syl1', 'lec-syl2', 'lec-sons', 'lec-mots', 'lec-phr1', 'lec-dict1', 'lec-phr2', 'lec-dict2']);
     expect(seriesOf('lec').map((s) => s.need)).toEqual([0, 0, 1, 2, 3, 4, 4, 5, 6]);
   });

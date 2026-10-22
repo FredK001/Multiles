@@ -8,7 +8,7 @@ import { trapsCfg } from '../app/sessions';
 import { BtnSay, Svg, TabBar } from '../app/ui';
 import { lookOf } from '../content/isles';
 import { equation, tipOf } from '../content/messages';
-import { CP_ZONE, LEC_ZONE, NUM_ZONE, OP_NAME, OP_SIGN, OP_SPOKEN, SERIES, seriesOf, type Op } from '../content/series';
+import { CP_ZONE, ESP_ZONE, GRD_ZONE, LEC_ZONE, NUM_ZONE, OP_NAME, OP_SIGN, OP_SPOKEN, SERIES, seriesOf, type Op } from '../content/series';
 import { nb } from '../content/text';
 import { factKey, hasKey, parseFact } from '../engine/keys';
 import { stageFor } from '../engine/level';
@@ -24,24 +24,26 @@ type Cell = { op: 'add' | 'sub'; a: number; b: number };
 export function GridCP() {
   const p = usePlayer();
   const { go } = useApp();
-  const ops = opsOf(p).filter((x): x is 'add' | 'sub' | 'num' | 'lec' => x === 'add' || x === 'sub' || x === 'num' || x === 'lec');
-  const [op, setOp] = useState<'add' | 'sub' | 'num' | 'lec'>(p.op === 'sub' || p.op === 'lec' || p.op === 'num' ? p.op : 'add');
+  type CpOp = 'add' | 'sub' | 'num' | 'grd' | 'esp' | 'lec';
+  const ops = opsOf(p).filter((x): x is CpOp => x === 'add' || x === 'sub' || x === 'num' || x === 'grd' || x === 'esp' || x === 'lec');
+  const [op, setOp] = useState<CpOp>(p.op === 'sub' || p.op === 'lec' || p.op === 'num' || p.op === 'grd' || p.op === 'esp' ? p.op : 'add');
   const [sel, setSel] = useState<Cell | null>(null);
   useBack(() => (sel ? setSel(null) : go({ name: 'home' })));
   useProfileTheme(p.color);
   // Une seule couleur à la fois : celle de l'onglet (la lecture a la sienne).
-  const zone = op === 'lec' ? LEC_ZONE : op === 'num' ? NUM_ZONE : CP_ZONE;
+  const zone = op === 'lec' ? LEC_ZONE : op === 'num' ? NUM_ZONE : op === 'grd' ? GRD_ZONE : op === 'esp' ? ESP_ZONE : CP_ZONE;
   useIsleTheme(zone.fort, zone.clair);
   const tabs = ops.length > 1 && (
     <div class="opts op-tabs" role="group" aria-label="Opération">
       {ops.map((x: Op) => (
-        <button key={x} aria-pressed={x === op} onClick={() => { setOp(x as 'add' | 'sub' | 'num' | 'lec'); setSel(null); }}><b aria-hidden="true">{OP_SIGN[x]}</b>{OP_NAME[x]}</button>
+        <button key={x} aria-pressed={x === op} onClick={() => { setOp(x as CpOp); setSel(null); }}><b aria-hidden="true">{OP_SIGN[x]}</b>{OP_NAME[x]}</button>
       ))}
     </div>
   );
   // Lecture : sa propre grille (les sons et les mots réussis), sous les mêmes onglets.
   if (op === 'lec') return <GridRead key="lec" tabs={tabs} />;
   if (op === 'num') return <GridNum key="num" tabs={tabs} />;
+  if (op === 'grd' || op === 'esp') return <GridNum key={op} tabs={tabs} op={op} />;
   const o = opProg(p, op), stage = stageFor(p.level);
   const known = (c: Cell) => hasKey(o.mastered, factKey(c.op, c.a, c.b));
   const trap = (c: Cell) => hasKey(o.traps, factKey(c.op, c.a, c.b));

@@ -11,6 +11,7 @@ import { readFactLabel } from '../engine/reading';
 import { numOfKey } from '../engine/numbers';
 import { fracFactLabel } from '../engine/fractions';
 import { writtenFactLabel } from '../engine/written';
+import { picFactLabel } from '../engine/picquiz';
 import { numEq } from '../content/messages';
 import { cleanName, setGrade } from '../engine/profile';
 import { checkStreak } from '../engine/streak';
@@ -411,7 +412,7 @@ export function Parent() {
               <h2>Cette semaine <small>{split ? `${what}, du lundi à aujourd'hui` : "du lundi à aujourd'hui"}</small></h2>
               <div class="kpis">
                 <div class="kpi"><b>{tot} min</b><small>de jeu</small></div>
-                <div class="kpi"><b>{seriesDone(o.mastered, op)}/{seriesOf(op).length}</b><small>{mul || op === 'div' ? 'tables maîtrisées' : eng ? 'thèmes maîtrisés' : op === 'fr' || op === 'lec' || op === 'num' || op === 'frac' || op === 'big' || op === 'mes' ? 'îles maîtrisées' : 'séries maîtrisées'}</small></div>
+                <div class="kpi"><b>{seriesDone(o.mastered, op)}/{seriesOf(op).length}</b><small>{mul || op === 'div' ? 'tables maîtrisées' : eng ? 'thèmes maîtrisés' : op === 'fr' || op === 'lec' || op === 'num' || op === 'frac' || op === 'big' || op === 'mes' || op === 'grd' || op === 'esp' ? 'îles maîtrisées' : 'séries maîtrisées'}</small></div>
                 <div class="kpi"><b>{streak}</b><small>jour{streak > 1 ? 's' : ''} de suite</small></div>
               </div>
               <div class="week-bars" role="img" aria-label={`Minutes par jour : ${['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map((d, i) => `${d} ${mins[i]}`).join(', ')}`}>
@@ -426,7 +427,7 @@ export function Parent() {
               <p style={{ fontSize: '14px', color: 'var(--ink-2)' }}>{plural(totalSessions(p.days, split ? op : undefined), 'session')} depuis le début. Une session dure 3 à 5 minutes.</p>
             </div>
             <div class="pcard2">
-              <h2>{mul || op === 'div' ? 'Tables' : eng ? 'Thèmes' : op === 'fr' ? 'Homophones et conjugaison' : op === 'lec' ? 'Lecture' : op === 'num' ? 'Nombres' : op === 'frac' ? 'Fractions et décimaux' : op === 'big' ? 'Grands nombres' : op === 'mes' ? 'Mesures' : 'Séries'} <small>{eng ? 'part des mots et phrases réussis' : op === 'fr' ? 'part des phrases réussies' : op === 'lec' ? 'part des sons, mots et phrases réussis' : op === 'num' || op === 'frac' || op === 'big' || op === 'mes' ? 'part des questions réussies' : `part des ${what} réussies`}</small></h2>
+              <h2>{mul || op === 'div' ? 'Tables' : eng ? 'Thèmes' : op === 'fr' ? 'Homophones et conjugaison' : op === 'lec' ? 'Lecture' : op === 'num' ? 'Nombres' : op === 'frac' ? 'Fractions et décimaux' : op === 'big' ? 'Grands nombres' : op === 'mes' ? 'Mesures' : op === 'grd' || op === 'esp' ? OP_NAME[op] : 'Séries'} <small>{eng ? 'part des mots et phrases réussis' : op === 'fr' ? 'part des phrases réussies' : op === 'lec' ? 'part des sons, mots et phrases réussis' : op === 'num' || op === 'frac' || op === 'big' || op === 'mes' || op === 'grd' || op === 'esp' ? 'part des questions réussies' : `part des ${what} réussies`}</small></h2>
               <div class="tbl">
                 {seriesOf(op).map((s) => {
                   const v = seriesPct(o.mastered, s.id), b = seriesBadge(s);
@@ -444,7 +445,7 @@ export function Parent() {
               </div>
             </div>
             <div class="pcard2">
-              <h2>{eng ? 'Mots et phrases difficiles' : op === 'fr' ? 'Phrases difficiles' : op === 'lec' ? 'Sons, mots et phrases difficiles' : op === 'num' || op === 'frac' || op === 'big' || op === 'mes' ? 'Questions difficiles' : `${OP_NAME[op]} difficiles`} <small>{hard.length}</small></h2>
+              <h2>{eng ? 'Mots et phrases difficiles' : op === 'fr' ? 'Phrases difficiles' : op === 'lec' ? 'Sons, mots et phrases difficiles' : op === 'num' || op === 'frac' || op === 'big' || op === 'mes' || op === 'grd' || op === 'esp' ? 'Questions difficiles' : `${OP_NAME[op]} difficiles`} <small>{hard.length}</small></h2>
               {hard.length ? (
                 <>
                   <div class="hard">
@@ -454,6 +455,8 @@ export function Parent() {
                           <span class="eq eng"><span lang="en">{engFactLabel(h.a, h.b).en}</span>{engFactLabel(h.a, h.b).fr && <small>{engFactLabel(h.a, h.b).fr}</small>}</span>
                         ) : h.op === 'big' || h.op === 'mes' ? (
                           <span class="eq eng"><span>{writtenFactLabel(h.op, h.a, h.b).q}</span><small>{writtenFactLabel(h.op, h.a, h.b).a}</small></span>
+                        ) : h.op === 'grd' || h.op === 'esp' ? (
+                          <span class="eq eng"><span>{picFactLabel(h.op, h.a, h.b).q}</span><small>{picFactLabel(h.op, h.a, h.b).a}</small></span>
                         ) : h.op === 'frac' ? (
                           <span class="eq eng"><span>{fracFactLabel(h.a, h.b).q}</span><small>{fracFactLabel(h.a, h.b).a}</small></span>
                         ) : h.op === 'num' ? (
@@ -466,7 +469,7 @@ export function Parent() {
                           <span class="eq">{h.a} {OP_SIGN[h.op]} {h.b}</span>
                         )}
                         <small>{h.errors} erreur{h.errors > 1 ? 's' : ''} récente{h.errors > 1 ? 's' : ''}</small>
-                        {h.op !== 'eng' && h.op !== 'fr' && h.op !== 'lec' && h.op !== 'num' && h.op !== 'frac' && h.op !== 'big' && h.op !== 'mes' && <small>{h.r}</small>}
+                        {h.op !== 'eng' && h.op !== 'fr' && h.op !== 'lec' && h.op !== 'num' && h.op !== 'frac' && h.op !== 'big' && h.op !== 'mes' && h.op !== 'grd' && h.op !== 'esp' && <small>{h.r}</small>}
                       </div>
                     ))}
                   </div>

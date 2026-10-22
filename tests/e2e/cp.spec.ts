@@ -44,7 +44,7 @@ test('CP : création, choix de l\'opération mémorisé, soustractions sans nomb
   await page.getByRole('button', { name: 'Jouer avec le profil de Tom' }).click();
 
   // « Jouer » passe par le choix de l'opération.
-  await expect(page.locator('.btn-play small')).toHaveText('+ ou − ou 123 ou ab ?');
+  await expect(page.locator('.btn-play small')).toHaveText('+ ou − ou 123 ou € ou ▲ ou ab ?');
   await page.locator('.btn-play').click();
   await expect(page.locator('[data-screen="ops"]')).toBeVisible();
   await page.getByRole('group', { name: 'Opération' }).getByRole('button', { name: /^Moins/ }).click();
@@ -106,7 +106,7 @@ test('CP et CM1 sur le même appareil ; changer de classe garde la progression',
 
   // Tom (CP) : choix de l'opération, îles du CP.
   await page.getByRole('button', { name: 'Jouer avec le profil de Tom' }).click();
-  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 18 conquises');
+  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 26 conquises');
   await page.locator('#btnSwitch').click();
 
   // Nina passe en CP puis revient en CM1 : sa progression en multiplication est intacte.

@@ -12,7 +12,7 @@ const key = (f: Fact) => `${f.a},${f.b}`;
 describe('catalogue des séries', () => {
   it('chaque niveau propose des opérations qui ont des séries', () => {
     for (const g of GRADES) for (const op of CURRICULUM[g]) expect(seriesOf(op).length).toBeGreaterThan(0);
-    expect(CURRICULUM.CP).toEqual(['add', 'sub', 'num', 'lec']);
+    expect(CURRICULUM.CP).toEqual(['add', 'sub', 'num', 'grd', 'esp', 'lec']);
     expect(CURRICULUM.CM1).toEqual(['mul', 'div', 'frac', 'big', 'mes', 'fr', 'eng']); // grands nombres et mesures après les fractions
   });
   it('les tables du CM1 gardent leurs étapes ×1-5, ×6-10, toute la table', () => {

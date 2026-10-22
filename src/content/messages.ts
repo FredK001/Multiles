@@ -4,6 +4,7 @@ import { themeOf } from './english';
 import { fillBlank, quizOf, ruleOf } from './french';
 import { sayFrac } from './fractions';
 import { PICS, spell } from './reading';
+import { sayEuros } from './picquiz';
 import { DRILL_BASE, OP_SIGN, OP_SPOKEN, SERIES } from './series';
 import { seriesStory } from './stories';
 import { nb } from './text';
@@ -68,12 +69,20 @@ export function spoken(q: Question): string {
   if (q.op === 'num' && q.num) return numSpoken(q.num.set, q.num.x, q.num.y);
   if (q.op === 'lec' && q.read?.kind === 'phrase') return LEC_PROMPTS.phrase[0];
   if (q.op === 'lec' && q.read?.kind === 'dictee') return q.read.seen ? `Écris le mot du dessin : ${PICS[q.read.pic!].label}.` : LEC_PROMPTS.dictee[0];
+  if ((q.op === 'grd' || q.op === 'esp') && q.picq) return picSpoken(q.picq);
   if (q.op === 'lec' && q.read) return q.fmt === 'qcm' ? `Trouve : ${q.read.target}.` : 'Écoute bien.';
   if (q.op === 'fr' && q.fr) return q.fr.text.replace(/___/g, '…') + (q.fr.verb ? ` Verbe ${q.fr.verb}.` : '');
   const w = OP_SPOKEN[q.op];
   if (q.fmt === 'manquant') return q.op === 'div' ? `${q.a} ${w} combien égale ${q.p} ?` : `${q.a} ${w} combien font ${q.p} ?`;
   if (q.fmt === 'vf') return `${q.a} ${w} ${q.b} égale ${q.shown}. Vrai ou faux ?`;
   return `Combien font ${q.a} ${w} ${q.b} ?`;
+}
+
+/** Grandeurs et espace (CP) : la consigne, puis les réponses écrites (l'enfant lit peu) ; les euros en toutes lettres. */
+export function picSpoken(q: NonNullable<Question['picq']>): string {
+  if (q.pics) return sayEuros(q.text);
+  const o = q.options, list = `${o.slice(0, -1).join(', ')} ou ${o[o.length - 1]} ?`;
+  return sayEuros(`${q.text} ${list.charAt(0).toUpperCase()}${list.slice(1)}`);
 }
 
 /** Question de nombres, telle qu'on la dit. */
@@ -170,7 +179,7 @@ export function engPrompt(q: Question): readonly string[] {
 }
 
 /** Aide après une erreur en anglais : le sens du mot, ou la phrase à retenir. */
-type TipQ = Pick<Question, 'op' | 'a' | 'b'> & Partial<Pick<Question, 'eng' | 'fr' | 'read' | 'num' | 'frac' | 'big' | 'mes' | 'p' | 'fmt'>>;
+type TipQ = Pick<Question, 'op' | 'a' | 'b'> & Partial<Pick<Question, 'eng' | 'fr' | 'read' | 'num' | 'frac' | 'big' | 'mes' | 'picq' | 'p' | 'fmt'>>;
 
 function engTip(q: TipQ): string {
   const e = q.eng, t = e && themeOf(e.theme);
@@ -247,7 +256,7 @@ function phraseTip(r: NonNullable<TipQ['read']>): string {
 
 /** Astuce adaptée au calcul, quelle que soit l'opération. */
 export function tipOf(q: TipQ): string {
-  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'div' ? divTip(q.a, q.b) : q.op === 'fr' ? frTip(q) : q.op === 'lec' ? lecTip(q) : q.op === 'num' ? numTip(q) : q.op === 'frac' ? (q.frac?.tip ?? '') : q.op === 'big' ? (q.big?.tip ?? '') : q.op === 'mes' ? (q.mes?.tip ?? '') : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
+  return q.op === 'mul' ? tipFor(q.a, q.b) : q.op === 'div' ? divTip(q.a, q.b) : q.op === 'fr' ? frTip(q) : q.op === 'lec' ? lecTip(q) : q.op === 'num' ? numTip(q) : q.op === 'frac' ? (q.frac?.tip ?? '') : q.op === 'big' ? (q.big?.tip ?? '') : q.op === 'mes' ? (q.mes?.tip ?? '') : q.op === 'grd' || q.op === 'esp' ? (q.picq?.tip ?? '') : q.op === 'add' ? addTip(q.a, q.b) : q.op === 'sub' ? subTip(q.a, q.b) : engTip(q);
 }
 
 /** Bulle d'accueil. */

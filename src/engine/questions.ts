@@ -8,6 +8,7 @@ import { readDraft, type ReadQ } from './reading';
 import { numAnswer, numChoices, numQ, numSetOfSeries, type NumQ } from './numbers';
 import { fracDraft, fracSetOfSeries, type FracQ } from './fractions';
 import { writtenDraft, type WrittenQ } from './written';
+import { picDraft, picSpecOf, type PicQ } from './picquiz';
 import { displayBounds, drawFact, factsOf, inSeries, resultOf, weightOf, type Fact } from './series';
 
 /** Les 4 formats : pavé numérique, QCM à 3 choix, facteur manquant, vrai/faux ;
@@ -65,6 +66,8 @@ export interface Question {
   big?: WrittenQ;
   /** Mesures : l'énoncé (horloge éventuelle) et les trois réponses écrites ; `p` est l'indice de la bonne. */
   mes?: WrittenQ;
+  /** Grandeurs et espace (CP) : consigne, dessin et trois réponses (écrites ou dessinées) ; `p` est l'indice de la bonne. */
+  picq?: PicQ;
 }
 
 export interface GenOptions {
@@ -116,6 +119,12 @@ export function generateQuestion({ series, fmt, fact, step = null, rng = default
   if (s.op === 'big' || s.op === 'mes') {
     const d = writtenDraft(s, f.b, rng);
     const q: Question = { op: s.op, series: s.id, a: f.a, b: f.b, fmt: 'qcm', p: d.p, [s.op]: d.w, choices: [0, 1, 2] };
+    assertValid(q);
+    return q;
+  }
+  if (s.op === 'grd' || s.op === 'esp') {
+    const d = picDraft(picSpecOf(s), f.b, rng);
+    const q: Question = { op: s.op, series: s.id, a: f.a, b: f.b, fmt: 'qcm', p: d.p, picq: d.pic, choices: [0, 1, 2] };
     assertValid(q);
     return q;
   }
@@ -186,6 +195,11 @@ export function assertValid(q: Question): void {
   if (q.op === 'big' || q.op === 'mes') {
     const w = q[q.op], o = w?.options ?? [];
     if (!w || q.fmt !== 'qcm' || o.length !== 3 || new Set(o).size !== 3 || q.p < 0 || q.p > 2) fail(q.op === 'big' ? 'grands nombres' : 'mesures');
+    return;
+  }
+  if (q.op === 'grd' || q.op === 'esp') {
+    const o = q.picq?.options ?? [];
+    if (!q.picq || q.fmt !== 'qcm' || o.length !== 3 || new Set(o).size !== 3 || q.p < 0 || q.p > 2) fail('grandeurs, espace');
     return;
   }
   if (q.op === 'num') {

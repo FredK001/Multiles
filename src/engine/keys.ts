@@ -1,7 +1,7 @@
 import { OP_KEY, type Op } from '../content/series';
 
 /** Clé d'un calcul, dans l'ordre où il a été posé : « 7x8 », « 56d7 » (56 ÷ 7), « 3+4 », « 9-2 » ; en anglais « 4e12 » (thème 4, mot 12). */
-export type FactKey = `${number}${'x' | 'd' | 'r' | 'g' | 'm' | '+' | '-' | 'n' | 'l' | 'f' | 'e'}${number}`;
+export type FactKey = `${number}${'x' | 'd' | 'r' | 'g' | 'm' | '+' | '-' | 'n' | 'h' | 's' | 'l' | 'f' | 'e'}${number}`;
 /** Clé d'une multiplication : « 7x8 ». */
 export type MulKey = `${number}x${number}`;
 
@@ -11,8 +11,8 @@ export const mulKey = (a: number, b: number): MulKey => `${a}x${b}`;
 // Le dividende va jusqu'à 100 (10 × 10 ÷ 10).
 // Grands nombres « 2g7 » et mesures « 3m12 » : île, puis rang de la question.
 // Les questions de nombres vont jusqu'au rang 196 (avant/après) : trois chiffres de chaque côté.
-const FACT_RE = /^(\d{1,3})([x+edflnrgm-])(\d{1,3})$/;
-const OP_OF: Record<string, Op> = { x: 'mul', d: 'div', r: 'frac', g: 'big', m: 'mes', '+': 'add', '-': 'sub', n: 'num', l: 'lec', f: 'fr', e: 'eng' };
+const FACT_RE = /^(\d{1,3})([x+edflnrgmhs-])(\d{1,3})$/;
+const OP_OF: Record<string, Op> = { x: 'mul', d: 'div', r: 'frac', g: 'big', m: 'mes', '+': 'add', '-': 'sub', n: 'num', h: 'grd', s: 'esp', l: 'lec', f: 'fr', e: 'eng' };
 
 /** Lit une clé de calcul ; null si elle est mal formée. */
 export function parseFact(k: string): { op: Op; a: number; b: number } | null {
