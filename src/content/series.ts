@@ -5,28 +5,32 @@
 import { THEMES, type ThemeId } from './english';
 import { ALL_QUIZZES, type FrQuizId } from './french';
 import { FRAC_SETS, type FracId } from './fractions';
+import { GEO_SETS, type GeoId } from './geometry';
 import { NUM_SETS, type NumId } from './numbers';
 import { READ_SETS, type ReadId } from './reading';
 
-export type Op = 'mul' | 'div' | 'frac' | 'add' | 'sub' | 'num' | 'lec' | 'fr' | 'eng';
+export type Op = 'mul' | 'div' | 'frac' | 'geo' | 'add' | 'sub' | 'num' | 'lec' | 'fr' | 'eng';
 
 /** Toutes les opérations, dans l'ordre d'affichage (album, espace parent, sauvegarde). */
-export const OPS: readonly Op[] = ['mul', 'div', 'frac', 'add', 'sub', 'num', 'lec', 'fr', 'eng'];
+export const OPS: readonly Op[] = ['mul', 'div', 'frac', 'geo', 'add', 'sub', 'num', 'lec', 'fr', 'eng'];
 export type Grade = 'CP' | 'CM1';
 
 export const GRADES: readonly Grade[] = ['CP', 'CM1'];
 
 /** Opérations proposées à chaque niveau, dans l'ordre d'affichage. */
-export const CURRICULUM: Record<Grade, readonly Op[]> = { CP: ['add', 'sub', 'num', 'lec'], CM1: ['mul', 'div', 'frac', 'fr', 'eng'] };
+export const CURRICULUM: Record<Grade, readonly Op[]> = { CP: ['add', 'sub', 'num', 'lec'], CM1: ['mul', 'div', 'frac', 'geo', 'fr', 'eng'] };
 
 /** Couleur de zone de l'anglais (îles, questions, carte) : bleu marine, 9,6:1 avec le blanc. */
 export const ENG_ZONE = { fort: '#23408E', clair: '#DCE3F5' } as const;
 
 /** Couleur d'une opération (pastilles, cartes de choix) ; les tables gardent la couleur de profil. */
-export const zoneOf = (op: Op): string => (op === 'eng' ? ENG_ZONE.fort : op === 'mul' ? 'var(--ballon)' : op === 'div' ? DIV_ZONE.fort : op === 'fr' ? FR_ZONE.fort : op === 'lec' ? LEC_ZONE.fort : op === 'num' ? NUM_ZONE.fort : op === 'frac' ? FRAC_ZONE.fort : CP_ZONE.fort);
+export const zoneOf = (op: Op): string => (op === 'eng' ? ENG_ZONE.fort : op === 'mul' ? 'var(--ballon)' : op === 'div' ? DIV_ZONE.fort : op === 'fr' ? FR_ZONE.fort : op === 'lec' ? LEC_ZONE.fort : op === 'num' ? NUM_ZONE.fort : op === 'frac' ? FRAC_ZONE.fort : op === 'geo' ? GEO_ZONE.fort : CP_ZONE.fort);
 
 /** Couleur de zone des fractions (CM1) : framboise, 6,9:1 avec le blanc. */
 export const FRAC_ZONE = { fort: '#9C2F5B', clair: '#F6DDE7' } as const;
+
+/** Couleur de zone de la géométrie (CM1) : ardoise, 7,8:1 avec le blanc. */
+export const GEO_ZONE = { fort: '#3E5468', clair: '#E0E7EE' } as const;
 
 /** Couleur de zone des nombres (CP) : bleu canard, 6,2:1 avec le blanc. */
 export const NUM_ZONE = { fort: '#0B6E75', clair: '#D3EEF0' } as const;
@@ -44,25 +48,25 @@ export const DIV_ZONE = { fort: '#6B2E8F', clair: '#EBDDF3' } as const;
 export const CP_ZONE = { fort: '#B04A00', clair: '#FBE4D3' } as const;
 
 /** Noms au pluriel (espace parent, choix de l'opération). */
-export const OP_NAME: Record<Op, string> = { mul: 'Multiplications', div: 'Divisions', frac: 'Fractions', fr: 'Français', lec: 'Lecture', num: 'Nombres', add: 'Additions', sub: 'Soustractions', eng: 'Anglais' };
+export const OP_NAME: Record<Op, string> = { mul: 'Multiplications', div: 'Divisions', frac: 'Fractions', geo: 'Géométrie', fr: 'Français', lec: 'Lecture', num: 'Nombres', add: 'Additions', sub: 'Soustractions', eng: 'Anglais' };
 
 /** Nom d'une opération. */
-export const OP_SINGULAR: Record<Op, string> = { mul: 'Multiplication', div: 'Division', frac: 'Fractions', fr: 'Français', lec: 'Lecture', num: 'Nombres', add: 'Addition', sub: 'Soustraction', eng: 'Anglais' };
+export const OP_SINGULAR: Record<Op, string> = { mul: 'Multiplication', div: 'Division', frac: 'Fractions', geo: 'Géométrie', fr: 'Français', lec: 'Lecture', num: 'Nombres', add: 'Addition', sub: 'Soustraction', eng: 'Anglais' };
 
 /** Mot court lu et affiché pour un enfant qui lit peu. */
-export const OP_WORD: Record<Op, string> = { mul: 'Fois', div: 'Divisé', frac: 'Fractions', fr: 'Français', lec: 'Lire', num: 'Nombres', add: 'Plus', sub: 'Moins', eng: 'Anglais' };
+export const OP_WORD: Record<Op, string> = { mul: 'Fois', div: 'Divisé', frac: 'Fractions', geo: 'Géométrie', fr: 'Français', lec: 'Lire', num: 'Nombres', add: 'Plus', sub: 'Moins', eng: 'Anglais' };
 
 /** Mot lu à voix haute entre les deux nombres. */
-export const OP_SPOKEN: Record<Op, string> = { mul: 'fois', div: 'divisé par', frac: '', fr: '', lec: '', num: '', add: 'plus', sub: 'moins', eng: '' };
+export const OP_SPOKEN: Record<Op, string> = { mul: 'fois', div: 'divisé par', frac: '', geo: '', fr: '', lec: '', num: '', add: 'plus', sub: 'moins', eng: '' };
 
 /** Ce que propose chaque classe (création de profil, espace parent). */
-export const GRADE_DESC: Record<Grade, string> = { CP: 'Additions, soustractions, nombres et lecture', CM1: 'Tables de multiplication, divisions, fractions, français et anglais' };
+export const GRADE_DESC: Record<Grade, string> = { CP: 'Additions, soustractions, nombres et lecture', CM1: 'Tables de multiplication, divisions, fractions, géométrie, français et anglais' };
 
 /** Signe affiché (vrai signe moins, pas le tiret). */
-export const OP_SIGN: Record<Op, string> = { mul: '×', div: '÷', frac: '½', fr: 'Aa', lec: 'ab', num: '123', add: '+', sub: '−', eng: 'EN' };
+export const OP_SIGN: Record<Op, string> = { mul: '×', div: '÷', frac: '½', geo: '△', fr: 'Aa', lec: 'ab', num: '123', add: '+', sub: '−', eng: 'EN' };
 
-/** Lettre utilisée dans les clés de calcul : « 7x8 », « 56d7 », « 3+4 », « 9-2 », « 4e12 » (thème 4, mot 12). */
-export const OP_KEY: Record<Op, 'x' | 'd' | 'r' | '+' | '-' | 'n' | 'l' | 'f' | 'e'> = { mul: 'x', div: 'd', frac: 'r', add: '+', sub: '-', num: 'n', lec: 'l', fr: 'f', eng: 'e' };
+/** Lettre utilisée dans les clés de calcul : « 7x8 », « 56d7 », « 3+4 », « 9-2 », « 4e12 » (thème 4, mot 12), « 2o5 » (géométrie). */
+export const OP_KEY: Record<Op, 'x' | 'd' | 'r' | 'o' | '+' | '-' | 'n' | 'l' | 'f' | 'e'> = { mul: 'x', div: 'd', frac: 'r', geo: 'o', add: '+', sub: '-', num: 'n', lec: 'l', fr: 'f', eng: 'e' };
 
 export type SeriesSpec =
   /** Table de n : n × 1 à n × 10 ; en division, n × 1 ÷ n à n × 10 ÷ n (a = dividende, b = n). */
@@ -74,6 +78,8 @@ export type SeriesSpec =
   | { kind: 'list'; facts: readonly { a: number; b: number }[] }
   /** Fractions et décimaux n° `n` (1 à 4) : a = n, b = rang de la question (content/fractions.ts). */
   | { kind: 'frac'; set: FracId; n: number }
+  /** Géométrie n° `n` (1 à 4) : a = n, b = rang de la question (content/geometry.ts). */
+  | { kind: 'geo'; set: GeoId; n: number }
   /** Nombres jusqu'à 100 n° `n` (1 à 4) : le sens de a et b dépend de l'île (content/numbers.ts). */
   | { kind: 'num'; set: NumId; n: number }
   /** Lecture n° `n` (1 à 5) : a = n, b = n° du son, de la syllabe ou du mot. */
@@ -104,7 +110,8 @@ export type FrId = `fr-${FrQuizId}`;
 export type LecId = `lec-${ReadId}`;
 export type NumSeries = `num-${NumId}`;
 export type FracSeries = `frac-${FracId}`;
-export type SeriesId = TableId | DivId | 'add-10' | 'add-c10' | 'add-dbl' | 'add-pb' | 'add-20' | 'sub-pb' | 'sub-half' | 'sub-10' | 'sub-20' | NumSeries | LecId | FracSeries | FrId | EngId;
+export type GeoSeries = `geo-${GeoId}`;
+export type SeriesId = TableId | DivId | 'add-10' | 'add-c10' | 'add-dbl' | 'add-pb' | 'add-20' | 'sub-pb' | 'sub-half' | 'sub-10' | 'sub-20' | NumSeries | LecId | FracSeries | GeoSeries | FrId | EngId;
 
 export interface SeriesDef {
   id: SeriesId;
@@ -253,6 +260,19 @@ const fracSet = (id: FracId, i: number): SeriesDef => ({
   formats: ['qcm'],
 });
 
+/** Géométrie : les angles ouverts au départ, puis les droites et les figures, enfin symétrie et périmètre. */
+const GEO_NEED: Record<GeoId, number> = { angle: 0, droite: 1, figure: 1, sym: 2 };
+const geoSet = (id: GeoId, i: number): SeriesDef => ({
+  id: `geo-${id}`,
+  op: 'geo',
+  spec: { kind: 'geo', set: id, n: i + 1 },
+  steps: [{ half: 0 }, { half: 1 }, null],
+  title: GEO_SETS[i]!.title,
+  stepLabels: ['Partie 1', 'Partie 2', 'Tout'],
+  need: GEO_NEED[id],
+  formats: ['qcm'],
+});
+
 /** Nombres : dizaines et unités, avant/après ouverts au départ ; comparer puis la droite graduée. */
 const NUM_NEED: Record<NumId, number> = { du: 0, suite: 0, comp: 1, droite: 2 };
 const numSet = (id: NumId, i: number): SeriesDef => ({
@@ -300,6 +320,7 @@ export const SERIES: Record<SeriesId, SeriesDef> = {
   'add-10': upTo10('add'), 'add-c10': friends10, 'add-dbl': doubles, 'add-pb': problems('add'), 'add-20': upTo20('add'),
   'sub-10': upTo10('sub'), 'sub-pb': problems('sub'), 'sub-half': halves, 'sub-20': upTo20('sub'),
   ...(Object.fromEntries(FRAC_SETS.map((r, i) => [`frac-${r.id}`, fracSet(r.id, i)])) as Record<FracSeries, SeriesDef>),
+  ...(Object.fromEntries(GEO_SETS.map((r, i) => [`geo-${r.id}`, geoSet(r.id, i)])) as Record<GeoSeries, SeriesDef>),
   ...(Object.fromEntries(NUM_SETS.map((r, i) => [`num-${r.id}`, numSet(r.id, i)])) as Record<NumSeries, SeriesDef>),
   ...(Object.fromEntries(READ_SETS.map((r, i) => [`lec-${r.id}`, readSet(r.id, i)])) as Record<LecId, SeriesDef>),
   ...(Object.fromEntries(ALL_QUIZZES.map((q, i) => [`fr-${q.id}`, quiz(q.id, i)])) as Record<FrId, SeriesDef>),
