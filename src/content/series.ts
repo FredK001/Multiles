@@ -328,8 +328,8 @@ const geoSet = (id: GeoId, i: number): SeriesDef => ({
   formats: ['qcm'],
 });
 
-/** Nombres : dizaines et unités, avant/après ouverts au départ ; comparer puis la droite graduée. */
-const NUM_NEED: Record<NumId, number> = { du: 0, suite: 0, comp: 1, droite: 2 };
+/** Nombres : dizaines et unités, avant/après et « plus petit, plus grand » ouverts au départ ; les autres îles avec les trophées. */
+const NUM_NEED: Record<NumId, number> = { du: 0, suite: 0, comp: 1, droite: 2, pg: 0, signe: 1, vf: 2, trois: 3 };
 const numSet = (id: NumId, i: number): SeriesDef => ({
   id: `num-${id}`,
   op: 'num',
@@ -338,7 +338,7 @@ const numSet = (id: NumId, i: number): SeriesDef => ({
   title: NUM_SETS[i]!.title,
   stepLabels: ['Petits nombres', 'Grands nombres', 'Tout'],
   need: NUM_NEED[id],
-  formats: id === 'comp' ? ['qcm'] : ['pave', 'qcm'],
+  formats: id === 'du' || id === 'suite' || id === 'droite' ? ['pave', 'qcm'] : ['qcm'],
 });
 
 /** Grandeurs : les pièces et l'heure juste ouvertes au départ ; payer et la demie avec un trophée. */

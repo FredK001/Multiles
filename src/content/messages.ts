@@ -72,7 +72,7 @@ export function spoken(q: Question): string {
   if (q.op === 'big' && q.big) return sayMaths(q.big.text);
   if (q.op === 'mes' && q.mes) return sayMaths(q.mes.text);
   if (q.op === 'geo' && q.geo) return q.geo.text;
-  if (q.op === 'num' && q.num) return numSpoken(q.num.set, q.num.x, q.num.y);
+  if (q.op === 'num' && q.num) return numSpoken(q.num);
   if (q.op === 'lec' && q.read?.kind === 'phrase') return LEC_PROMPTS.phrase[0];
   if (q.op === 'lec' && q.read?.kind === 'dictee') return q.read.seen ? `Écris le mot du dessin : ${PICS[q.read.pic!].label}.` : LEC_PROMPTS.dictee[0];
   if ((q.op === 'grd' || q.op === 'esp') && q.picq) return picSpoken(q.picq);
@@ -95,16 +95,33 @@ export function picSpoken(q: NonNullable<Question['picq']>): string {
 }
 
 /** Question de nombres, telle qu'on la dit. */
-function numSpoken(set: NonNullable<Question['num']>['set'], a: number, b: number): string {
+function numSpoken(n: NonNullable<Question['num']>): string {
+  const { set, x: a, y: b, z, k = 0 } = n, which = k === 0 ? 'le plus petit' : 'le plus grand';
+  if (set === 'pg') return `Lequel est ${which} : ${a} ou ${b} ?`;
+  if (set === 'signe') return `Quel signe mettre entre ${a} et ${b} ?`;
+  if (set === 'vf') return `${numClaim(a, b, k, true)}. Vrai ou faux ?`;
+  if (set === 'trois') return `Quel est ${which} des trois : ${a}, ${b} ou ${z} ?`;
   if (set === 'du') return `${a} dizaine${a > 1 ? 's' : ''} et ${b} unité${b > 1 ? 's' : ''}, c'est quel nombre ?`;
   if (set === 'suite') return b === 1 ? `Quel nombre vient juste après ${a} ?` : `Quel nombre vient juste avant ${a} ?`;
   if (set === 'comp') return `Quel est le plus grand : ${a} ou ${b} ?`;
   return `Quel nombre est caché sur la droite, entre ${a} et ${a + 10} ?`;
 }
 
+/** Affirmation du vrai/faux : « 6 < 2 », « 6 est plus grand que 2 » ; à voix haute, les signes en mots. */
+export function numClaim(a: number, b: number, k: number, said = false): string {
+  if (k >= 2) return `${a} est plus ${k === 2 ? 'petit' : 'grand'} que ${b}`;
+  return said ? `${a} est plus ${k === 0 ? 'petit' : 'grand'} que ${b}` : `${a} ${k === 0 ? '<' : '>'} ${b}`;
+}
+
+/** Comparaison juste de deux nombres, avec le signe : « 2 < 6 », « 7 = 7 ». */
+const cmp = (a: number, b: number): string => `${a} ${a < b ? '<' : a > b ? '>' : '='} ${b}`;
+
 /** Réponse complète d'une question de nombres (feuille de réponse). */
 export function numEq(n: NonNullable<Question['num']>): string {
-  const { set, x, y } = n;
+  const { set, x, y, z = 0, k = 0 } = n;
+  if (set === 'pg' || set === 'signe') return cmp(x, y);
+  if (set === 'vf') return (k % 2 === 0 ? x < y : x > y) ? `Vrai : ${cmp(x, y)}` : `Faux : ${cmp(x, y)}`;
+  if (set === 'trois') return [x, y, z].sort((p, q) => p - q).join(' < ');
   if (set === 'du') return `${x} dizaine${x > 1 ? 's' : ''} et ${y} unité${y > 1 ? 's' : ''} = ${x * 10 + y}`;
   if (set === 'suite') return y === 1 ? `${x}, puis ${x + 1}` : `${x - 1}, puis ${x}`;
   if (set === 'comp') return `${Math.max(x, y)} > ${Math.min(x, y)}`;
@@ -221,7 +238,7 @@ function frTip(q: TipQ): string {
 /** Astuce des nombres : dizaines d'abord. */
 function numTip(q: TipQ): string {
   if (!q.num) return '';
-  const { set, x: a, y: b } = q.num;
+  const { set, x: a, y: b, k = 0 } = q.num;
   if (set === 'du') return `${a} dizaine${a > 1 ? 's' : ''}, c'est ${a * 10}. ${a * 10} et ${b}, ça fait ${a * 10 + b}.`;
   if (set === 'suite') {
     if (b === 1) return a % 10 === 9 ? `Après ${a}, on change de dizaine : ${a + 1}.` : `Juste après, c'est un de plus : ${a} + 1 = ${a + 1}.`;
@@ -230,6 +247,19 @@ function numTip(q: TipQ): string {
   if (set === 'comp') {
     const ta = Math.floor(a / 10), tb = Math.floor(b / 10), big = Math.max(a, b);
     return ta !== tb ? `On regarde d'abord les dizaines : ${Math.max(ta, tb)} dizaines, c'est plus que ${Math.min(ta, tb)}. Le plus grand est ${big}.` : `Même nombre de dizaines : on regarde les unités. Le plus grand est ${big}.`;
+  }
+  if (set === 'pg') {
+    const big = Math.max(a, b), small = Math.min(a, b);
+    return `La tour de ${big} est plus haute : ${big} est plus grand que ${small}. ${k === 0 ? `Le plus petit est ${small}.` : `Le plus grand est ${big}.`}`;
+  }
+  if (set === 'signe' || set === 'vf') {
+    if (a === b) return `${a} et ${b}, c'est pareil : on écrit ${a} = ${b}.`;
+    const ta = Math.floor(a / 10), tb = Math.floor(b / 10), why = a < 10 && b < 10 || ta === tb ? '' : `${Math.max(ta, tb)} dizaines, c'est plus que ${Math.min(ta, tb)}. `;
+    return `${why}Le crocodile ouvre la bouche vers le plus grand nombre : ${cmp(a, b)}, ${a} est plus ${a < b ? 'petit' : 'grand'} que ${b}.`;
+  }
+  if (set === 'trois') {
+    const all = [a, b, q.num.z ?? 0], r = k === 0 ? Math.min(...all) : Math.max(...all);
+    return `Range-les du plus petit au plus grand : ${[...all].sort((p, s) => p - s).join(', ')}. ${k === 0 ? 'Le plus petit' : 'Le plus grand'} est ${r}.`;
   }
   // Près de la dizaine suivante, on compte à rebours.
   if (b - a >= 8) return `Compte les traits à rebours depuis ${a + 10} : ${Array.from({ length: a + 10 - b }, (_, i) => a + 9 - i).join(', ')}. Le nombre caché est ${b}.`;

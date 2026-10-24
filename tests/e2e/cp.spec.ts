@@ -106,7 +106,7 @@ test('CP et CM1 sur le même appareil ; changer de classe garde la progression',
 
   // Tom (CP) : choix de l'opération, îles du CP.
   await page.getByRole('button', { name: 'Jouer avec le profil de Tom' }).click();
-  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 30 conquises');
+  await expect(page.locator('.isles-strip small')).toHaveText('0 sur 34 conquises');
   await page.locator('#btnSwitch').click();
 
   // Nina passe en CP puis revient en CM1 : sa progression en multiplication est intacte.

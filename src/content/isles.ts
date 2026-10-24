@@ -171,6 +171,11 @@ const NUM_ISLES: Record<NumId, Omit<IsleLook, 'fort' | 'clair'>> = {
   suite: { name: 'Escalier', decor: 'nuages', motif: 9, boss: 'Pas-à-pas', sticker: 'Marelle', of: "de l'Escalier" },
   comp: { name: 'Balance', decor: 'verger', motif: 3, boss: 'Pesos', sticker: 'Balance dorée', of: 'de la Balance' },
   droite: { name: 'Rail', decor: 'espace', motif: 10, boss: 'Wagonnet', sticker: 'Petit train', of: 'du Rail' },
+  // Comparer les nombres.
+  pg: { name: 'Tours', decor: 'bonbon', motif: 6, boss: 'Cubik', sticker: 'Tour de cubes', of: 'des Tours' },
+  signe: { name: 'Marais', decor: 'jungle', motif: 2, boss: 'Croco', sticker: 'Crocodile glouton', of: 'du Marais' },
+  vf: { name: 'Récif', decor: 'plage', motif: 1, boss: 'Vraifo', sticker: 'Étoile de mer', of: 'du Récif' },
+  trois: { name: 'Sommet', decor: 'glace', motif: 5, boss: 'Grimpou', sticker: 'Piolet', of: 'du Sommet' },
 };
 
 /* Grandeurs (CP) : la monnaie, puis l'heure. */

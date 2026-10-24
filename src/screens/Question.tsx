@@ -25,7 +25,7 @@ import { AidGrid, AidTokens } from './Aid';
 import { EngAid, EngAnswers, EngCard, engRight, engSayParts } from './EngQuestion';
 import { FrAid, FrAnswers, FrCard, frRight } from './FrQuestion';
 import { DictAnswers, dictHeard, ReadAid, ReadAnswers, ReadCard, sayRead } from './ReadQuestion';
-import { NumCard, tensArt } from './NumQuestion';
+import { NumCard, numAria, numLabel, tensArt, towerArt } from './NumQuestion';
 import { FracAid, FracAnswers, FracCard, fracRight } from './FracQuestion';
 import { WrittenAid, WrittenAnswers, WrittenCard, writtenRight } from './WrittenQuestion';
 import { sayMaths } from '../content/written';
@@ -347,7 +347,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
 
   const slot = (
     <span class={`slot ${input ? 'filled' : ''} ${mark}`} id="slot" ref={slotRef}>
-      {input ? <span class="d" key={input}>{input}</span> : <span>?</span>}
+      {input ? <span class="d" key={input}>{q && num ? numLabel(q, Number(input)) : input}</span> : <span>?</span>}
     </span>
   );
   let expr = null;
@@ -382,7 +382,7 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
       <div class="choices">
         {q.choices!.map((c) => {
           const cls = !picked ? '' : c === q.p ? 'ok' : c === picked.value ? 'help' : 'off';
-          return <button key={c} class={`choice ${cls}`} onClick={() => !locked && check(isCorrect(q, c), c)}>{c}</button>;
+          return <button key={c} class={`choice ${cls}`} aria-label={num ? numAria(q, c) : undefined} onClick={() => !locked && check(isCorrect(q, c), c)}>{num ? numLabel(q, c) : c}</button>;
         })}
       </div>
     );
@@ -445,7 +445,9 @@ export function QuestionScreen({ cfg, back }: { cfg: SessionConfig; back: Route 
           ) : wr ? (
             <WrittenAid q={fq} />
           ) : num ? (
-            fq.num!.set === 'du' ? <div class="num-card"><Svg html={tensArt(fq.num!.x, fq.num!.y, 90)} /></div> : null
+            fq.num!.set === 'du' ? <div class="num-card"><Svg html={tensArt(fq.num!.x, fq.num!.y, 90)} /></div>
+            : (fq.num!.set === 'pg' || fq.num!.set === 'signe' || fq.num!.set === 'vf') && fq.num!.x > 0 && fq.num!.y > 0 && fq.num!.x <= 10 && fq.num!.y <= 10 ? <div class="num-towers" aria-hidden="true">{[fq.num!.x, fq.num!.y].map((n, i) => <span key={i}><Svg html={towerArt(n, 80)} /><b>{n}</b></span>)}</div>
+            : null
           ) : fq.op === 'mul' ? (
             <>
               <div class="aid-top"><span>{fq.a} rangée{fq.a > 1 ? 's' : ''} de {fq.b}</span><span>{fq.p} en tout</span></div>

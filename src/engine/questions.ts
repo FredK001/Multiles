@@ -139,8 +139,11 @@ export function generateQuestion({ series, fmt, fact, step = null, rng = default
   }
   if (s.op === 'num') {
     const n = numQ(numSetOfSeries(s), f.b);
-    const q: Question = { op: 'num', series: s.id, a: f.a, b: f.b, fmt: fmt === 'pave' && n.set !== 'comp' ? 'pave' : 'qcm', p: numAnswer(n.set, n.x, n.y), num: n };
-    if (q.fmt === 'qcm') q.choices = numChoices(n.set, n.x, n.y, rng);
+    // Comparer : toujours au choix (les nombres, les signes) ; vrai ou faux pour les affirmations.
+    const nf: Format = n.set === 'vf' ? 'vf' : fmt === 'pave' && (n.set === 'du' || n.set === 'suite' || n.set === 'droite') ? 'pave' : 'qcm';
+    const q: Question = { op: 'num', series: s.id, a: f.a, b: f.b, fmt: nf, p: numAnswer(n), num: n };
+    if (q.fmt === 'qcm') q.choices = numChoices(n, rng);
+    if (q.fmt === 'vf') q.truth = q.p === 1;
     assertValid(q);
     return q;
   }
@@ -218,7 +221,8 @@ export function assertValid(q: Question): void {
   }
   if (q.op === 'num') {
     const c = q.choices ?? [];
-    if (!q.num || q.p !== numAnswer(q.num.set, q.num.x, q.num.y) || q.p < 0 || q.p > 100) fail('nombres');
+    if (!q.num || q.p !== numAnswer(q.num) || q.p < 0 || q.p > 100) fail('nombres');
+    if (q.fmt === 'vf' && q.truth !== (q.p === 1)) fail('nombres : vrai ou faux');
     if (q.fmt === 'qcm' && (c.length < 2 || new Set(c).size !== c.length || !c.includes(q.p) || c.some((x) => x < 0 || x > 100))) fail('nombres : propositions');
     return;
   }

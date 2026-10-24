@@ -15,7 +15,16 @@ async function answerNum(page: Page) {
   if (du) r = Number(du[1]) * 10 + Number(du[2]);
   else if (suite) r = Number(suite[2]) + (suite[1] === 'après' ? 1 : -1);
   else if (comp) r = Math.max(Number(comp[1]), Number(comp[2]));
-  else throw new Error(`énoncé inattendu : ${t}`);
+  else if (/plus (petit|grand)( des trois)? : /.test(t)) {
+    const ns = (t.split(':')[1]!.match(/\d+/g) ?? []).map(Number);
+    r = t.includes('plus petit') ? Math.min(...ns) : Math.max(...ns);
+  } else if (/^Quel signe/.test(t)) {
+    const [a, b] = t.match(/\d+/g)!.map(Number);
+    return page.locator('.choices .choice', { hasText: a! < b! ? '<' : a! > b! ? '>' : '=' }).click();
+  } else if (/Vrai ou faux/.test(t)) {
+    const m = /^(\d+) est plus (petit|grand) que (\d+)/.exec(t)!, a = Number(m[1]), b = Number(m[3]);
+    return page.locator('.vf .choice', { hasText: (m[2] === 'petit' ? a < b : a > b) ? 'Vrai' : 'Faux' }).click();
+  } else throw new Error(`énoncé inattendu : ${t}`);
   if (await page.locator('.pad').count()) {
     for (const d of String(r)) await page.locator('.pad .key', { hasText: new RegExp(`^${d}$`) }).click();
     await page.getByRole('button', { name: 'Valider' }).click();
@@ -37,8 +46,8 @@ test('CP : nombres, tableau des nombres, dizaines et unités sans faute, grille'
   await page.getByRole('button', { name: 'Jouer avec le profil de Tom' }).click();
   await page.locator('.isles-strip').click();
   await page.locator('.op-card', { hasText: 'Nombres' }).click();
-  await expect(page.locator('.isle')).toHaveCount(4);
-  await expect(page.locator('.isle:not(.locked)')).toHaveCount(2);
+  await expect(page.locator('.isle')).toHaveCount(8);
+  await expect(page.locator('.isle:not(.locked)')).toHaveCount(3);
   await page.locator('.isle').first().click();
   await expect(page.locator('[data-screen="isle"] h1')).toHaveText('Carrière');
   await page.getByRole('button', { name: /Découvrir/ }).click();
@@ -71,4 +80,31 @@ test('CP : avant, après', async ({ page }) => {
   await expect(page.locator('.expr.num-ans .op', { hasText: '→' })).toBeVisible();
   await answerNum(page);
   await expect(page.locator('.fb-sheet.ok')).toBeVisible();
+});
+
+test('CP : comparer les nombres (tours de cubes, signes, vrai ou faux, trois nombres)', async ({ page }) => {
+  test.setTimeout(120_000);
+  // Trois trophées en nombres : toutes les îles de comparaison sont ouvertes.
+  const won = { steps: 3, trophy: true, stepStars: [3, 3, 3] };
+  const series = { 'num-du': won, 'num-suite': won, 'num-droite': won };
+  await seedProd(page, [{ ...cpKid(), prog: { num: { current: 'num-du', series, mastered: [], traps: [], trapLog: {}, records: {}, stickers: [] } } }], undefined, 3);
+  for (const name of ['Tours', 'Marais', 'Récif', 'Sommet']) {
+    await page.reload();
+    await page.getByRole('button', { name: 'Jouer avec le profil de Tom' }).click();
+    await page.locator('.isles-strip').click();
+    await page.locator('.op-card', { hasText: 'Nombres' }).click();
+    await expect(page.locator('.isle.locked')).toHaveCount(0);
+    await page.locator(`.isle[aria-label^="Île ${name}"]`).click();
+    await expect(page.locator('[data-screen="isle"] h1')).toHaveText(name);
+    await page.getByRole('button', { name: /Jouer l'étape 1/ }).click();
+    if (name === 'Tours') await expect(page.locator('.num-towers svg')).toHaveCount(2);
+    if (name === 'Marais') await expect(page.locator('.choices .choice')).toHaveText(['<', '=', '>']);
+    if (name === 'Récif') await expect(page.locator('.vf .choice')).toHaveCount(2);
+    await page.screenshot({ path: `test-results/num-${name}.png` });
+    for (let j = 0; j < 3; j++) {
+      await answerNum(page);
+      await expect(page.locator('.fb-sheet.ok')).toBeVisible();
+      await page.locator('.fb-sheet').waitFor({ state: 'detached' });
+    }
+  }
 });

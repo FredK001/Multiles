@@ -521,6 +521,7 @@
 .key.go[aria-disabled="true"]{background:var(--ile-clair);color:var(--ink-2)}
 .key.go[aria-disabled="true"]:active{transform:none;box-shadow:0 5px 0 var(--ink)}
 .choices{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.choices:has(> :nth-child(2):last-child){grid-template-columns:repeat(2,1fr)}
 .choice{height:112px;border-radius:24px;background:#fff;border:3px solid var(--ink);box-shadow:0 6px 0 var(--ink);font-family:var(--titre);font-weight:700;font-size:44px;transition:transform .06s,box-shadow .06s}
 .choice:active{transform:translateY(5px);box-shadow:0 1px 0 var(--ink)}
 .choice.ok{background:var(--feuille);color:#fff}
@@ -682,6 +683,14 @@
 .num-wrap{display:flex;justify-content:center;width:100%}
 .num-card{display:flex;flex-direction:column;align-items:center;gap:10px}
 .expr.num-ans{font-size:56px}
+.num-towers{display:flex;justify-content:center;align-items:flex-end;gap:64px}
+.num-towers>span{display:flex;flex-direction:column;align-items:center;gap:4px}
+.num-towers b{font-family:var(--titre);font-size:30px;line-height:1}
+.num-ask{font-family:var(--titre);font-weight:600;font-size:26px;color:var(--ink)}
+.expr.num-claim.words{font-size:34px;text-align:center;white-space:normal;line-height:1.15}
+.expr.num-ans.three{gap:30px}
+.expr.num-signe{align-items:flex-end;gap:18px}
+.num-col{display:flex;flex-direction:column;align-items:center;gap:6px}
 .hundred{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
 .hundred button{aspect-ratio:1;border:2px solid var(--ink);border-radius:8px;background:#fff;font-family:var(--ui);font-weight:800;font-size:14px;padding:0;min-width:0}
 .hundred button.ten{background:var(--ile-clair)}
@@ -700,8 +709,8 @@
 /* Choix de la matière : jamais plus large que l'écran ; au-delà de 2 matières, cartes compactes et liste qui défile */
 .ops-cards{grid-template-columns:minmax(0,1fr)}
 .op-card > span:last-child{min-width:0}
-.ops-cards.many{grid-template-rows:none;grid-auto-rows:auto;gap:14px;overflow-y:auto;overflow-x:hidden;padding:12px 2px 8px}
-.ops-cards.many .op-card{min-height:0;padding:12px 16px;gap:14px;border-radius:26px}
+.ops-cards.many{grid-template-rows:none;grid-auto-rows:max-content;gap:14px;overflow-y:auto;overflow-x:hidden;padding:12px 2px 8px}
+.ops-cards.many .op-card{min-height:auto;padding:12px 16px;gap:14px;border-radius:26px}
 .ops-cards.many .op-sign{width:76px;height:76px;border-radius:22px;font-size:62px;padding-bottom:4px}
 .ops-cards.many .op-sign.txt{font-size:36px;padding-bottom:0}
 .ops-cards.many .op-card b{font-size:32px}
