@@ -23,7 +23,7 @@ import { hardList, totalSessions, weekMinutes } from '../engine/stats';
 import { opProg, opsOf } from '../engine/progress';
 import { tableNum } from '../engine/unlock';
 import {
-  BackupError, forgetTransfer, formatCode, FutureVersionError, lastBackupText, makeBackup, MAX_PROFILES, readBackup, receiveTransfer, sendTransfer, TransferError,
+  BackupError, forgetTransfer, formatCode, FutureVersionError, lastBackupText, makeBackup, MAX_PROFILES, mergeData, readBackup, restoreText, receiveTransfer, sendTransfer, TransferError,
   type AppData, type BossTime, type Profile,
 } from '../store';
 
@@ -254,17 +254,15 @@ function BackupCard() {
   };
   const restore = async () => {
     if (!pending) return;
-    // Réglages propres à l'appareil : conservés.
-    const { persistAsked, lastBackup } = store.get();
-    const next = { ...pending, persistAsked, lastBackup };
+    // Enfants fusionnés un à un ; réglages de l'appareil et enfants absents de la réception conservés.
     selectPlayer(null);
-    await store.update(() => next);
+    await store.update((d) => mergeData(d, pending).data);
     setPending(null);
     if (received) void forgetTransfer(received);
     setReceived(null);
     toast((await store.flush()) ? 'Progression restaurée.' : "La progression est restaurée, mais n'a pas pu être enregistrée sur l'appareil.");
   };
-  const names = pending?.profiles.map((k) => k.name).join(', ') || 'aucun profil';
+  const report = pending ? mergeData(data, pending).report : [];
 
   return (
     <div class="pcard2">
@@ -313,10 +311,10 @@ function BackupCard() {
       {msg && <p role="alert" style={{ fontSize: '15px', color: '#A3261E' }}>{msg}</p>}
       {pending && (
         <div class="confirm" role="alertdialog" aria-label="Confirmer la restauration">
-          <span>Remplacer toute la progression de cet appareil par celle de la sauvegarde ({names}) ? Les profils actuels seront remplacés.</span>
+          <span>{restoreText(report)}</span>
           <span class="acts">
             <button class="btn-sm" onClick={() => setPending(null)}>Annuler</button>
-            <button class="btn-sm dangerfill" onClick={() => void restore()}>Remplacer</button>
+            <button class="btn-sm" disabled={!report.some((r) => r.kind === 'added' || r.kind === 'updated')} onClick={() => void restore()}>Récupérer la progression</button>
           </span>
         </div>
       )}

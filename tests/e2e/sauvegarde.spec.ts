@@ -30,7 +30,7 @@ test('sauvegarder, tout perdre, restaurer : la progression revient', async ({ pa
 
   await page.locator('input[type=file]').setInputFiles({ name: 's.json', mimeType: 'application/json', buffer: readFileSync(file) });
   await expect(page.getByRole('alertdialog')).toContainText('Nina');
-  await page.getByRole('button', { name: 'Remplacer' }).click();
+  await page.getByRole('button', { name: 'Récupérer la progression' }).click();
   await expect(page.locator('.kid', { hasText: 'Nina' })).toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
@@ -53,8 +53,8 @@ test('transférer par code vers un autre téléphone', async ({ page }) => {
   const code = (await page.locator('.xfer-code').textContent())!;
   expect(code).toMatch(/^[A-Z2-9]{3}-[A-Z2-9]{3}$/);
 
-  // Nouveau téléphone, vide.
-  await seedProd(page, []);
+  // Autre tablette, où joue déjà Léo : il ne doit pas disparaître.
+  await seedProd(page, [kid({ id: 'k2', name: 'Léo', color: '#8A36A8', coins: 12 })]);
   await openParent(page);
   await page.getByRole('button', { name: "J'ai un code de transfert" }).click();
   await page.getByLabel("Code affiché sur l'ancien téléphone").fill('ZZZ-ZZZ');
@@ -69,10 +69,12 @@ test('transférer par code vers un autre téléphone', async ({ page }) => {
   await page.getByRole('button', { name: "J'ai un code de transfert" }).click();
   await page.getByLabel("Code affiché sur l'ancien téléphone").fill(code);
   await page.getByRole('button', { name: 'Récupérer' }).click();
-  await page.getByRole('button', { name: 'Remplacer' }).click();
+  await expect(page.getByRole('alertdialog')).toContainText('Nina : nouveau profil');
+  await page.getByRole('button', { name: 'Récupérer la progression' }).click();
   // Restaurée : la copie en ligne est effacée.
   await expect.poll(() => store.size()).toBe(0);
   await page.reload();
+  await expect(page.getByRole('button', { name: 'Jouer avec le profil de Léo' })).toBeVisible();
   await page.getByRole('button', { name: 'Jouer avec le profil de Nina' }).click();
   await expect(page.locator('.stat').first()).toContainText('21');
   await expect(page.locator('.stat.coin')).toContainText('44');
