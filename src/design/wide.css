@@ -46,5 +46,5 @@
   .scr-q .q-answer .choices .choice{height:clamp(72px,14vh,130px)}
 
   /* Choix de la matière : cartes en grille. */
-  .ops-cards,.ops-cards.many{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:auto;align-content:center}
+  .ops-cards,.ops-cards.many{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:max-content;align-content:center}
 }
